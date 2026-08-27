@@ -1,0 +1,36 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    volumes:
+      # Исходники смонтированы внутрь контейнера: uvicorn --reload подхватывает
+      # правки на лету, пересобирать образ не нужно.
+      - ./backend/app:/app/app
+      - ./backend/data:/app/data
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-change-me-to-a-random-string}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      DATABASE_URL: sqlite:///./data/app.db
+      CORS_ORIGINS: http://localhost:5173,http://127.0.0.1:5173
+      # В Docker Desktop на macOS inotify через bind-mount не срабатывает,
+      # поэтому следим за файлами опросом.
+      WATCHFILES_FORCE_POLLING: "true"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/app
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      # Тот же приём для фронтенда — Vite отдаёт HMR без перезагрузки страницы.
+      - ./frontend:/app
+      # ...но node_modules берём из образа, а не с хоста.
+      - /app/node_modules
+    environment:
+      VITE_API_PROXY_TARGET: http://backend:8000
+    depends_on:
+      - backend
+    restart: unless-stopped

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="CS2 Турниры">
+  <rect width="32" height="32" rx="7.5" fill="#2f2f33"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6">
+    <!-- Две ветви, сходящиеся в одну: тот же знак, что и в шапке сайта. -->
+    <path d="M9 8.5h5.5v15H9" stroke="#fbfaf8"/>
+    <path d="M14.5 16h8.5" stroke="#6fc79a"/>
+  </g>
+</svg>
