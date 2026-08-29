@@ -95,6 +95,54 @@ def _match_map(match: dict) -> str | None:
     return decider
 
 
+def _team_captain_id(bracket: dict, team_idx: int | None) -> int | None:
+    """Тот же порядок, что и в проверке хода: у старых сеток капитана нет,
+    и за него отвечает первый игрок команды."""
+    if team_idx is None:
+        return None
+    teams = bracket.get("teams") or []
+    if team_idx >= len(teams):
+        return None
+    team = teams[team_idx]
+    return team.get("captain_id") or team.get("player_a_id")
+
+
+@router.get("/active-veto", response_model=schemas.ActiveVetoOut | None)
+def active_veto(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Идущий драфт, в котором вошедший — капитан.
+
+    Нужен, чтобы капитана сразу бросало в его пик/бан, а не заставляло искать
+    матч в сетке. Драфт живёт внутри JSON-сетки, поэтому обходим незавершённые
+    турниры и ищем первый матч со статусом in_progress со своим капитаном.
+    """
+    tournaments = (
+        db.query(Tournament)
+        .filter(Tournament.status != TournamentStatus.finished)
+        .order_by(Tournament.created_at.desc())
+        .all()
+    )
+
+    for t in tournaments:
+        bracket = t.bracket or {}
+        for r, round_ in enumerate(bracket.get("rounds") or []):
+            for i, match in enumerate(round_):
+                veto = match.get("veto") or {}
+                if veto.get("status") != "in_progress":
+                    continue
+                captains = [_team_captain_id(bracket, idx) for idx in match.get("p", [])]
+                if user.id not in captains:
+                    continue
+                turn = veto.get("turn")
+                return schemas.ActiveVetoOut(
+                    tournament_id=t.id,
+                    tournament_name=t.name,
+                    round=r,
+                    index=i,
+                    my_turn=turn is not None and captains[turn] == user.id,
+                )
+    return None
+
+
 @router.get("/cabinet", response_model=schemas.CabinetOut)
 def cabinet(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     """Всё, что относится лично к вошедшему: его матчи и сводная статистика.

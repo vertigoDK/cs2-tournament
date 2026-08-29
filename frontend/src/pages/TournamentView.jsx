@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Bracket from "../components/Bracket.jsx";
@@ -15,6 +15,7 @@ export default function TournamentView() {
   const { id } = useParams();
   const { auth, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { toast, toastNode } = useToast();
 
   const [t, setT] = useState(null);
@@ -39,6 +40,15 @@ export default function TournamentView() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  // Ссылка вида ?veto=1-0 открывает драфт нужного матча сразу — по ней
+  // капитана сюда и приводит DraftRedirect.
+  const vetoParam = searchParams.get("veto");
+  useEffect(() => {
+    if (!vetoParam) return;
+    const [r, i] = vetoParam.split("-").map(Number);
+    if (Number.isInteger(r) && Number.isInteger(i)) setVetoTarget({ r, i });
+  }, [vetoParam]);
 
   // Турнир смотрят несколько человек сразу, а карты на драфте капитаны
   // выбирают по очереди — соперник должен видеть ход почти сразу. Поэтому во
@@ -105,7 +115,15 @@ export default function TournamentView() {
   };
 
   const onOpenVeto = (r, i) => setVetoTarget({ r, i });
-  const onCloseVeto = () => setVetoTarget(null);
+  const onCloseVeto = () => {
+    setVetoTarget(null);
+    // Убираем ?veto из адреса, иначе эффект тут же откроет модалку заново.
+    if (searchParams.has("veto")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("veto");
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const onVetoStart = () =>
     runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/start`));
@@ -141,7 +159,7 @@ export default function TournamentView() {
     );
   }
 
-  const vetoMatch = vetoTarget ? t.bracket.rounds[vetoTarget.r][vetoTarget.i] : null;
+  const vetoMatch = vetoTarget ? t.bracket.rounds[vetoTarget.r]?.[vetoTarget.i] ?? null : null;
   const teamA = vetoMatch && vetoMatch.p[0] != null ? t.bracket.teams[vetoMatch.p[0]] : null;
   const teamB = vetoMatch && vetoMatch.p[1] != null ? t.bracket.teams[vetoMatch.p[1]] : null;
 
@@ -205,7 +223,7 @@ export default function TournamentView() {
       />
 
       <VetoModal
-        open={Boolean(vetoTarget)}
+        open={Boolean(vetoMatch)}
         onClose={onCloseVeto}
         match={vetoMatch}
         teamA={teamA}

@@ -72,6 +72,16 @@ class CabinetMatch(BaseModel):
     result: Literal["win", "loss", "pending"]
 
 
+class ActiveVetoOut(BaseModel):
+    """Идущий драфт, к которому вошедшего нужно перекинуть."""
+
+    tournament_id: int
+    tournament_name: str
+    round: int
+    index: int
+    my_turn: bool
+
+
 class CabinetStats(BaseModel):
     tournaments: int
     matches_played: int
