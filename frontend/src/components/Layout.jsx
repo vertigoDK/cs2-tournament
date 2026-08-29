@@ -2,6 +2,8 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Icon from "./Icon.jsx";
 import ProfileMenu from "./ProfileMenu.jsx";
+import KefirDrips from "./KefirDrips.jsx";
+import DraftRedirect from "./DraftRedirect.jsx";
 
 export default function Layout() {
   const { isAdmin } = useAuth();
@@ -41,6 +43,8 @@ export default function Layout() {
         <ProfileMenu />
       </header>
       <Outlet />
+      <DraftRedirect />
+      <KefirDrips />
     </div>
   );
 }

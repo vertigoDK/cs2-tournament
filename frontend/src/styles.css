@@ -1020,3 +1020,84 @@ svg.links path.champion-link{stroke:var(--gold);opacity:.8}
   .map-stat-grid{grid-template-columns:1fr}
   .t-head .actions{grid-template-columns:1fr}
 }
+
+/* ─────────────── Пасхалка kefir: кефир течёт с верхнего края ───────────────
+   Оверлей во весь экран поверх шапки (z-index 40), но ниже выпадашки профиля
+   (50), модалок (100) и тостов (200) — потёки не должны мешать работать.
+   pointer-events:none, поэтому по шапке под кефиром всё так же кликается. */
+.kefir{position:fixed;inset:0;z-index:45;pointer-events:none}
+/* Без viewBox пользовательские единицы SVG = пиксели, а проценты в cx/cy
+   считаются от окна: потёки сами растягиваются под любой экран, а лужицы
+   на cy="100%" всегда лежат ровно на нижнем краю. */
+.kefir svg{width:100%;height:100%;display:block}
+
+/* Тень сдвинута вниз и вправо: видно объём, и белое не теряется на светлом. */
+.kefir-shadow{fill:#8e8aa6;opacity:.3;transform:translate(2px,7px)}
+.kefir-body{fill:#fdfdfa;opacity:.9}
+:root[data-theme="dark"] .kefir-shadow{fill:#000;opacity:.35}
+:root[data-theme="dark"] .kefir-body{opacity:.8}
+
+/* Дорожка только двигает каплю по горизонтали: у неё transform-box:view-box,
+   поэтому проценты считаются от ширины окна. Сама капля анимируется внутри
+   со своим fill-box, иначе масштаб растягивал бы всю систему координат. */
+.kefir-lane{transform-box:view-box;translate:var(--x) 44px}
+
+.kefir-drop,.kefir-tongue,.kefir-splat,.kefir-bit{
+  /* Иначе масштаб считался бы от начала координат SVG и фигура уезжала бы вбок. */
+  transform-box:fill-box;
+  animation-iteration-count:infinite;animation-timing-function:linear;
+}
+.kefir-drop{animation-name:kefir-fall;transform-origin:50% 0}
+.kefir-tongue{animation-name:kefir-hang;animation-timing-function:ease-in-out;transform-origin:50% 0}
+.kefir-splat{animation-name:kefir-splat;transform-origin:50% 50%;opacity:0}
+.kefir-bit{animation-name:kefir-bit;transform-origin:50% 50%;opacity:0}
+
+/* Физика капли за один цикл. Проценты подобраны так, что само падение —
+   это 64%→76%, то есть ~12% цикла (около секунды), а остальное время капля
+   копится у края: медленно набухает, вытягивает шейку и рвёт её. */
+@keyframes kefir-fall{
+  /* Растёт прямо из натёка. */
+  0%   {transform:translateY(-46px) scale(.05,.05);animation-timing-function:ease-out}
+  26%  {transform:translateY(-30px) scale(.75,.7);animation-timing-function:ease-in-out}
+  52%  {transform:translateY(-14px) scale(1,1.25);animation-timing-function:ease-in}
+  /* Шейка вытянулась до предела и рвётся. */
+  60%  {transform:translateY(-6px) scale(.78,2.4);animation-timing-function:ease-in}
+  /* Оторвалась — поверхностное натяжение собирает её обратно в шар. */
+  64%  {transform:translateY(26px) scale(1.05,1.1);animation-timing-function:cubic-bezier(.5,0,1,1)}
+  /* Свободное падение: cubic-bezier(.5,0,1,1) — это почти g·t²/2. На скорости
+     капля вытягивается по вертикали. */
+  76%  {transform:translateY(calc(100vh - 56px)) scale(.8,1.6);animation-timing-function:cubic-bezier(.2,.85,.35,1)}
+  /* Удар: расплющило в блин и разбило на брызги. */
+  78%  {transform:translateY(calc(100vh - 34px)) scale(1.75,.3)}
+  80%  {transform:translateY(calc(100vh - 30px)) scale(.05,.05)}
+  100% {transform:translateY(calc(100vh - 30px)) scale(.05,.05)}
+}
+
+/* Лужица на месте удара: растекается и впитывается. */
+@keyframes kefir-splat{
+  0%,77%{transform:scale(.15,.15);opacity:0}
+  79%   {transform:scale(1.1,.6);opacity:.95}
+  84%   {transform:scale(1.9,.32);opacity:.55}
+  93%   {transform:scale(2.5,.2);opacity:0}
+  100%  {transform:scale(.15,.15);opacity:0}
+}
+/* Брызги: две капельки в стороны и вверх, потом падают обратно. */
+@keyframes kefir-bit{
+  0%,77%{transform:translate(0,0) scale(.2);opacity:0}
+  80%   {transform:translate(calc(var(--dx) * .5),-15px) scale(1);opacity:.9;
+         animation-timing-function:ease-in}
+  88%   {transform:translate(var(--dx),6px) scale(.6);opacity:0}
+  100%  {transform:translate(0,0) scale(.2);opacity:0}
+}
+
+/* Язык то стекает ниже, то втягивается обратно в натёк. */
+@keyframes kefir-hang{
+  0%,100%{transform:translateY(0) scale(1,1)}
+  50%    {transform:translateY(16px) scale(.85,2.2)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .kefir-drop{animation:none;transform:translateY(30px) scale(.9,1.6)}
+  .kefir-tongue{animation:none;transform:translateY(10px) scale(.9,1.8)}
+  .kefir-splat,.kefir-bit{animation:none}
+}
