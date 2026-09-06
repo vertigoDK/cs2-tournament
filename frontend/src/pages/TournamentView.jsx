@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext.jsx";
 import Bracket from "../components/Bracket.jsx";
 import VetoModal from "../components/VetoModal.jsx";
 import MapStatsModal from "../components/MapStatsModal.jsx";
+import TournamentStatsModal from "../components/TournamentStatsModal.jsx";
 import StartAnnounce from "../components/StartAnnounce.jsx";
 import { useToast } from "../components/Toast.jsx";
 import Icon from "../components/Icon.jsx";
@@ -23,6 +24,7 @@ export default function TournamentView() {
   const [busy, setBusy] = useState(false);
   const [vetoTarget, setVetoTarget] = useState(null); // {r, i}
   const [statsMap, setStatsMap] = useState(null); // индекс карты серии
+  const [statsOpen, setStatsOpen] = useState(false);
 
   // Пока идёт своё действие, фоновое обновление не должно перетереть ответ.
   const busyRef = useRef(false);
@@ -181,30 +183,38 @@ export default function TournamentView() {
             ) : null}
           </div>
         </div>
-        {isAdmin ? (
-          <div className="actions">
-            <Link to={`/tournaments/${id}/edit`} className="btn">
-              Редактировать
-            </Link>
-            {t.status !== "finished" && !t.started_at ? (
-              <button className="btn accent" onClick={onStart} disabled={busy}>
-                <Icon name="play" size={14} filled />
-                <span>Начать турнир</span>
-              </button>
-            ) : null}
-            {t.started_at && t.status !== "finished" ? (
-              <button className="btn" onClick={onUnstart} disabled={busy}>
-                Отменить старт
-              </button>
-            ) : null}
-            <button className="btn" onClick={onReset} disabled={busy}>
-              Сбросить результаты
+        <div className="actions">
+          {t.status !== "setup" ? (
+            <button className="btn" onClick={() => setStatsOpen(true)}>
+              <Icon name="medal" size={14} />
+              <span>Статистика</span>
             </button>
-            <button className="btn danger" onClick={onDelete} disabled={busy}>
-              Удалить
-            </button>
-          </div>
-        ) : null}
+          ) : null}
+          {isAdmin ? (
+            <>
+              <Link to={`/tournaments/${id}/edit`} className="btn">
+                Редактировать
+              </Link>
+              {t.status !== "finished" && !t.started_at ? (
+                <button className="btn accent" onClick={onStart} disabled={busy}>
+                  <Icon name="play" size={14} filled />
+                  <span>Начать турнир</span>
+                </button>
+              ) : null}
+              {t.started_at && t.status !== "finished" ? (
+                <button className="btn" onClick={onUnstart} disabled={busy}>
+                  Отменить старт
+                </button>
+              ) : null}
+              <button className="btn" onClick={onReset} disabled={busy}>
+                Сбросить результаты
+              </button>
+              <button className="btn danger" onClick={onDelete} disabled={busy}>
+                Удалить
+              </button>
+            </>
+          ) : null}
+        </div>
       </div>
 
       <StartAnnounce
@@ -251,6 +261,13 @@ export default function TournamentView() {
         onSave={onSaveMapStats}
         readOnly={!isAdmin}
         busy={busy}
+      />
+
+      <TournamentStatsModal
+        open={statsOpen}
+        onClose={() => setStatsOpen(false)}
+        tournamentId={id}
+        tournamentName={t.name}
       />
 
       {toastNode}

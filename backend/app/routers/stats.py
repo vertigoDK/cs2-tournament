@@ -57,7 +57,16 @@ def _parse_prize(text: str) -> tuple[float, str]:
 
 
 @router.get("", response_model=schemas.StatsOut)
-def stats(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def stats(
+    tournament_id: int | None = None,
+    db: Session = Depends(get_db),
+    _: User = Depends(get_current_user),
+):
+    """Сводка по всем турнирам сразу или по одному, если передан `tournament_id`.
+
+    Считается всё тем же проходом: страница турнира показывает ту же таблицу,
+    что и общая статистика, только по своим матчам.
+    """
     players = {
         u.id: schemas.PlayerStat(
             id=u.id,
@@ -75,7 +84,11 @@ def stats(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     def map_row(name: str) -> schemas.MapStat:
         return maps.setdefault(name, schemas.MapStat(map=name))
 
-    for t in db.query(Tournament).order_by(Tournament.created_at.desc()).all():
+    query = db.query(Tournament).order_by(Tournament.created_at.desc())
+    if tournament_id is not None:
+        query = query.filter(Tournament.id == tournament_id)
+
+    for t in query.all():
         bracket = hydrate_bracket(db, t.bracket)
         rounds = bracket.get("rounds") or []
         teams = bracket.get("teams") or []
@@ -199,7 +212,12 @@ def stats(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
     for p in players.values():
         p.prize = round(p.prize, 2)
 
-    ranked = sorted(players.values(), key=lambda p: (-p.kills, p.display_name.lower()))
+    rows = players.values()
+    # В сводке по одному турниру остальные участники — просто пустые строки.
+    if tournament_id is not None:
+        rows = [p for p in rows if p.tournaments]
+
+    ranked = sorted(rows, key=lambda p: (-p.kills, p.display_name.lower()))
     map_list = sorted(maps.values(), key=lambda m: (-(m.played + m.picked + m.banned), m.map))
     return schemas.StatsOut(
         players=ranked,

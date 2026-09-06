@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
 import Avatar from "../components/Avatar.jsx";
 import Icon from "../components/Icon.jsx";
-import { mapImage } from "../utils/maps.js";
+import { EmptyStats, MapsGrid, PlayersTable } from "../components/StatsTables.jsx";
 
 const TABS = [
   { id: "players", label: "Игроки", icon: "medal" },
@@ -15,20 +15,10 @@ const TABS = [
 const money = (value) =>
   new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(value || 0);
 
-// По какому столбцу сортировать таблицу игроков.
-const SORTS = [
-  { id: "kills", label: "Килы", get: (p) => p.kills },
-  { id: "kd", label: "K/D", get: (p) => p.kd },
-  { id: "kpr", label: "Килов в раунде", get: (p) => p.kpr },
-  { id: "map_wins", label: "Побед на картах", get: (p) => p.map_wins },
-  { id: "titles", label: "Титулы", get: (p) => p.titles },
-];
-
 export default function Stats() {
   const [data, setData] = useState(null);
   const [error, setError] = useState("");
   const [tab, setTab] = useState("players");
-  const [sort, setSort] = useState("kills");
 
   useEffect(() => {
     api
@@ -36,14 +26,6 @@ export default function Stats() {
       .then((res) => setData(res.data))
       .catch((err) => setError(apiErrorMessage(err)));
   }, []);
-
-  const players = useMemo(() => {
-    if (!data) return [];
-    const cmp = SORTS.find((s) => s.id === sort) || SORTS[0];
-    return [...data.players].sort(
-      (a, b) => cmp.get(b) - cmp.get(a) || a.display_name.localeCompare(b.display_name)
-    );
-  }, [data, sort]);
 
   if (error) {
     return (
@@ -82,65 +64,7 @@ export default function Stats() {
         ))}
       </div>
 
-      {tab === "players" &&
-        (!hasStats ? (
-          <EmptyStats />
-        ) : (
-          <>
-            <div className="sort-bar">
-              <span>Сортировка</span>
-              {SORTS.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className={`chip${sort === s.id ? " active" : ""}`}
-                  onClick={() => setSort(s.id)}
-                >
-                  {s.label}
-                </button>
-              ))}
-            </div>
-
-            <div className="panel table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Игрок</th>
-                    <th>Карт</th>
-                    <th>K</th>
-                    <th>D</th>
-                    <th>A</th>
-                    <th>K/D</th>
-                    <th title="Килов в раунде">KPR</th>
-                    <th>Карты W-L</th>
-                    <th>Титулы</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {players.map((p, idx) => (
-                    <tr key={p.id}>
-                      <td className="dt-player">
-                        <span className="dt-rank">{idx + 1}</span>
-                        <Avatar name={p.display_name} color={p.avatar_color} url={p.avatar_url} size={26} />
-                        <span className="dt-name">{p.display_name}</span>
-                      </td>
-                      <td>{p.maps}</td>
-                      <td>{p.kills}</td>
-                      <td>{p.deaths}</td>
-                      <td>{p.assists}</td>
-                      <td className="num strong">{p.kd.toFixed(2)}</td>
-                      <td className="num">{p.kpr.toFixed(2)}</td>
-                      <td>
-                        {p.map_wins}–{p.map_losses}
-                      </td>
-                      <td>{p.titles || "—"}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        ))}
+      {tab === "players" && (!hasStats ? <EmptyStats /> : <PlayersTable players={data.players} />)}
 
       {tab === "prizes" && <Prizes data={data} />}
 
@@ -148,11 +72,7 @@ export default function Stats() {
         (data.maps.length === 0 ? (
           <EmptyStats text="Ни одного драфта ещё не было." />
         ) : (
-          <div className="map-stat-grid">
-            {data.maps.map((m) => (
-              <MapStatCard key={m.map} stat={m} />
-            ))}
-          </div>
+          <MapsGrid maps={data.maps} />
         ))}
 
       {tab === "history" &&
@@ -234,40 +154,6 @@ function Prizes({ data }) {
         команды-победителя.
       </div>
     </>
-  );
-}
-
-function EmptyStats({ text }) {
-  return (
-    <div className="empty-state">
-      <b>Данных пока нет</b>
-      <span>{text || "Статистика появится, когда админ внесёт результаты сыгранных карт."}</span>
-    </div>
-  );
-}
-
-function MapStatCard({ stat }) {
-  const [noImage, setNoImage] = useState(false);
-  const src = mapImage(stat.map);
-  return (
-    <div className="map-stat">
-      <div className="ms-image">
-        {src && !noImage ? <img src={src} alt="" onError={() => setNoImage(true)} /> : null}
-        <span className="mc-shade" />
-        <span className="mc-name">{stat.map}</span>
-      </div>
-      <div className="ms-rows">
-        <span>
-          <b>{stat.played}</b> сыграна
-        </span>
-        <span className="pick">
-          <b>{stat.picked}</b> пиков
-        </span>
-        <span className="ban">
-          <b>{stat.banned}</b> банов
-        </span>
-      </div>
-    </div>
   );
 }
 
