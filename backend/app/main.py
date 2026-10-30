@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
-from .database import SessionLocal, init_db
+from .database import SessionLocal
+from .migrations import upgrade_db
 from .routers import auth, matches, me, stats, tournaments, uploads, users, veto
 from .seed import seed_admin
 
@@ -9,7 +10,7 @@ app = FastAPI(title="CS2 Local Tournaments", version="0.3.0")
 
 @app.on_event("startup")
 def on_startup() -> None:
-    init_db()  # создаёт недостающие таблицы
+    upgrade_db()  # доводит схему базы до последней миграции
     db = SessionLocal()
     try:
         seed_admin(db)

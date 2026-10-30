@@ -35,8 +35,3 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 class Base(DeclarativeBase):
     pass
 
-
-def init_db() -> None:
-    from . import models  # noqa: F401  (register models on Base)
-
-    Base.metadata.create_all(bind=engine)
