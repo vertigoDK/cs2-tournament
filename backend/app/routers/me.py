@@ -32,7 +32,7 @@ def update_profile(
     user: User = Depends(get_current_user),
 ):
     if payload.clear_avatar:
-        delete_image(user.avatar_url)
+        delete_image(db, user.avatar_url)
         user.avatar_url = None
 
     if payload.avatar_color is not None:
@@ -60,8 +60,8 @@ async def upload_avatar(
     user: User = Depends(get_current_user),
 ):
     """Свою аватарку каждый ставит сам — админ тут не нужен."""
-    url = await save_image(file, "avatars")
-    delete_image(user.avatar_url)  # старую не копим
+    url = await save_image(file, "avatars", db)
+    delete_image(db, user.avatar_url)  # старую не копим
     user.avatar_url = url
     db.commit()
     db.refresh(user)

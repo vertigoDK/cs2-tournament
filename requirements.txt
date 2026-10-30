@@ -1,8 +1,9 @@
 fastapi==0.115.6
-uvicorn[standard]==0.32.1
+uvicorn==0.32.1  # только для локального запуска
 sqlalchemy==2.0.36
 pydantic==2.10.3
 pydantic-settings==2.7.0
+psycopg[binary]==3.2.3
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 pyjwt==2.10.1

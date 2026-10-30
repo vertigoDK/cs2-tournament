@@ -1,7 +1,7 @@
 import datetime as dt
 import enum
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer, LargeBinary, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -77,3 +77,16 @@ class Tournament(Base):
     )
 
     creator: Mapped["User | None"] = relationship()
+
+
+class Image(Base):
+    """Загруженная картинка (аватарка или логотип), уже ужатая до 256px PNG.
+
+    Лежит прямо в базе: у Vercel нет постоянного диска, а отдельное файловое
+    хранилище ради пары десятков картинок по ~50 КБ не нужно.
+    """
+
+    __tablename__ = "images"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True)
+    data: Mapped[bytes] = mapped_column(LargeBinary)

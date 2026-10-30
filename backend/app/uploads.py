@@ -1,7 +1,7 @@
 """Приём картинок: аватарки участников и логотипы команд.
 
-Файлы кладём в тот же том, что и базу, поэтому они переживают пересоздание
-контейнера. Каждую картинку ужимаем до 256px и пересохраняем в PNG: во-первых,
+Картинки храним в самой базе (таблица `images`) — на Vercel нет постоянного
+диска. Каждую картинку ужимаем до 256px и пересохраняем в PNG: во-первых,
 это отсекает мегабайтные скриншоты, во-вторых — пересохранение через Pillow
 выбрасывает любую постороннюю нагрузку из исходного файла.
 
@@ -11,16 +11,18 @@
 
 import io
 import secrets
-from pathlib import Path
 
 from fastapi import HTTPException, UploadFile
 from PIL import Image, UnidentifiedImageError
+from sqlalchemy.orm import Session
 
-MAX_BYTES = 6 * 1024 * 1024
+from . import models
+
+# Vercel не пропускает в функцию тело запроса больше 4.5 МБ.
+MAX_BYTES = 4 * 1024 * 1024
 MAX_SIDE = 256
 
-UPLOAD_ROOT = Path("data/uploads")
-PUBLIC_PREFIX = "/uploads"
+PUBLIC_PREFIX = "/api/images"
 
 
 def _edge_color(image: Image.Image) -> tuple[int, int, int, int]:
@@ -70,20 +72,16 @@ def _to_square(image: Image.Image, kind: str) -> Image.Image:
     return canvas
 
 
-def _folder(kind: str) -> Path:
+async def save_image(file: UploadFile, kind: str, db: Session) -> str:
+    """Сохраняет картинку и возвращает ссылку на неё. Коммит — за вызывающим."""
     if kind not in ("avatars", "logos"):
         raise HTTPException(status_code=400, detail="Неизвестный тип изображения")
-    path = UPLOAD_ROOT / kind
-    path.mkdir(parents=True, exist_ok=True)
-    return path
 
-
-async def save_image(file: UploadFile, kind: str) -> str:
     raw = await file.read()
     if not raw:
         raise HTTPException(status_code=400, detail="Файл пустой")
     if len(raw) > MAX_BYTES:
-        raise HTTPException(status_code=413, detail="Файл больше 6 МБ")
+        raise HTTPException(status_code=413, detail="Файл больше 4 МБ")
 
     try:
         image = Image.open(io.BytesIO(raw))
@@ -91,25 +89,27 @@ async def save_image(file: UploadFile, kind: str) -> str:
     except (UnidentifiedImageError, OSError):
         raise HTTPException(status_code=400, detail="Это не картинка или формат не поддерживается")
 
-    folder = _folder(kind)
-
     # Прозрачность у логотипов важна, поэтому приводим всё к RGBA.
     image = image.convert("RGBA")
     image = _to_square(image, kind)
     image.thumbnail((MAX_SIDE, MAX_SIDE), Image.LANCZOS)
 
-    name = f"{secrets.token_hex(8)}.png"
-    image.save(folder / name, format="PNG", optimize=True)
-    return f"{PUBLIC_PREFIX}/{kind}/{name}"
+    out = io.BytesIO()
+    image.save(out, format="PNG", optimize=True)
+    name = secrets.token_hex(8)
+    db.add(models.Image(id=name, data=out.getvalue()))
+    return f"{PUBLIC_PREFIX}/{name}.png"
 
 
-def delete_image(url: str | None) -> None:
-    """Удаляет ранее загруженный файл, если он наш и всё ещё существует."""
+def image_id(url: str | None) -> str | None:
+    """id картинки из её ссылки, если ссылка наша."""
     if not url or not url.startswith(f"{PUBLIC_PREFIX}/"):
-        return
-    relative = url[len(PUBLIC_PREFIX) + 1 :]
-    target = (UPLOAD_ROOT / relative).resolve()
-    root = UPLOAD_ROOT.resolve()
-    # Защита от «../»: удаляем только внутри своей папки.
-    if root in target.parents and target.is_file():
-        target.unlink(missing_ok=True)
+        return None
+    return url[len(PUBLIC_PREFIX) + 1 :].removesuffix(".png")
+
+
+def delete_image(db: Session, url: str | None) -> None:
+    """Удаляет ранее загруженную картинку, если она наша. Коммит — за вызывающим."""
+    name = image_id(url)
+    if name:
+        db.query(models.Image).filter(models.Image.id == name).delete()
