@@ -20,7 +20,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (res) => res,
   (err) => {
-    if (err.response?.status === 401) {
+    // На страницу входа отправляем, только если сессия была и протухла:
+    // гость смотрит турниры без входа, и его 401 никуда не уводит.
+    if (err.response?.status === 401 && err.config?.headers?.Authorization) {
       try {
         localStorage.removeItem("auth");
       } catch {

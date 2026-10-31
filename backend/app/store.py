@@ -7,6 +7,8 @@
 явно — иначе результаты молча теряются при следующей загрузке страницы.
 """
 
+import time
+
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -34,4 +36,13 @@ def save_bracket(db: Session, t: Tournament, bracket: dict) -> Tournament:
     sync_status(t)
     db.commit()
     db.refresh(t)
+    return t
+
+
+def tick_vetoes(db: Session, t: Tournament) -> Tournament:
+    """Доигрывает просроченные ходы драфта (у кого кончился таймер) и
+    сохраняет, если что-то изменилось. Вызывается при чтении турнира —
+    отдельного фонового процесса, который следил бы за часами, нет."""
+    if t.bracket and B.veto_tick(t.bracket, time.time()):
+        return save_bracket(db, t, t.bracket)
     return t

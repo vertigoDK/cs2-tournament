@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import Avatar from "./Avatar.jsx";
 import { mapImage } from "../utils/maps.js";
+import { EmptyState } from "./PageHead.jsx";
 
 // Одни и те же таблицы показывает страница «Статистика» (по всем турнирам)
 // и карточка отдельного турнира — отличаются только данными.
@@ -16,14 +17,21 @@ export const SORTS = [
 
 export function EmptyStats({ text }) {
   return (
-    <div className="empty-state">
-      <b>Данных пока нет</b>
-      <span>{text || "Статистика появится, когда админ внесёт результаты сыгранных карт."}</span>
-    </div>
+    <EmptyState
+      art="/img/stats.webp"
+      title="Данных пока нет"
+      text={text || "Статистика появится, когда админ внесёт результаты сыгранных карт."}
+    />
   );
 }
 
-export function PlayersTable({ players, showTitles = true }) {
+const fmt = (sortId, p) => {
+  const cmp = SORTS.find((s) => s.id === sortId) || SORTS[0];
+  const v = cmp.get(p);
+  return sortId === "kd" || sortId === "kpr" ? v.toFixed(2) : String(v);
+};
+
+export function PlayersTable({ players, showTitles = true, podium = false }) {
   const [sort, setSort] = useState("kills");
 
   const rows = useMemo(() => {
@@ -34,9 +42,26 @@ export function PlayersTable({ players, showTitles = true }) {
   }, [players, sort]);
 
   const sorts = showTitles ? SORTS : SORTS.filter((s) => s.id !== "titles");
+  // Дуэли 1×1 — отдельный столбец, только если они вообще были.
+  const showDuels = players.some((p) => p.duel_wins || p.duel_losses);
+  const sortLabel = (SORTS.find((s) => s.id === sort) || SORTS[0]).label;
 
   return (
     <>
+      {podium && rows.length >= 3 ? (
+        <div className="podium">
+          {rows.slice(0, 3).map((p, i) => (
+            <div className={`podium-card${i === 0 ? " first" : ""}`} key={p.id}>
+              <span className="podium-place mono">#{i + 1}</span>
+              <Avatar name={p.display_name} color={p.avatar_color} url={p.avatar_url} size={40} />
+              <div className="podium-nick">{p.display_name}</div>
+              <div className="podium-value mono">{fmt(sort, p)}</div>
+              <div className="podium-label mono">{sortLabel}</div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       <div className="sort-bar">
         <span>Сортировка</span>
         {sorts.map((s) => (
@@ -63,6 +88,7 @@ export function PlayersTable({ players, showTitles = true }) {
               <th>K/D</th>
               <th title="Килов в раунде">KPR</th>
               <th>Карты W-L</th>
+              {showDuels ? <th title="Отборочные дуэли 1×1 — в K/D не входят">Дуэли W-L</th> : null}
               {showTitles ? <th>Титулы</th> : null}
             </tr>
           </thead>
@@ -83,6 +109,9 @@ export function PlayersTable({ players, showTitles = true }) {
                 <td>
                   {p.map_wins}–{p.map_losses}
                 </td>
+                {showDuels ? (
+                  <td>{p.duel_wins || p.duel_losses ? `${p.duel_wins}–${p.duel_losses}` : "—"}</td>
+                ) : null}
                 {showTitles ? <td>{p.titles || "—"}</td> : null}
               </tr>
             ))}
@@ -110,9 +139,8 @@ function MapStatCard({ stat }) {
     <div className="map-stat">
       <div className="ms-image">
         {src && !noImage ? <img src={src} alt="" onError={() => setNoImage(true)} /> : null}
-        <span className="mc-shade" />
-        <span className="mc-name">{stat.map}</span>
       </div>
+      <div className="ms-name">{stat.map}</div>
       <div className="ms-rows">
         <span>
           <b>{stat.played}</b> сыграна

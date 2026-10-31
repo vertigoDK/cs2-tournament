@@ -1,76 +1,70 @@
 import { Link } from "react-router-dom";
 import CountdownBlocks from "./CountdownBlocks.jsx";
 import Icon from "./Icon.jsx";
+import MvpCard from "./MvpCard.jsx";
+import StatusPill, { statusKind } from "./StatusPill.jsx";
+import { tournamentCover } from "../utils/maps.js";
+import { formatLocal } from "../utils/time.js";
 
-const STATUS_LABEL = { setup: "Подготовка", active: "Идёт", finished: "Завершён" };
-
+// Текущий турнир на главной: крупная карточка с обложкой справа.
 export default function HeroTournamentCard({ t }) {
-  const finished = t.status === "finished";
-  // Завершённый турнир «идущим» уже не считается, даже если старт был отмечен.
-  const live = !finished && (Boolean(t.started_at) || t.status === "active");
+  const kind = statusKind(t);
 
   return (
-    <Link to={`/tournaments/${t.id}`} className={`hero${live ? " live" : ""}${finished ? " done" : ""}`}>
-      <div className="hero-main">
-        <div className="hero-top">
-          <span className={`status-chip ${t.status}`}>
-            {live ? <span className="live-dot" /> : null}
-            {STATUS_LABEL[t.status] || t.status}
-          </span>
-          <span className="hero-meta">создан {new Date(t.created_at).toLocaleDateString("ru-RU")}</span>
-        </div>
+    <Link to={`/tournaments/${t.id}`} className={`featured ${kind}`}>
+      <div className="featured-body">
+        <StatusPill t={t} />
+        <h2>{t.name}</h2>
 
-        <h2 className="hero-title">{t.name}</h2>
-
-        <div className="hero-facts">
+        <dl className="t-facts">
           {t.prize_pool ? (
-            <Fact icon="trophy" tone="gold" value={t.prize_pool} label="призовой фонд" />
+            <div>
+              <dt>Призовой</dt>
+              <dd className="accent">{t.prize_pool}</dd>
+            </div>
           ) : null}
-          <Fact icon="users" value={`${t.teams_count}`} label="команд" />
-          {finished && t.champion ? (
-            <Fact icon="medal" tone="gold" value={t.champion} label="чемпионы" />
-          ) : (
-            <Fact
-              icon="chart"
-              value={t.stage || "—"}
-              label={t.matches_total ? `матчей сыграно ${t.matches_played} из ${t.matches_total}` : "стадия"}
-            />
+          <div>
+            <dt>Команды</dt>
+            <dd>{t.teams_count}</dd>
+          </div>
+          {kind === "finished" ? null : (
+            <div>
+              <dt>{kind === "live" ? "Стадия" : "Старт"}</dt>
+              <dd>{kind === "live" ? t.stage || "—" : t.starts_at ? formatLocal(t.starts_at) : "не назначен"}</dd>
+            </div>
           )}
-        </div>
+          {t.matches_total && kind !== "upcoming" ? (
+            <div>
+              <dt>Матчи</dt>
+              <dd>
+                {t.matches_played}/{t.matches_total}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
 
-        <span className="hero-cta">
-          Открыть сетку <Icon name="arrowRight" size={15} />
+        {kind === "upcoming" ? <CountdownBlocks startsAt={t.starts_at} /> : null}
+
+        {kind === "finished" && (t.champion || t.mvp) ? (
+          <div className="t-awards">
+            {t.champion ? (
+              <div className="champ-banner">
+                <img src="/img/trophy-tight.webp" alt="" />
+                <div>
+                  <span className="mono">Чемпион</span>
+                  <b>{t.champion}</b>
+                </div>
+              </div>
+            ) : null}
+            {t.mvp ? <MvpCard mvp={t.mvp} /> : null}
+          </div>
+        ) : null}
+
+        <span className="featured-cta">
+          Открыть сетку <Icon name="arrowRight" size={16} />
         </span>
       </div>
-
-      <div className="hero-side">
-        {finished ? (
-          <div className="hero-done">
-            <Icon name="trophy" size={22} />
-            <b>{t.champion || "Завершён"}</b>
-            <span>победители</span>
-          </div>
-        ) : live ? (
-          <div className="hero-live">
-            <span className="live-dot" />
-            Идёт сейчас
-          </div>
-        ) : (
-          <CountdownBlocks startsAt={t.starts_at} />
-        )}
-      </div>
+      <img src={tournamentCover(t.id)} alt="" className="featured-art" />
     </Link>
-  );
-}
-
-function Fact({ icon, value, label, tone }) {
-  return (
-    <div className={`fact${tone ? ` ${tone}` : ""}`}>
-      <Icon name={icon} size={16} />
-      <span className="fact-text">
-        <b>{value}</b>
-        <span>{label}</span>
-      </span>
-    </div>
   );
 }

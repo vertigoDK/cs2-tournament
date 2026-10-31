@@ -26,6 +26,9 @@ function rosterOf(team, slot) {
     team.player_b_id
       ? { id: team.player_b_id, name: team.b, color: team.b_color, url: team.b_avatar, slot }
       : null,
+    // Кто ещё выходил за команду — у них тоже своя строка, иначе правка карты
+    // стёрла бы их статистику.
+    ...(team.subs_info || []).map((s) => ({ id: s.id, name: s.name, color: s.color, url: s.avatar, slot })),
   ].filter(Boolean);
 }
 
@@ -71,6 +74,9 @@ export default function MapStatsModal({ open, onClose, entry, mapIndex, teamA, t
     const stats = {};
     roster.forEach((p) => {
       const l = lines[p.id] || {};
+      // Пустая строка — игрок эту карту не играл: иначе ему засчиталась бы
+      // сыгранная карта с 0/0/0.
+      if ([l.k, l.d, l.a].every((v) => v === "" || v == null)) return;
       stats[String(p.id)] = { k: toInt(l.k), d: toInt(l.d), a: toInt(l.a) };
     });
     const hasScore = rounds[0] !== "" || rounds[1] !== "";
@@ -86,7 +92,6 @@ export default function MapStatsModal({ open, onClose, entry, mapIndex, teamA, t
       <div className="veto-modal stats-modal" onClick={(e) => e.stopPropagation()}>
         <div className="stats-hero">
           {src && !noImage ? <img src={src} alt="" onError={() => setNoImage(true)} /> : null}
-          <span className="mc-shade" />
           <span className="sh-name">{entry.map}</span>
           <button type="button" className="sh-close" onClick={onClose} aria-label="Закрыть">
             ✕

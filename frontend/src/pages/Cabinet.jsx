@@ -5,6 +5,7 @@ import { useAuth } from "../auth/AuthContext.jsx";
 import Avatar, { AVATAR_COLORS, COLOR_LABELS } from "../components/Avatar.jsx";
 import { useToast } from "../components/Toast.jsx";
 import Icon from "../components/Icon.jsx";
+import PageHead, { EmptyState } from "../components/PageHead.jsx";
 
 export default function Cabinet() {
   const { auth, updateProfile } = useAuth();
@@ -80,9 +81,7 @@ export default function Cabinet() {
 
   return (
     <main className="page narrow">
-      <div className="section-head">
-        <h2>Личный кабинет</h2>
-      </div>
+      <PageHead title="Личный кабинет" sub="Ник, аватар, ваша статистика и матчи." art="/img/mouse.webp" />
 
       {error ? <div className="error-box">{error}</div> : null}
 
@@ -192,10 +191,7 @@ export default function Cabinet() {
             <h2>История матчей</h2>
           </div>
           {data.history.length === 0 ? (
-            <div className="empty-state">
-              <b>Сыгранных матчей пока нет</b>
-              <span>Как только сыграете первый — он появится здесь.</span>
-            </div>
+            <EmptyState art="/img/c4.webp" title="Сыгранных матчей пока нет" text="Как только сыграете первый — он появится здесь." />
           ) : (
             <div className="panel panel-pad">
               <ul className="match-log">

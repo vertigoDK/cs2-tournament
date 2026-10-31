@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import HeroTournamentCard from "../components/HeroTournamentCard.jsx";
+import TournamentCard from "../components/TournamentCard.jsx";
+import PageHead, { EmptyState } from "../components/PageHead.jsx";
 import Icon from "../components/Icon.jsx";
 
 export default function Dashboard() {
@@ -33,42 +35,48 @@ export default function Dashboard() {
     );
   }
 
-  // На главной — только то, что происходит сейчас. Прошедшие турниры живут
-  // в «Статистике», чтобы этот экран отвечал на один вопрос: что идёт?
+  // Наверху — то, что происходит сейчас: идущий турнир, иначе ближайший анонс.
   const current =
     tournaments.find((t) => t.status === "active") ||
     tournaments.find((t) => t.status === "setup") ||
     tournaments[0];
-  const past = tournaments.filter((t) => t.id !== current?.id).length;
+  const rest = tournaments.filter((t) => t.id !== current?.id);
 
   return (
     <main className="page">
+      <PageHead
+        title="Турниры"
+        sub={
+          <>
+            Сетки, драфт карт и результаты. Команды <span className="mono accent">2×2</span>, серии BO1, BO3 и BO5.
+          </>
+        }
+      />
+
       {!tournaments.length ? (
-        <div className="empty-state">
-          <b>Турниров пока нет</b>
-          <span>{isAdmin ? "Создайте первый турнир, чтобы начать." : "Попросите админа создать турнир."}</span>
+        <EmptyState
+          title="Турниров пока нет"
+          text={isAdmin ? "Создайте первый турнир, чтобы начать." : "Попросите админа создать турнир."}
+        >
           {isAdmin ? (
-            <div style={{ marginTop: 16 }}>
-              <Link to="/tournaments/new" className="btn primary">
-                <Icon name="plus" size={14} />
-                <span>Новый турнир</span>
-              </Link>
-            </div>
+            <Link to="/tournaments/new" className="btn primary">
+              <Icon name="plus" size={15} /> Новый турнир
+            </Link>
           ) : null}
-        </div>
+        </EmptyState>
       ) : (
         <>
-          <div className="section-head">
-            <h2>Текущий турнир</h2>
-          </div>
           <HeroTournamentCard t={current} />
 
-          {past > 0 ? (
-            <Link to="/stats" className="past-link">
-              <Icon name="history" size={15} />
-              Прошедших турниров: {past} — смотреть в статистике
-              <Icon name="arrowRight" size={14} />
-            </Link>
+          {rest.length ? (
+            <section className="section">
+              <h2 className="section-title">Все турниры</h2>
+              <div className="grid">
+                {rest.map((t, i) => (
+                  <TournamentCard key={t.id} t={t} index={i} />
+                ))}
+              </div>
+            </section>
           ) : null}
         </>
       )}

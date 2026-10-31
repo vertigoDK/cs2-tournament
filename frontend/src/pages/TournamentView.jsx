@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
@@ -9,8 +9,10 @@ import TournamentStatsModal from "../components/TournamentStatsModal.jsx";
 import StartAnnounce from "../components/StartAnnounce.jsx";
 import { useToast } from "../components/Toast.jsx";
 import Icon from "../components/Icon.jsx";
-
-const STATUS_LABEL = { setup: "подготовка", active: "идёт", finished: "завершён" };
+import StatusPill from "../components/StatusPill.jsx";
+import MvpCard from "../components/MvpCard.jsx";
+import QualifierBracket, { QualifierSetup } from "../components/QualifierBracket.jsx";
+import { tournamentCover } from "../utils/maps.js";
 
 export default function TournamentView() {
   const { id } = useParams();
@@ -20,11 +22,15 @@ export default function TournamentView() {
   const { toast, toastNode } = useToast();
 
   const [t, setT] = useState(null);
+  // Расхождение часов браузера и сервера: таймер драфта считается по серверу.
+  // Ответ только что пришёл, поэтому разница посчитана с точностью до задержки сети.
+  const serverOffset = useMemo(() => (t?.server_time ? t.server_time - Date.now() / 1000 : 0), [t]);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [vetoTarget, setVetoTarget] = useState(null); // {r, i}
   const [statsMap, setStatsMap] = useState(null); // индекс карты серии
   const [statsOpen, setStatsOpen] = useState(false);
+  const [qualifierSetup, setQualifierSetup] = useState(false);
 
   // Пока идёт своё действие, фоновое обновление не должно перетереть ответ.
   const busyRef = useRef(false);
@@ -94,10 +100,55 @@ export default function TournamentView() {
     }
   };
 
-  const onPick = (r, i, slot) => runAction(() => api.post(`/tournaments/${id}/matches/${r}/${i}/pick`, { slot }));
+  // Всё, что стирает результаты, — только после подтверждения: один случайный
+  // клик не должен уносить сыгранный турнир.
+  const onPick = (r, i, slot) => {
+    const m = t.bracket.rounds[r][i];
+    if (m.win !== null && !m.bye) {
+      const msg =
+        m.win === slot
+          ? "Снять результат матча? Вместе с ним сбросится вся ветка дальше по сетке."
+          : "Отдать победу другой команде? Результаты дальше по сетке сбросятся.";
+      if (!confirm(msg)) return;
+    }
+    runAction(() => api.post(`/tournaments/${id}/matches/${r}/${i}/pick`, { slot }));
+  };
 
-  const onReset = () =>
+  const onReset = () => {
+    if (
+      !confirm(
+        `Сбросить ВСЕ результаты турнира «${t.name}»?\n\nСчёт по картам, статистика игроков и драфты будут удалены. Отменить это нельзя.`
+      )
+    )
+      return;
     runAction(() => api.post(`/tournaments/${id}/reset`), "Результаты сброшены");
+  };
+
+  // Дуэли 1×1: создать/пересобрать, внести результат, удалить.
+  const onCreateQualifier = async (payload) => {
+    if (t.bracket.qualifier && !confirm("Пересобрать дуэли? Все их результаты удалятся.")) return;
+    await runAction(() => api.post(`/tournaments/${id}/qualifier`, payload), "Сетка дуэлей готова");
+    setQualifierSetup(false);
+  };
+  const onSetDuel = async (r, i, payload) => {
+    setBusy(true);
+    busyRef.current = true;
+    try {
+      const { data } = await api.put(`/tournaments/${id}/qualifier/${r}/${i}`, payload);
+      setT(data);
+      return true;
+    } catch (err) {
+      toast(apiErrorMessage(err));
+      return false;
+    } finally {
+      setBusy(false);
+      busyRef.current = false;
+    }
+  };
+  const onDeleteQualifier = () => {
+    if (!confirm("Удалить отборочные дуэли вместе с результатами?")) return;
+    runAction(() => api.delete(`/tournaments/${id}/qualifier`), "Дуэли удалены");
+  };
 
   const onStart = () => runAction(() => api.post(`/tournaments/${id}/start`), "Турнир начался");
 
@@ -131,10 +182,14 @@ export default function TournamentView() {
     runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/start`));
   const onVetoChoose = (map) =>
     runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/choose`, { map }));
-  const onMapWinner = (mapIndex, slot) =>
-    runAction(() =>
+  const onMapWinner = (mapIndex, slot) => {
+    const entry = t.bracket.rounds[vetoTarget.r][vetoTarget.i].maps?.[mapIndex];
+    if (entry?.winner === slot && !confirm(`Снять результат карты ${entry.map}? Итог матча пересчитается.`)) return;
+    if (entry?.winner != null && entry.winner !== slot && !confirm(`Отдать карту ${entry.map} другой команде?`)) return;
+    return runAction(() =>
       api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/maps/${mapIndex}/winner`, { slot })
     );
+  };
 
   const onSaveMapStats = async (mapIndex, body) => {
     await runAction(() =>
@@ -143,8 +198,10 @@ export default function TournamentView() {
     setStatsMap(null);
   };
 
-  const onVetoReset = () =>
+  const onVetoReset = () => {
+    if (!confirm("Сбросить драфт этого матча? Карты серии и их результаты тоже удалятся.")) return;
     runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/reset`));
+  };
 
   if (error) {
     return (
@@ -167,54 +224,87 @@ export default function TournamentView() {
 
   return (
     <main className="page">
-      <div className="t-head">
-        <div>
+      <Link to="/" className="back">
+        <Icon name="arrowLeft" size={16} /> Все турниры
+      </Link>
+
+      <section className="t-hero">
+        <div className="t-hero-body">
+          <StatusPill t={t} />
           <h1>{t.name}</h1>
-          <div className="meta-row">
-            <span className={`status-chip ${t.status}`}>
-              {t.started_at && t.status === "active" ? <span className="live-dot" /> : null}
-              {STATUS_LABEL[t.status] || t.status}
-            </span>
-            <span>{t.bracket.teams.length} команд</span>
-            {t.prize_pool ? (
-              <span className="prize-tag">
-                <Icon name="trophy" size={14} /> {t.prize_pool}
-              </span>
+          <dl className="t-facts">
+            <div>
+              <dt>Призовой</dt>
+              <dd className="accent">{t.prize_pool || "—"}</dd>
+            </div>
+            <div>
+              <dt>Формат</dt>
+              <dd>
+                2×2 · BO{t.bracket.best_of || 1}
+                {t.bracket.final_best_of && t.bracket.final_best_of !== (t.bracket.best_of || 1)
+                  ? ` · финал BO${t.bracket.final_best_of}`
+                  : ""}
+              </dd>
+            </div>
+            <div>
+              <dt>Команды</dt>
+              <dd>{t.bracket.teams.length}</dd>
+            </div>
+            <div>
+              <dt>Стадия</dt>
+              <dd>
+                {t.status === "finished"
+                  ? "Завершён"
+                  : t.status === "setup" && !t.started_at
+                  ? "Не начат"
+                  : t.matches_total
+                  ? `${t.stage || "—"} · ${t.matches_played}/${t.matches_total}`
+                  : t.stage || "—"}
+              </dd>
+            </div>
+          </dl>
+        </div>
+        <img src={tournamentCover(t.id)} alt="" className="t-hero-art" />
+      </section>
+
+      <div className="t-actions">
+        {t.status !== "setup" ? (
+          <button className="btn" onClick={() => setStatsOpen(true)}>
+            <Icon name="medal" size={15} />
+            <span>Статистика турнира</span>
+          </button>
+        ) : null}
+        {isAdmin ? (
+          <>
+            {t.status !== "finished" && !t.started_at ? (
+              <button className="btn primary" onClick={onStart} disabled={busy}>
+                <Icon name="play" size={14} filled />
+                <span>Начать турнир</span>
+              </button>
             ) : null}
-          </div>
-        </div>
-        <div className="actions">
-          {t.status !== "setup" ? (
-            <button className="btn" onClick={() => setStatsOpen(true)}>
-              <Icon name="medal" size={14} />
-              <span>Статистика</span>
+            <Link to={`/tournaments/${id}/edit`} className="btn">
+              Редактировать
+            </Link>
+            {!t.bracket.qualifier ? (
+              <button className="btn" onClick={() => setQualifierSetup(true)} disabled={busy}>
+                <Icon name="users" size={14} />
+                <span>Дуэли 1×1</span>
+              </button>
+            ) : null}
+            {t.started_at && t.status !== "finished" ? (
+              <button className="btn" onClick={onUnstart} disabled={busy}>
+                Отменить старт
+              </button>
+            ) : null}
+            <button className="btn" onClick={onReset} disabled={busy}>
+              Сбросить результаты
             </button>
-          ) : null}
-          {isAdmin ? (
-            <>
-              <Link to={`/tournaments/${id}/edit`} className="btn">
-                Редактировать
-              </Link>
-              {t.status !== "finished" && !t.started_at ? (
-                <button className="btn accent" onClick={onStart} disabled={busy}>
-                  <Icon name="play" size={14} filled />
-                  <span>Начать турнир</span>
-                </button>
-              ) : null}
-              {t.started_at && t.status !== "finished" ? (
-                <button className="btn" onClick={onUnstart} disabled={busy}>
-                  Отменить старт
-                </button>
-              ) : null}
-              <button className="btn" onClick={onReset} disabled={busy}>
-                Сбросить результаты
-              </button>
-              <button className="btn danger" onClick={onDelete} disabled={busy}>
-                Удалить
-              </button>
-            </>
-          ) : null}
-        </div>
+            <button className="btn danger" onClick={onDelete} disabled={busy}>
+              <Icon name="trash" size={14} />
+              <span>Удалить</span>
+            </button>
+          </>
+        ) : null}
       </div>
 
       <StartAnnounce
@@ -223,14 +313,53 @@ export default function TournamentView() {
         finished={t.status === "finished"}
       />
 
-      <Bracket
-        key={id}
-        bracket={t.bracket}
-        isAdmin={isAdmin}
-        started={Boolean(t.started_at) || t.status !== "setup"}
-        onPick={onPick}
-        onOpenVeto={onOpenVeto}
-      />
+      {t.champion || t.mvp ? (
+        <div className="t-awards">
+          {t.champion ? (
+            <div className="champ-banner">
+              <img src="/img/trophy-tight.webp" alt="" />
+              <div>
+                <span className="mono">Чемпион</span>
+                <b>{t.champion}</b>
+              </div>
+            </div>
+          ) : null}
+          {t.mvp ? <MvpCard mvp={t.mvp} /> : null}
+        </div>
+      ) : null}
+
+      {t.bracket.qualifier?.rounds?.length ? (
+        <QualifierBracket
+          qualifier={t.bracket.qualifier}
+          isAdmin={isAdmin}
+          busy={busy}
+          onSetDuel={onSetDuel}
+          onRebuild={() => setQualifierSetup(true)}
+          onDelete={onDeleteQualifier}
+        />
+      ) : null}
+
+      {qualifierSetup ? (
+        <QualifierSetup
+          tournament={t}
+          existing={t.bracket.qualifier}
+          busy={busy}
+          onClose={() => setQualifierSetup(false)}
+          onCreate={onCreateQualifier}
+        />
+      ) : null}
+
+      <section className="section">
+        <h2 className="section-title">Сетка</h2>
+        <Bracket
+          key={id}
+          bracket={t.bracket}
+          isAdmin={isAdmin}
+          started={Boolean(t.started_at) || t.status !== "setup"}
+          onPick={onPick}
+          onOpenVeto={onOpenVeto}
+        />
+      </section>
 
       <VetoModal
         open={Boolean(vetoMatch)}
@@ -242,6 +371,7 @@ export default function TournamentView() {
         bestOf={t.bracket.best_of || 1}
         isAdmin={isAdmin}
         meId={auth?.id}
+        serverOffset={serverOffset}
         tournamentStarted={Boolean(t.started_at) || t.status !== "setup"}
         onStart={onVetoStart}
         onChoose={onVetoChoose}

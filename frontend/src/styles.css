@@ -1,1108 +1,2348 @@
-:root{
-  --bg:#f7f6f4;
-  --panel:#ffffff;
-  --card:#fbfaf8;
-  --card-2:#f6f4f0;
-  --line:#e7e2d9;
-  --line-soft:#ece8e0;
-  --text:#2f2f33;
-  --muted:#8d877d;
-  --seed-bg:#e6edf7;
-  --seed-fg:#4a6d9c;
-  --ava-bg:#ece4d8;
-  --ava-fg:#6f6355;
-  --ava-bg-2:#e2e8f0;
-  --ava-fg-2:#5b6b80;
-  --accent:#3f7d5c;
-  --accent-bg:#e8f2ec;
-  --danger:#b3543f;
-  --danger-bg:#f6e8e4;
-  --gold:#9c7220;
-  --gold-bg:#f4e9cd;
-  --shadow:0 1px 2px rgba(40,34,24,.05), 0 8px 24px rgba(40,34,24,.05);
-  --radius:14px;
+/* ───────── THIRTEEN · identity ─────────
+   Бумага, чернила и один акцент. Оранжевый — только там, куда должен
+   падать взгляд: идущий турнир, победитель, пик, призовой. */
+:root {
+  --paper: #f4f2ee;
+  --card: #fbfaf7;
+  --ink: #151515;
+  --ink-2: #2a2a28;
+  --muted: #77736b;
+  --line: #e3dfd6;
+  --line-2: #d4cfc4;
+  --accent: #ff4d1a;
+  --accent-ink: #d93a0c;
+  --accent-soft: #ffe6dc;
 
-  /* Inter — плотный интерфейс и таблицы, Space Grotesk — заголовки,
-     JetBrains Mono — цифры и логины (системный моно выглядит по-разному
-     в каждой ОС). Все три вариативные, поэтому веса вроде 650 настоящие,
-     а не подделанные браузером. Системный стек остаётся запасным. */
-  --font-body:"Inter","Inter var",-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
-  --font-display:"Space Grotesk","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;
-  --font-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  /* Unbounded — заголовки, Manrope — текст, JetBrains Mono — цифры, логины
+     и подписи-капсом. Должны совпадать с FONT_STACK в utils/measure.js. */
+  --display: "Unbounded", system-ui, sans-serif;
+  --body: "Manrope Variable", system-ui, sans-serif;
+  --mono: "JetBrains Mono Variable", ui-monospace, monospace;
+
+  --r-sm: 8px;
+  --r: 14px;
+  --r-lg: 20px;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --w: 1180px;
+
+  color-scheme: light;
 }
-:root[data-theme="dark"]{
-  --bg:#16151a;
-  --panel:#1d1c22;
-  --card:#232228;
-  --card-2:#1f1e24;
-  --line:#33313a;
-  --line-soft:#2b2a32;
-  --text:#eceaf1;
-  --muted:#8e8a99;
-  --seed-bg:#22314a;
-  --seed-fg:#9dbbe6;
-  --ava-bg:#3a3327;
-  --ava-fg:#d8c7a8;
-  --ava-bg-2:#2b3340;
-  --ava-fg-2:#a9bcd4;
-  --accent:#6fc79a;
-  --accent-bg:#1e3a2c;
-  --danger:#e0917d;
-  --danger-bg:#3a2420;
-  --gold:#dcb15e;
-  --gold-bg:#3a2f18;
-  --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#16151a; --panel:#1d1c22; --card:#232228; --card-2:#1f1e24; --line:#33313a; --line-soft:#2b2a32;
-    --text:#eceaf1; --muted:#8e8a99; --seed-bg:#22314a; --seed-fg:#9dbbe6; --ava-bg:#3a3327; --ava-fg:#d8c7a8;
-    --ava-bg-2:#2b3340; --ava-fg-2:#a9bcd4; --accent:#6fc79a; --accent-bg:#1e3a2c; --danger:#e0917d; --danger-bg:#3a2420;
-    --gold:#dcb15e; --gold-bg:#3a2f18;
-    --shadow:0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25);
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--paper);
+  /* сетка в точку, как на тактической карте */
+  background-image: radial-gradient(circle at 1px 1px, rgb(21 21 21 / 0.07) 1px, transparent 0);
+  background-size: 28px 28px;
+  color: var(--ink);
+  font: 500 15px/1.55 var(--body);
+  /* clip, а не hidden: не создаёт контейнер прокрутки и не ломает sticky-шапку */
+  overflow-x: clip;
+}
+
+#root { min-height: 100vh; display: flex; flex-direction: column; }
+
+h1, h2, h3 {
+  font-family: var(--display);
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  margin: 0;
+}
+
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+button, input, select, textarea { font: inherit; color: inherit; }
+
+::selection { background: var(--accent); color: #fff; }
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.mono { font-family: var(--mono); font-feature-settings: "zero" 1; }
+.muted { color: var(--muted); }
+.accent { color: var(--accent); }
+
+/* Иконки — линейные SVG в currentColor, выравниваются по тексту рядом. */
+.icon { flex: none; vertical-align: -0.16em; }
+
+/* ───────── cursor ───────── */
+html.has-cursor,
+html.has-cursor * { cursor: none !important; }
+html.has-cursor.cursor-text input,
+html.has-cursor.cursor-text textarea { cursor: text !important; }
+
+.cursor-sight,
+.cursor-ring {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 10000;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.cursor-sight img {
+  width: 30px;
+  height: 30px;
+  translate: -50% -50%;
+  filter: drop-shadow(0 0 1px rgb(255 255 255 / 0.95)) drop-shadow(0 0 1px rgb(255 255 255 / 0.95));
+  transition: rotate 0.35s var(--ease), scale 0.25s var(--ease);
+}
+.cursor-ring {
+  width: 46px;
+  height: 46px;
+  margin: -23px 0 0 -23px;
+}
+.cursor-ring::before,
+.cursor-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+}
+.cursor-ring::before { opacity: 0; scale: 0.3; transition: opacity 0.25s, scale 0.35s var(--ease); }
+.cursor-ring::after { opacity: 0; }
+.cursor-ring.ping::after { animation: ping 0.45s var(--ease); }
+
+.cursor-hover .cursor-sight img { rotate: 45deg; scale: 0.75; }
+.cursor-hover .cursor-ring::before { opacity: 1; scale: 1; }
+.cursor-down .cursor-sight img { scale: 0.55; }
+.cursor-down.cursor-hover .cursor-ring::before { scale: 0.8; }
+.cursor-text .cursor-sight,
+.cursor-text .cursor-ring,
+.cursor-hidden .cursor-sight,
+.cursor-hidden .cursor-ring { opacity: 0; }
+
+@keyframes ping {
+  from { opacity: 1; scale: 0.3; }
+  to { opacity: 0; scale: 1.5; }
+}
+
+/* ───────── shell ───────── */
+.app { flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+.page-wrap { flex: 1; display: flex; flex-direction: column; }
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgb(244 242 238 / 0.82);
+  backdrop-filter: blur(14px) saturate(1.4);
+  border-bottom: 1px solid var(--line);
+}
+.header-inner {
+  max-width: var(--w);
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--ink);
+  display: grid;
+  place-items: center;
+  flex: none;
+  transition: rotate 0.5s var(--ease);
+}
+.brand-mark img { width: 30px; }
+.brand:hover .brand-mark { rotate: -8deg; }
+.brand-word { font: 700 19px/1 var(--display); letter-spacing: -0.04em; }
+
+.nav { display: flex; gap: 4px; }
+.nav-link {
+  padding: 8px 14px;
+  border-radius: 10px;
+  color: var(--muted);
+  font-weight: 600;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: color 0.2s, background 0.2s;
+}
+.nav-link:hover { color: var(--ink); }
+.nav-link.active {
+  color: var(--ink);
+  background: var(--card);
+  border-color: var(--line);
+  box-shadow: 0 1px 0 rgb(0 0 0 / 0.03);
+}
+
+.header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.spacer { flex: 1; }
+
+/* Панорама карт над подвалом: её линия земли и есть верхняя граница подвала. */
+.skyline {
+  margin-top: auto;
+  padding: 40px 24px 0;
+  pointer-events: none;
+}
+.skyline img {
+  display: block;
+  width: 100%;
+  max-width: var(--w);
+  margin: 0 auto -1px;
+}
+.footer { border-top: 1.5px solid var(--ink); }
+
+/* Пометки на полях: только там, где по бокам от контента есть свободное
+   место, и бледно — чтобы читались как карандаш на карте, а не как контент. */
+.app { position: relative; }
+.field-notes { display: none; }
+@media (min-width: 1440px) {
+  .field-notes {
+    display: block;
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    /* Ниже всего контента, но поверх фона страницы. Слои у шапки и страницы
+       не трогаем: иначе ломается sticky и модалки оказываются под шапкой. */
+    z-index: -1;
   }
+  .fn {
+    position: absolute;
+    width: 110px;
+    height: auto;
+    opacity: 0.16;
+    --side: max(10px, calc((100vw - var(--w)) / 2 - 130px));
+  }
+  .fn-1 { left: var(--side); top: 220px; rotate: -6deg; }
+  .fn-2 { right: var(--side); top: 360px; width: 84px; rotate: 4deg; }
+  .fn-3 { left: var(--side); top: 58%; width: 96px; }
+  .fn-4 { right: var(--side); top: 72%; width: 100px; rotate: -3deg; }
+}
+.footer-inner {
+  max-width: var(--w);
+  margin: 0 auto;
+  padding: 22px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.footer-mark { width: 26px; opacity: 0.9; }
+.footer-meta { margin-left: auto; font-size: 12px; }
+
+/* ───────── layout ───────── */
+.page {
+  flex: 1;
+  width: 100%;
+  max-width: var(--w);
+  margin: 0 auto;
+  padding: 44px 24px 80px;
+  animation: enter 0.55s var(--ease);
+}
+.page.narrow { max-width: 820px; }
+@keyframes enter {
+  from { opacity: 0; transform: translateY(10px); }
 }
 
-*{box-sizing:border-box}
-html,body,#root{height:100%}
-body{
-  margin:0;background:var(--bg);color:var(--text);
-  font:15px/1.5 var(--font-body);
-  font-feature-settings:"cv05" 1, "ss03" 1;  /* однозначная «l» и одноэтажная «a» у Inter */
-  -webkit-font-smoothing:antialiased;
+.page-head {
+  display: grid;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 32px;
 }
-a{color:inherit}
-button, input, select, textarea{font:inherit;color:inherit}
-
-/* Заголовки и крупные числа — акцентным шрифтом: он задаёт характер,
-   а Inter остаётся на всём, что нужно читать плотно и мелко. */
-h1, h2, h3,
-.brand-text,
-.hero-title,
-.hud-unit b,
-.ann-unit b,
-.ann-main,
-.fact-text b,
-.stat-tile b,
-.ps-item b,
-.profile-nick,
-.hist-name,
-.series-score,
-.sh-name,
-.mc-name{
-  font-family:var(--font-display);
-  letter-spacing:-.015em;
+.page-head.with-art { grid-template-columns: 1fr 280px; }
+.page-head h1 { font-size: clamp(34px, 5.2vw, 56px); }
+.page.narrow .page-head h1 { font-size: clamp(30px, 4.4vw, 44px); }
+.lead {
+  margin: 14px 0 0;
+  max-width: 540px;
+  color: var(--muted);
+  font-size: 17px;
+}
+.page-head-art {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
+  animation: float 6s ease-in-out infinite;
+}
+@keyframes float {
+  50% { transform: translateY(-6px); }
 }
 
-/* Иконки — линейные SVG в currentColor, поэтому наследуют цвет и
-   выравниваются по базовой линии текста рядом. */
-.icon{flex:none;vertical-align:-.16em}
-.veto-btn .icon, .prize-tag .icon, .turn-banner .icon,
-.nm-map .icon, .hero-cta .icon, .match-no .icon, .sr-map .icon,
-.hint .icon{vertical-align:-.18em}
-
-/* ---------------- shell ---------------- */
-.app{min-height:100%;display:flex;flex-direction:column}
-.topbar{
-  position:sticky;top:0;z-index:40;
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 22px;height:60px;
-  background:color-mix(in srgb, var(--panel) 88%, transparent);
-  backdrop-filter:saturate(1.4) blur(10px);
-  border-bottom:1px solid var(--line);
+.section { margin-top: 48px; }
+.section-title,
+.section-head h2 {
+  font: 600 13px/1.4 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:6px}
-.brand-mark{
-  width:30px;height:30px;border-radius:9px;display:grid;place-items:center;flex:none;
-  background:var(--text);color:var(--bg);
+.section-title::after,
+.section-head h2::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
 }
-.brand-text{font-weight:700;letter-spacing:-.02em;font-size:15.5px;white-space:nowrap}
+.section-head { display: flex; align-items: center; gap: 10px; margin: 36px 0 0; }
+.section-head h2 { flex: 1; }
+.section-head:first-child { margin-top: 0; }
 
-.topnav{display:flex;align-items:center;gap:2px}
-.topnav-link{
-  display:inline-flex;align-items:center;padding:7px 12px;border-radius:9px;
-  font-size:13.5px;font-weight:550;color:var(--muted);text-decoration:none;transition:.15s ease;
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 20px;
+  transition: color 0.2s, gap 0.2s var(--ease);
 }
-.topnav-link:hover{color:var(--text);background:var(--card-2)}
-.topnav-link.active{color:var(--text);background:var(--card-2);box-shadow:inset 0 0 0 1px var(--line)}
+.back:hover { color: var(--ink); gap: 11px; }
 
-.spacer{flex:1}
-.who{font-size:13px;color:var(--muted)}
-.who b{color:var(--text);font-weight:600}
-
-/* ---------------- профиль: выпадающее меню ---------------- */
-.profile-menu{position:relative}
-.profile-trigger{
-  display:flex;align-items:center;gap:8px;padding:4px 8px 4px 4px;border-radius:999px;
-  background:transparent;border:1px solid var(--line);cursor:pointer;transition:.15s ease;
+/* ───────── buttons ───────── */
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 11px;
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 650;
+  font-size: 14px;
+  line-height: 1.3;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, transform 0.2s var(--ease), box-shadow 0.2s;
 }
-.profile-trigger:hover{background:var(--card-2)}
-.profile-trigger.open{background:var(--card-2);border-color:var(--muted)}
-.pt-name{font-size:13.5px;font-weight:600;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pt-caret{color:var(--muted);transition:transform .15s ease}
-.profile-trigger.open .pt-caret{transform:rotate(180deg)}
-
-.profile-dropdown{
-  position:absolute;right:0;top:calc(100% + 8px);min-width:230px;z-index:50;
-  background:var(--panel);border:1px solid var(--line);border-radius:13px;
-  box-shadow:0 4px 12px rgba(40,34,24,.08), 0 16px 40px rgba(40,34,24,.12);
-  padding:6px;animation:dropIn .13s ease-out;
+.btn:hover { border-color: var(--ink); }
+.btn:active { transform: scale(0.98); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.btn.primary {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+  box-shadow: inset 0 -2px 0 rgb(255 255 255 / 0.06), 0 1px 2px rgb(0 0 0 / 0.15);
 }
-:root[data-theme="dark"] .profile-dropdown{box-shadow:0 8px 32px rgba(0,0,0,.5)}
-@keyframes dropIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.profile-dropdown{animation:none}}
-
-.pd-head{display:flex;align-items:center;gap:11px;padding:10px 10px 12px}
-.pd-id{display:flex;flex-direction:column;gap:2px;min-width:0}
-.pd-id b{font-size:14.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pd-id span{font:11.5px/1.3 var(--font-mono);color:var(--muted)}
-.pd-sep{height:1px;background:var(--line);margin:2px 0}
-.pd-item{
-  display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:9px;
-  background:transparent;cursor:pointer;font-size:13.5px;font-weight:500;text-align:left;transition:.12s ease;
+.btn.primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  transform: translateY(-1px);
 }
-.pd-item:hover{background:var(--card-2)}
-.pd-item .icon{color:var(--muted)}
-.pd-item.danger{color:var(--danger)}
-.pd-item.danger .icon{color:var(--danger)}
-.pd-item.danger:hover{background:var(--danger-bg)}
+.btn.accent { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.accent:hover:not(:disabled) { background: var(--accent-ink); border-color: var(--accent-ink); }
+.btn.danger { color: var(--accent-ink); border-color: var(--line-2); }
+.btn.danger:hover:not(:disabled) { background: var(--accent-soft); border-color: var(--accent); }
+.btn.sm { padding: 6px 11px; font-size: 13px; border-radius: 9px; gap: 6px; }
+.btn.lg { padding: 13px 20px; font-size: 15px; width: 100%; }
+.btn.icon { padding: 8px 10px; line-height: 1; }
 
-.btn{
-  appearance:none;border:1px solid var(--line);background:var(--card);color:var(--text);
-  padding:7px 13px;border-radius:9px;font-size:13.5px;font-weight:500;cursor:pointer;
-  transition:.15s ease;white-space:nowrap;text-decoration:none;
-  /* Flex вместо ручных пробелов: иконка и подпись выравниваются по центру
-     и не разъезжаются при разных кеглях. */
-  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+/* ───────── profile menu ───────── */
+.profile-menu { position: relative; }
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 0.2s;
 }
-.btn:hover{background:var(--card-2);border-color:var(--muted)}
-.btn:active{transform:translateY(1px)}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.btn.primary{background:var(--text);color:var(--bg);border-color:var(--text)}
-.btn.primary:hover{opacity:.88;background:var(--text)}
-.btn.danger{color:var(--danger);border-color:var(--danger-bg)}
-.btn.danger:hover{background:var(--danger-bg)}
-.btn.accent{color:var(--accent);border-color:var(--accent);background:var(--accent-bg)}
-.btn.accent:hover{background:var(--accent-bg);border-color:var(--accent);filter:brightness(.97)}
-.btn.icon{padding:7px 10px;font-size:14px;line-height:1}
-.btn.sm{padding:5px 10px;font-size:12.5px;gap:5px}
+.profile-trigger:hover,
+.profile-trigger.open { border-color: var(--ink); }
+.profile-trigger .ava { border-radius: 50%; }
+.pt-name { font-size: 14px; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-caret { color: var(--muted); transition: transform 0.2s var(--ease); }
+.profile-trigger.open .pt-caret { transform: rotate(180deg); }
 
-.page{flex:1;padding:26px 24px 60px;max-width:1240px;width:100%;margin:0 auto}
-.page.narrow{max-width:640px}
-
-/* ---------------- generic cards / forms ---------------- */
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
-.panel-pad{padding:22px}
-
-.field{margin-bottom:16px}
-.field label{display:block;font-size:12px;font-weight:600;letter-spacing:.03em;
-  text-transform:uppercase;color:var(--muted);margin-bottom:7px}
-.field .hint{font-size:12px;color:var(--muted);margin-top:7px}
-.field .hint code{background:var(--card-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:11.5px}
-
-input[type=text], input[type=password], input[type=number], textarea, select{
-  width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:10px;
-  background:var(--card);color:var(--text);
+.profile-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  min-width: 240px;
+  z-index: 60;
+  padding: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  box-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.18);
+  animation: pop 0.18s var(--ease);
+  transform-origin: top right;
 }
-input:focus, textarea:focus, select:focus{outline:2px solid var(--seed-fg);outline-offset:1px}
-textarea{resize:vertical;font:13px/1.75 var(--font-mono)}
-.row{display:flex;gap:8px}
-.row .btn{flex:1;text-align:center}
-.error-box{
-  background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger-bg);
-  border-radius:10px;padding:10px 13px;font-size:13.5px;margin-bottom:14px;
+@keyframes pop {
+  from { opacity: 0; transform: scale(0.96) translateY(-4px); }
 }
-
-/* ---------------- login ---------------- */
-.login-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
-.login-box{width:100%;max-width:360px}
-.login-box h1{font-size:19px;margin:0 0 4px;letter-spacing:-.01em}
-.login-box p.sub{color:var(--muted);font-size:13.5px;margin:0 0 20px}
-
-/* ---------------- dashboard ---------------- */
-.section-head{display:flex;align-items:center;gap:10px;margin:28px 0 14px}
-.section-head:first-child{margin-top:0}
-.section-head h2{font-size:15px;margin:0;letter-spacing:.01em}
-.section-head .spacer{flex:1}
-
-/* ---------------- hero tournament card ---------------- */
-.hero{
-  display:flex;align-items:stretch;gap:0;text-decoration:none;overflow:hidden;
-  border:1px solid var(--line);border-radius:18px;background:var(--panel);
-  box-shadow:var(--shadow);transition:border-color .15s ease, transform .15s ease;
+.pd-head { display: flex; align-items: center; gap: 11px; padding: 8px 10px 12px; }
+.pd-head .ava { border-radius: 50%; }
+.pd-id { display: grid; gap: 2px; min-width: 0; }
+.pd-id b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pd-id span { font: 500 11.5px/1.3 var(--mono); color: var(--muted); }
+.pd-sep { height: 1px; background: var(--line); margin: 2px 0 4px; }
+.pd-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  font-weight: 600;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
 }
-.hero:hover{border-color:var(--muted);transform:translateY(-1px)}
-.hero.live{border-color:var(--accent)}
+.pd-item:hover { background: var(--paper); }
+.pd-item .icon { color: var(--muted); }
+.pd-item.danger,
+.pd-item.danger .icon { color: var(--accent-ink); }
+.pd-item.danger:hover { background: var(--accent-soft); }
 
-.hero-main{flex:1;min-width:0;padding:26px 28px;position:relative}
-/* Тонкая цветная кромка слева — единственный декоративный элемент карточки. */
-.hero-main::before{
-  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line);
+/* ───────── status ───────── */
+.pill,
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: 600 11px/1.3 var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  white-space: nowrap;
 }
-.hero.live .hero-main::before{background:var(--accent)}
+.pill-live,
+.status-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.pill-upcoming,
+.status-chip.setup { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.pill-finished,
+.status-chip.finished { color: var(--muted); }
 
-.hero-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}
-.hero-meta{font-size:12px;color:var(--muted)}
-
-.status-chip{
-  display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:7px;
+.live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: none;
+  animation: blink 1.2s steps(2, jump-none) infinite;
 }
-.status-chip.setup{background:var(--seed-bg);color:var(--seed-fg)}
-.status-chip.active{background:var(--accent-bg);color:var(--accent)}
-.status-chip.finished{background:var(--gold-bg);color:var(--gold)}
-
-.live-dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none;
-  animation:pulse 1.7s ease-in-out infinite}
-@media (prefers-reduced-motion:reduce){.live-dot{animation:none}}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-.hero-title{font-size:clamp(24px,4.6vw,34px);font-weight:760;letter-spacing:-.028em;line-height:1.1;margin:0 0 18px}
-
-.hero-facts{display:flex;gap:26px;flex-wrap:wrap;margin-bottom:20px}
-.fact{display:flex;align-items:center;gap:9px;min-width:0}
-.fact .icon{color:var(--muted);flex:none}
-.fact.gold .icon{color:var(--gold)}
-.fact-text{display:flex;flex-direction:column;gap:1px;min-width:0}
-.fact-text b{font-size:16px;font-weight:700;letter-spacing:-.01em;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.fact.gold .fact-text b{color:var(--gold)}
-.fact-text span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-
-.hero-done{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--gold);text-align:center}
-.hero-done b{font-size:16px;font-weight:750}
-.hero-done span{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
-.hero.done{border-color:var(--gold)}
-.hero.done .hero-main::before{background:var(--gold)}
-
-.hero-cta{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:650;color:var(--accent)}
-.hero:hover .hero-cta{gap:10px}
-.hero-cta .icon{transition:transform .15s ease}
-
-.hero-side{
-  flex:none;display:flex;align-items:center;justify-content:center;padding:26px 30px;
-  border-left:1px solid var(--line);background:var(--card-2);
-}
-.hero-live{display:flex;align-items:center;gap:9px;color:var(--accent);font-weight:700;font-size:15px;white-space:nowrap}
-
-/* HUD-таймер */
-.hud{display:flex;align-items:flex-start;gap:8px;flex-wrap:wrap}
-.hud-unit{
-  background:var(--panel);border:1px solid var(--line);border-radius:11px;
-  padding:9px 12px;min-width:56px;text-align:center;
-}
-.hud-unit b{
-  display:block;font-size:23px;font-weight:700;line-height:1;
-  font-variant-numeric:tabular-nums;letter-spacing:-.03em;
-}
-.hud-unit span{display:block;font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:5px}
-.hud-label{font-size:11.5px;color:var(--muted);line-height:1.4;align-self:center}
-
-.hero-live-banner{
-  display:inline-flex;align-items:center;gap:8px;background:var(--accent-bg);color:var(--accent);
-  padding:9px 14px;border-radius:10px;font-weight:650;font-size:13.5px;
+@keyframes blink {
+  50% { opacity: 0.25; }
 }
 
-/* ---------------- анонс старта на странице турнира ---------------- */
-.announce{
-  display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px;
-  padding:14px 20px;border-radius:14px;
-  background:var(--card-2);border:1px solid var(--line);
+.tag {
+  font: 600 10px var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--muted);
 }
-.announce.live{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
-.announce.due{background:var(--seed-bg);border-color:var(--seed-fg);color:var(--seed-fg)}
-.ann-label{display:inline-flex;align-items:center;gap:7px;font-size:11px;font-weight:700;
-  letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
-.ann-clock{display:flex;align-items:baseline;gap:14px}
-.ann-unit{display:inline-flex;align-items:baseline;gap:3px}
-.ann-unit b{font-size:26px;font-weight:700;line-height:1;
-  font-variant-numeric:tabular-nums;letter-spacing:-.03em}
-.ann-unit i{font-style:normal;font-size:11.5px;color:var(--muted)}
-.ann-main{font-size:16px;font-weight:700}
-.ann-note{font-size:12.5px;color:var(--muted);margin-left:auto}
-.announce.live .ann-note, .announce.due .ann-note{color:currentColor;opacity:.75}
 
-.empty-state{
-  text-align:center;color:var(--muted);padding:50px 20px;border:1px dashed var(--line);border-radius:var(--radius);
+/* ───────── panels & forms ───────── */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
 }
-.empty-state b{display:block;color:var(--text);font-size:15px;margin-bottom:6px}
+.panel-pad { padding: 24px; }
 
-/* ---------------- tournament header ---------------- */
-.t-head{display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:24px}
-.t-head h1{font-size:22px;margin:0 0 6px;letter-spacing:-.01em}
-.t-head .meta-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-.prize-tag{
-  display:inline-flex;align-items:center;gap:6px;background:var(--accent-bg);color:var(--accent);
-  padding:4px 11px;border-radius:9px;font-weight:600;font-size:13.5px;
+.field { display: grid; gap: 6px; margin: 0 0 18px; min-width: 0; }
+.field > label,
+.field > span,
+.field > legend {
+  display: block;
+  font: 600 11px/1.4 var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  margin: 0 0 2px;
 }
-.t-head .actions{display:flex;gap:8px;margin-left:auto;flex-wrap:wrap}
-
-/* ---------------- bracket ---------------- */
-/* Обычная горизонтальная прокрутка: сетка читается слева направо, как турнирная
-   таблица, и не требует освоения жестов. */
-.bracket-scroll{
-  overflow-x:auto;overflow-y:hidden;
-  padding:4px 4px 14px;margin:0 -4px;
-  scrollbar-width:thin;
+.field .hint,
+.hint { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.field .hint code,
+.hint code {
+  font: 500 12px var(--mono);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
 }
-.bracket-scroll::-webkit-scrollbar{height:10px}
-.bracket-scroll::-webkit-scrollbar-track{background:transparent}
-.bracket-scroll::-webkit-scrollbar-thumb{background:var(--line);border-radius:99px;border:3px solid var(--bg)}
-.bracket-scroll::-webkit-scrollbar-thumb:hover{background:var(--muted)}
 
-.bracket{display:flex;align-items:stretch;gap:104px;position:relative;width:max-content;padding:0 2px 10px}
-svg.links{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-svg.links path{fill:none;stroke:var(--line);stroke-width:1.5}
-svg.links path.done{stroke:var(--accent);stroke-width:2;opacity:.7}
-svg.links path.champion-link{stroke:var(--gold);opacity:.8}
-
-/* Заголовок держится вверху, а матчи распределяются по высоте колонки —
-   иначе space-around растаскивает подпись и единственную карточку. */
-.round{display:flex;flex-direction:column;position:relative;z-index:1}
-.round-matches{flex:1;display:flex;flex-direction:column;justify-content:space-around;gap:28px}
-.round-title{
-  display:flex;align-items:center;gap:12px;margin-bottom:4px;
-  font-size:12px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);
-  white-space:nowrap;
+input[type="text"],
+input[type="password"],
+input[type="number"],
+input[type="datetime-local"],
+textarea,
+select {
+  width: 100%;
+  padding: 11px 13px;
+  border-radius: 11px;
+  border: 1px solid var(--line-2);
+  background: #fff;
+  color: var(--ink);
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.round-title::after{content:"";flex:1;height:1px;background:var(--line)}
-
-.match{
-  width:var(--match-w,340px);background:var(--panel);border:1px solid var(--line);border-radius:14px;
-  overflow:hidden;transition:border-color .18s ease, box-shadow .18s ease;
-  box-shadow:0 1px 2px rgba(40,34,24,.04);
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 3px var(--accent-soft);
 }
-:root[data-theme="dark"] .match{box-shadow:0 1px 2px rgba(0,0,0,.25)}
-.match:hover{border-color:var(--muted)}
-.match.live{border-color:var(--seed-fg)}
-.match.champion{border-color:var(--gold);background:var(--panel)}
-.match.champion .slot.win{background:var(--gold-bg)}
-.match.champion .slot.win::before{background:var(--gold)}
-.match.champion .slot.win .check{color:var(--gold)}
-.match-head{
-  padding:9px 15px;font-size:11.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;
-  font-weight:650;background:var(--card-2);border-bottom:1px solid var(--line);
-  display:flex;justify-content:space-between;align-items:center;gap:8px;
+textarea { resize: vertical; font: 500 13px/1.75 var(--mono); }
+input[type="checkbox"],
+input[type="radio"] { accent-color: var(--accent); }
+
+.row { display: flex; gap: 8px; }
+.row .btn { flex: 1; }
+
+.error-box {
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  border: 1px solid #ffc9b6;
+  border-radius: 11px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 16px;
 }
-.match-no{display:inline-flex;align-items:center;gap:5px}
-.match.champion .match-head{background:var(--gold-bg);color:var(--gold)}
-.match-head .tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--accent);background:var(--accent-bg);padding:2px 6px;border-radius:5px}
-.match-head .veto-btn{
-  display:inline-flex;align-items:center;gap:4px;
-  border:none;background:transparent;color:var(--seed-fg);font:inherit;cursor:pointer;
-  padding:2px 6px;border-radius:5px;text-transform:none;letter-spacing:.02em;
+
+/* ───────── login ───────── */
+.login {
+  flex: 1;
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: minmax(340px, 460px) 1fr;
+  gap: 48px;
+  align-items: center;
+  max-width: var(--w);
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px;
+  animation: enter 0.55s var(--ease);
 }
-.match-head .veto-btn:hover{background:var(--seed-bg)}
-.match-head .veto-btn.done{color:var(--accent)}
-.match-head .veto-btn.live{color:var(--accent);background:var(--accent-bg)}
-.match-head .veto-btn .icon{color:currentColor}
-
-.slot{
-  display:flex;align-items:center;gap:13px;padding:14px 18px;cursor:pointer;
-  border-top:1px solid var(--line-soft);position:relative;transition:background .13s ease;
+.login-panel {
+  padding: 36px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  box-shadow: 0 30px 60px -36px rgb(0 0 0 / 0.3);
 }
-.slot:first-of-type{border-top:0}
-.slot:hover{background:var(--card-2)}
-.slot.tbd, .slot.readonly{cursor:default}
-.slot.tbd:hover, .slot.readonly:hover{background:transparent}
-.slot.win{background:var(--accent-bg)}
-.slot.win::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent)}
-.slot.lose{opacity:.42}
+.login-brand { margin-bottom: 36px; }
+.login-panel h1 { font-size: 40px; }
+.login-panel .lead { font-size: 15.5px; margin: 10px 0 26px; }
+.login-form .btn { margin-top: 6px; }
+.login-guest { margin: 18px 0 0; }
+.login-art { display: grid; justify-items: center; gap: 4px; }
+.login-art img { width: min(560px, 100%); animation: float 7s ease-in-out infinite; }
+.login-art p { margin: 0; font-size: 13px; color: var(--muted); letter-spacing: 0.04em; }
 
-.seed{flex:none;min-width:30px;height:30px;border-radius:9px;display:grid;place-items:center;
-  background:var(--seed-bg);color:var(--seed-fg);font-size:13px;font-weight:650;padding:0 6px}
-
-/* ---------------- avatars ---------------- */
-.ava{
-  flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
-  font-size:13px;font-weight:650;text-transform:uppercase;
-  background:var(--ava-bg);color:var(--ava-fg);
+/* ───────── featured (текущий турнир) ───────── */
+.featured {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  min-height: 300px;
+  border-radius: var(--r-lg);
+  background: var(--card);
+  border: 1px solid var(--line);
+  transition: border-color 0.3s, box-shadow 0.4s var(--ease);
 }
-.ava.has-image{background:none;overflow:hidden;padding:0}
-.ava.has-image img{width:100%;height:100%;object-fit:cover;display:block}
-.ava.team-logo img{object-fit:contain;background:var(--card-2)}
+.featured:hover { border-color: var(--ink); box-shadow: 0 26px 50px -34px rgb(0 0 0 / 0.4); }
+.featured.live { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.featured-art {
+  position: absolute;
+  right: -2%;
+  bottom: -6%;
+  height: 116%;
+  width: auto;
+  max-width: none;
+  pointer-events: none;
+  transition: transform 0.8s var(--ease);
+}
+.featured:hover .featured-art { transform: translateX(-12px) scale(1.02); }
+.featured-body {
+  position: relative;
+  z-index: 1;
+  padding: 32px 36px;
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+  max-width: 520px;
+}
+.featured h2 { font-size: clamp(26px, 3.4vw, 34px); }
+.featured .champ-banner { margin-top: 0; }
+/* В карточке на главной награды стоят друг под другом — слева узкая колонка. */
+.featured .t-awards { flex-direction: column; margin-top: 0; }
+.featured .mvp-card { background: rgb(251 250 247 / 0.92); }
+.featured-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 2px;
+  margin-top: 4px;
+}
+.featured-cta svg { transition: transform 0.3s var(--ease); }
+.featured:hover .featured-cta svg { transform: translateX(4px); }
 
-.ava[data-color="sand"]{background:#ece4d8;color:#6f6355}
-.ava[data-color="sky"]{background:#dde8f5;color:#41678f}
-.ava[data-color="moss"]{background:#dee9dc;color:#4a6b4d}
-.ava[data-color="clay"]{background:#f0ddd4;color:#8a5a44}
-.ava[data-color="plum"]{background:#e7dcec;color:#6f5183}
-.ava[data-color="steel"]{background:#e0e3e7;color:#576270}
-.ava[data-color="amber"]{background:#f5e6c8;color:#8a6a24}
-.ava[data-color="rose"]{background:#f3dde2;color:#8d4c60}
-:root[data-theme="dark"] .ava[data-color="sand"]{background:#3a3327;color:#d8c7a8}
-:root[data-theme="dark"] .ava[data-color="sky"]{background:#22344a;color:#a3c4e8}
-:root[data-theme="dark"] .ava[data-color="moss"]{background:#25382a;color:#a6cfa8}
-:root[data-theme="dark"] .ava[data-color="clay"]{background:#402b22;color:#e0a98c}
-:root[data-theme="dark"] .ava[data-color="plum"]{background:#33253c;color:#c4a5d6}
-:root[data-theme="dark"] .ava[data-color="steel"]{background:#2c3138;color:#b3bcc7}
-:root[data-theme="dark"] .ava[data-color="amber"]{background:#3d3118;color:#e2c274}
-:root[data-theme="dark"] .ava[data-color="rose"]{background:#3c2229;color:#e2a3b3}
+.t-facts {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  justify-content: start;
+  gap: 14px 40px;
+  margin: 4px 0 0;
+}
+.t-facts dt {
+  font: 600 11px var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.t-facts dd { margin: 3px 0 0; font: 700 16px/1.3 var(--mono); }
 
-.duo{flex:none;display:flex}
-.duo .ava{box-shadow:0 0 0 2px var(--card)}
-.slot.win .duo .ava{box-shadow:0 0 0 2px var(--accent-bg)}
-.duo .ava+.ava{margin-left:-10px}
+.champ-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 20px 0 0;
+  padding: 12px 24px 12px 12px;
+  border-radius: var(--r);
+  background: var(--ink);
+  color: var(--paper);
+  width: fit-content;
+  max-width: 100%;
+}
+.champ-banner img {
+  width: 58px;
+  height: 66px;
+  padding: 5px 6px;
+  object-fit: contain;
+  background: var(--paper);
+  border-radius: 10px;
+  flex: none;
+}
+.champ-banner > div { display: grid; min-width: 0; }
+.champ-banner span { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #a9a49a; }
+.champ-banner b { font: 500 22px/1.2 var(--display); letter-spacing: -0.03em; overflow-wrap: anywhere; }
 
-.team{flex:1;min-width:0}
-.team .nm{font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.team .nm .plus{color:var(--muted);margin:0 3px}
-.team .sub{display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--muted);
-  letter-spacing:.02em;margin-top:3px;overflow:hidden;white-space:nowrap}
-.team .sub .icon{color:var(--gold);flex:none}
+/* обратный отсчёт до старта */
+.hud { display: flex; align-items: flex-start; gap: 8px; flex-wrap: wrap; }
+.hud-unit {
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 11px;
+  padding: 9px 12px 8px;
+  min-width: 60px;
+  text-align: center;
+}
+.hud-unit b {
+  display: block;
+  font: 700 24px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.hud-unit span {
+  display: block;
+  font: 600 9.5px var(--mono);
+  color: #a9a49a;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 5px;
+}
+.hud-unit:last-of-type b { color: var(--accent); }
+.hud-label { font-size: 12.5px; color: var(--muted); line-height: 1.45; align-self: center; margin-left: 6px; }
+
+.hero-live-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--accent);
+  color: #fff;
+  padding: 9px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* ───────── cards ───────── */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+}
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  animation: enter 0.6s var(--ease) backwards;
+  transition: transform 0.35s var(--ease), border-color 0.3s, box-shadow 0.35s;
+}
+.card:hover {
+  transform: translateY(-4px);
+  border-color: var(--ink);
+  box-shadow: 0 22px 40px -24px rgb(0 0 0 / 0.35);
+}
+.card-cover {
+  position: relative;
+  aspect-ratio: 16 / 8.5;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+.card-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 80% 60%;
+  scale: 1.25;
+  transition: scale 0.8s var(--ease), translate 0.8s var(--ease);
+}
+.card:hover .card-cover img { scale: 1.32; translate: -3% 0; }
+.card-cover .pill { position: absolute; left: 14px; top: 14px; }
+.card-body { padding: 18px 20px 20px; display: grid; gap: 10px; flex: 1; }
+.card h3 { font-size: 19px; }
+.card-meta { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--muted); }
+.card-meta span + span::before { content: "/"; margin-right: 14px; color: var(--line-2); }
+.card-foot {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px dashed var(--line-2);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.prize { font-weight: 700; font-size: 15px; }
+.champ { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.champ-label {
+  font: 600 10px var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent);
+  white-space: nowrap;
+}
+.champ-label.muted-label { color: var(--muted); }
+
+/* ───────── empty ───────── */
+.empty {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  padding: 32px 24px 44px;
+  border: 1.5px dashed var(--line-2);
+  border-radius: var(--r-lg);
+  animation: enter 0.5s var(--ease);
+}
+.empty-art { width: 280px; margin-bottom: 4px; }
+.empty h3 { font-size: 20px; }
+.empty p { color: var(--muted); margin: 10px 0 0; max-width: 420px; }
+.empty .btn { margin-top: 22px; }
+.panel .empty { border: 0; padding: 12px 0 8px; }
+.panel .empty-art { width: 200px; }
+
+/* ───────── tournament page ───────── */
+.t-hero {
+  position: relative;
+  overflow: hidden;
+  min-height: 300px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+.t-hero-art {
+  position: absolute;
+  right: 0;
+  bottom: -4%;
+  height: 112%;
+  width: auto;
+  max-width: none;
+  pointer-events: none;
+}
+.t-hero-body {
+  position: relative;
+  z-index: 1;
+  padding: 36px;
+  max-width: 560px;
+  display: grid;
+  justify-items: start;
+  gap: 16px;
+}
+.t-hero h1 { font-size: clamp(28px, 4vw, 44px); }
+
+.t-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0; }
+
+/* Награды завершённого турнира: чемпион и MVP рядом. */
+.t-awards { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 20px; }
+.t-awards .champ-banner { margin: 0; }
+.mvp-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 24px 12px 12px;
+  border-radius: var(--r);
+  background: var(--card);
+  border: 1.5px solid var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  max-width: 100%;
+}
+.mvp-card .ava { border-radius: 12px; font-size: 22px; }
+.mvp-card > div { display: grid; min-width: 0; }
+.mvp-card > div > span:first-child { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); font-weight: 700; }
+.mvp-card b { font: 500 22px/1.2 var(--display); letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.mvp-line { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.mvp-line i { font-style: normal; font-weight: 700; color: var(--accent); }
+
+.announce {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 16px 0 0;
+  padding: 14px 20px;
+  border-radius: var(--r);
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.announce.live { background: var(--accent); border-color: var(--accent); color: #fff; }
+.announce.due { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.ann-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font: 600 11px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.ann-clock { display: flex; align-items: baseline; gap: 14px; }
+.ann-unit { display: inline-flex; align-items: baseline; gap: 4px; }
+.ann-unit b { font: 700 26px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.ann-unit:last-child b { color: var(--accent); }
+.ann-unit i { font-style: normal; font: 600 11px var(--mono); color: var(--muted); }
+.ann-main { font: 500 17px/1.2 var(--display); letter-spacing: -0.02em; }
+.ann-note { font-size: 13px; color: var(--muted); margin-left: auto; }
+.announce.live .ann-note,
+.announce.due .ann-note { color: currentColor; opacity: 0.75; }
+
+/* ───────── отборочные дуэли ───────── */
+.q-note { margin: -4px 0 16px; color: var(--muted); font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; }
+.q-winner { display: inline-flex; align-items: center; gap: 6px; color: var(--ink); }
+.q-winner .icon { color: var(--accent); }
+.q-scroll { overflow-x: auto; scrollbar-width: none; padding-bottom: 4px; }
+.q-scroll::-webkit-scrollbar { display: none; }
+.q-grid { display: flex; gap: 28px; width: max-content; }
+.q-round { display: flex; flex-direction: column; }
+.q-matches { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 12px; }
+.q-match { display: block; padding: 0; text-align: left; font: inherit; color: inherit; width: 230px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.q-match.editable { cursor: pointer; transition: border-color 0.2s; }
+.q-match.editable:hover { border-color: var(--ink); }
+.q-match:disabled { cursor: default; }
+.q-admin { display: inline-flex; gap: 6px; margin-left: auto; }
+.duel-modal { width: min(560px, 100%); }
+.duel-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.duel-side { display: grid; justify-items: center; gap: 8px; padding: 16px; border: 1px solid var(--line); border-radius: 14px; }
+.duel-side b { font: 500 18px/1.2 var(--display); letter-spacing: -0.02em; }
+.duel-side input { text-align: center; font: 700 26px/1 var(--mono); }
+.duel-people { display: flex; flex-wrap: wrap; gap: 6px; }
+.q-side { display: flex; align-items: center; gap: 10px; padding: 8px 12px; font-weight: 600; font-size: 14px; position: relative; }
+.q-side + .q-side { border-top: 1px solid var(--line); }
+.q-side .ava { width: 26px; height: 26px; border-radius: 8px; font-size: 11px; }
+.q-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.q-score { font-weight: 700; }
+.q-side.win { font-weight: 700; }
+.q-side.win::before { content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 0 3px 3px 0; background: var(--accent); }
+.q-side.win .q-score { color: var(--accent); }
+.q-side.lose { color: var(--muted); }
+.q-side.lose .ava { opacity: 0.5; }
+
+/* ───────── bracket ───────── */
+/* Сетка шире страницы: прокрутка занимает всё окно, а первая колонка стоит
+   ровно по краю контента — так финал и победитель чаще видны целиком. */
+.bracket-scroll {
+  --edge: max(16px, calc((100vw - var(--w)) / 2 + 24px));
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0 calc(50% - 50vw);
+  /* Справа небольшой отступ, а не --edge: иначе прокрутка появлялась даже
+     тогда, когда вся сетка помещается в окно. */
+  padding: 4px 24px 14px var(--edge);
+  scroll-padding-inline: var(--edge) 24px;
+  /* Полосу прокрутки не показываем: сетку двигают тачпадом, Shift+колесом
+     или пальцем. */
+  scrollbar-width: none;
+}
+.bracket-scroll::-webkit-scrollbar { display: none; }
+
+.bracket { display: flex; align-items: stretch; gap: 72px; position: relative; width: max-content; padding: 0 2px 10px; }
+svg.links { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+svg.links path { fill: none; stroke: var(--line-2); stroke-width: 1.5; }
+svg.links path.done { stroke: var(--ink); stroke-width: 1.5; }
+svg.links path.champion-link { stroke: var(--accent); stroke-width: 2; }
+
+.round { display: flex; flex-direction: column; position: relative; z-index: 1; }
+.round-matches { flex: 1; display: flex; flex-direction: column; justify-content: space-around; gap: 28px; }
+.round-title {
+  font: 600 11px var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  white-space: nowrap;
+}
+
+.match {
+  width: var(--match-w, 340px);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  animation: enter 0.5s var(--ease) backwards;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.match:hover { border-color: var(--line-2); }
+.match.live { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.match.champion { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.match-head {
+  padding: 7px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font: 600 11px var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px dashed var(--line);
+}
+.match-no { display: inline-flex; align-items: center; gap: 5px; }
+.bo-tag { margin-left: 4px; color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
+.match.champion .match-head { color: var(--accent); border-bottom-color: rgb(255 255 255 / 0.12); }
+.match-head .veto-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 0;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  text-transform: none;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  margin: -3px -6px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.match-head .veto-btn:hover { background: var(--paper); color: var(--ink); }
+.match-head .veto-btn.done { color: var(--ink); }
+.match-head .veto-btn.live { color: #fff; background: var(--accent); }
+
+.slot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  position: relative;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.slot + .slot { border-top: 1px solid var(--line); }
+.slot:hover { background: var(--paper); }
+.slot.tbd,
+.slot.readonly { cursor: default; }
+.slot.tbd:hover,
+.slot.readonly:hover { background: transparent; }
+.slot.win::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: var(--accent);
+}
+.slot.lose { color: var(--muted); }
+.slot.lose .duo,
+.slot.lose .seed { opacity: 0.45; }
+.match.champion .slot { cursor: default; }
+.match.champion .slot:hover { background: transparent; }
+.match.champion .team .sub { color: #a9a49a; }
+
+.seed {
+  flex: none;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  color: var(--ink-2);
+  font: 700 12px var(--mono);
+}
+.slot.win .seed { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.match.champion .seed { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.team { flex: 1; min-width: 0; }
+.team .nm { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team .nm .plus { color: var(--muted); margin: 0 4px; }
+.team .sub {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  margin-top: 2px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+.team .sub .icon { color: var(--accent); }
+.team .sub .plus { margin: 0 2px; }
 /* Капитан подчёркнут пунктиром — он драфтит карты. */
-.team .cap{text-decoration:underline;text-decoration-style:dotted;
-  text-decoration-color:var(--gold);text-underline-offset:3px}
-.team .sub .plus{margin:0 2px}
-.slot.win .team .nm{font-weight:600}
-.slot.tbd .team .nm{font-style:italic;color:var(--muted)}
+.team .cap { text-decoration: underline dotted var(--accent); text-underline-offset: 3px; }
+.slot.win .team .nm { font-weight: 700; }
+.slot.tbd .team .nm { font-style: italic; color: var(--muted); font-weight: 500; }
 
-.check{flex:none;color:var(--accent);display:grid;place-items:center;width:16px}
+.check { flex: none; color: var(--accent); display: grid; place-items: center; width: 16px; }
 
-/* Карты серии прямо в карточке матча: видно счёт, не открывая драфт. */
-.match-maps{
-  display:flex;gap:6px;flex-wrap:wrap;width:100%;padding:10px 16px;
-  border-top:1px solid var(--line-soft);background:var(--card-2);border-radius:0;
-  border-left:0;border-right:0;border-bottom:0;cursor:pointer;text-align:left;
+/* Карты серии прямо в карточке матча */
+.match-maps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-top: 1px dashed var(--line);
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
 }
-.match-maps:hover{background:var(--card)}
-.mm{
-  display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:6px;
-  background:var(--panel);border:1px solid var(--line);font-size:11.5px;color:var(--muted);
+.match-maps:hover { background: var(--paper); }
+.mm {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font: 600 11px var(--mono);
+  color: var(--muted);
 }
-.mm i{font-style:normal}
-.mm b{display:grid;place-items:center;width:15px;height:15px;border-radius:4px;
-  font-size:9.5px;font-weight:800;background:var(--line);color:var(--text)}
-.mm.a, .mm.b{color:var(--text);border-color:var(--accent)}
-.mm.a b, .mm.b b{background:var(--accent);color:#fff}
-
-/* ---------------- драфт карт ---------------- */
-.veto-backdrop{
-  position:fixed;inset:0;background:rgba(20,18,14,.5);display:flex;align-items:center;justify-content:center;
-  padding:20px;z-index:100;
+.mm i { font-style: normal; }
+.mm b {
+  display: grid;
+  place-items: center;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 3px;
+  border-radius: 4px;
+  font-size: 9.5px;
+  background: var(--line);
+  color: var(--ink);
 }
-:root[data-theme="dark"] .veto-backdrop{background:rgba(0,0,0,.68)}
-.veto-modal{
-  width:100%;max-width:620px;background:var(--panel);border:1px solid var(--line);border-radius:16px;
-  box-shadow:0 20px 60px rgba(40,34,24,.22);max-height:90vh;overflow:auto;
+.mm.a,
+.mm.b { color: var(--ink); border-color: var(--ink); }
+.mm.a b,
+.mm.b b { background: var(--accent); color: #fff; }
+
+/* ───────── avatars ───────── */
+.ava {
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font: 700 13px var(--display);
+  text-transform: uppercase;
+  background: #ece4d8;
+  color: #6f6355;
 }
-:root[data-theme="dark"] .veto-modal{box-shadow:0 20px 60px rgba(0,0,0,.6)}
-.veto-modal-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--line)}
-.veto-modal-head h3{margin:0;font-size:16px}
-.bo-pill{margin-left:auto;font-size:11px;font-weight:700;letter-spacing:.06em;
-  padding:3px 9px;border-radius:6px;background:var(--seed-bg);color:var(--seed-fg)}
-.veto-modal-body{padding:18px 20px}
+.ava.has-image { background: none; overflow: hidden; padding: 0; }
+.ava.has-image img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.ava.team-logo img { object-fit: contain; background: var(--paper); }
 
-/* Составы: подсвечивается команда, чей сейчас ход */
-.veto-teams{display:flex;align-items:stretch;gap:12px;margin-bottom:16px}
-.veto-team{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;padding:10px 13px;
-  border:1px solid var(--line);border-radius:11px;transition:.15s ease}
-.veto-team.right{text-align:right}
-.veto-team.active{border-color:var(--seed-fg);background:var(--seed-bg)}
-.veto-team b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.veto-team .cap{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--muted)}
-.veto-team.right .cap{justify-content:flex-end}
-.veto-team .cap .icon{color:var(--gold);flex:none}
-.veto-teams .vs{color:var(--muted);font-size:11px;text-transform:uppercase;
-  letter-spacing:.08em;align-self:center;flex:none}
+.ava[data-color="sand"] { background: #ece4d8; color: #6f6355; }
+.ava[data-color="sky"] { background: #dde8f5; color: #41678f; }
+.ava[data-color="moss"] { background: #dee9dc; color: #4a6b4d; }
+.ava[data-color="clay"] { background: #ffe1d4; color: #b4461f; }
+.ava[data-color="plum"] { background: #e7dcec; color: #6f5183; }
+.ava[data-color="steel"] { background: #e0e3e7; color: #576270; }
+.ava[data-color="amber"] { background: #f5e6c8; color: #8a6a24; }
+.ava[data-color="rose"] { background: #f3dde2; color: #8d4c60; }
 
-.veto-note{display:flex;align-items:center;gap:9px;font-size:13.5px;color:var(--muted);
-  background:var(--card-2);border-radius:10px;padding:12px 14px;margin-bottom:14px}
-.veto-note .icon{flex:none}
+.duo { flex: none; display: flex; }
+.duo .ava { box-shadow: 0 0 0 2px var(--card); }
+.match.champion .duo .ava { box-shadow: 0 0 0 2px var(--ink); }
+.duo .ava + .ava { margin-left: -10px; }
 
-/* Бан — красный, пик — зелёный: цвет сразу говорит, что сейчас произойдёт. */
-.turn-banner{
-  display:flex;align-items:center;gap:9px;
-  padding:11px 14px;border-radius:10px;font-size:13.5px;font-weight:600;margin-bottom:14px;
-  background:var(--card-2);color:var(--muted);
+/* ───────── veto modal ───────── */
+.veto-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(21 21 21 / 0.32);
+  backdrop-filter: blur(6px);
+  animation: fade 0.2s;
 }
-.turn-banner.ban{background:var(--danger-bg);color:var(--danger)}
-.turn-banner.pick{background:var(--accent-bg);color:var(--accent)}
-.turn-banner b{font-weight:750}
-.turn-banner.mine{box-shadow:inset 0 0 0 2px currentColor}
-
-/* Карточки карт — прямоугольные, с картинкой, как в про-сцене */
-.map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
-.map-card{
-  position:relative;aspect-ratio:16/10;padding:0;overflow:hidden;cursor:pointer;
-  border:2px solid var(--line);border-radius:11px;background:var(--card-2);
-  transition:transform .14s ease, border-color .14s ease, filter .14s ease;
+@keyframes fade {
+  from { opacity: 0; }
 }
-.map-card img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
-.mc-shade{position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,.82) 0%, rgba(0,0,0,.25) 45%, rgba(0,0,0,.05) 100%)}
-.map-card.no-image .mc-shade{background:linear-gradient(to top, rgba(0,0,0,.55), rgba(0,0,0,.2))}
-.mc-name{
-  position:absolute;left:0;right:0;bottom:0;padding:8px 10px;
-  color:#fff;font-size:13.5px;font-weight:700;letter-spacing:.02em;
-  text-shadow:0 1px 3px rgba(0,0,0,.6);text-align:center;
+.veto-modal {
+  width: min(640px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  border-radius: 22px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  box-shadow: 0 40px 80px -30px rgb(0 0 0 / 0.45);
+  animation: rise 0.35s var(--ease);
 }
-.mc-tag{
-  position:absolute;top:7px;left:7px;display:inline-flex;align-items:center;gap:4px;
-  padding:3px 8px;border-radius:6px;font-size:9.5px;font-weight:800;
-  letter-spacing:.08em;text-transform:uppercase;
+@keyframes rise {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
 }
-.mc-tag.banned{background:var(--danger);color:#fff}
-.mc-tag.picked{background:var(--accent);color:#fff}
-.mc-tag.decider{background:var(--gold);color:#1b1508}
-
-.map-card:not(:disabled):hover{transform:translateY(-2px);border-color:var(--seed-fg)}
-.map-card:disabled{cursor:not-allowed}
-.map-card.banned{filter:grayscale(1);opacity:.4;border-color:var(--line)}
-.map-card.banned .mc-name{text-decoration:line-through}
-.map-card.picked{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
-.map-card.decider{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-bg)}
-
-.veto-log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
-.veto-log li{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
-.veto-log .who{font-weight:600;color:var(--text)}
-.log-act{flex:none;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-  padding:2px 7px;border-radius:5px;background:var(--danger-bg);color:var(--danger)}
-.log-act.pick{background:var(--accent-bg);color:var(--accent)}
-
-/* Результат серии: у каждой карты — кто её взял */
-.series{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-bottom:16px}
-.series-head{display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:10px 14px;background:var(--card-2);border-bottom:1px solid var(--line);
-  font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
-.series-score{font-size:16px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;
-  letter-spacing:0;color:var(--text);text-transform:none}
-.series-row{display:flex;align-items:center;gap:12px;padding:10px 14px;
-  border-top:1px solid var(--line-soft)}
-.series-row:first-of-type{border-top:0}
-.sr-map{display:flex;align-items:center;gap:7px;flex:1;min-width:0;font-size:13.5px;font-weight:600}
-.sr-map .icon{color:var(--muted);flex:none}
-.sr-tag{font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-  padding:2px 6px;border-radius:5px;background:var(--gold-bg);color:var(--gold)}
-.sr-pick{display:flex;gap:6px;flex:none}
-.sr-btn{
-  padding:5px 11px;border-radius:8px;border:1px solid var(--line);background:var(--card);
-  font-size:12.5px;font-weight:600;cursor:pointer;max-width:120px;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap;transition:.13s ease;
+.veto-modal-head { display: flex; align-items: center; gap: 12px; padding: 20px 24px 0; }
+.veto-modal-head h3 { font-size: 22px; }
+.bo-pill {
+  margin-left: auto;
+  font: 700 12px var(--mono);
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--paper);
 }
-.sr-btn:hover:not(:disabled){border-color:var(--accent)}
-.sr-btn:disabled{cursor:default}
-.sr-btn.won{background:var(--accent-bg);border-color:var(--accent);color:var(--accent)}
-.series-hint{padding:10px 14px;border-top:1px solid var(--line-soft);
-  font-size:11.5px;color:var(--muted);line-height:1.5}
+.veto-modal-body { padding: 18px 24px 20px; }
+.veto-art { width: 260px; margin: -8px auto 4px; }
 
-.veto-modal-foot{display:flex;justify-content:flex-end;gap:8px;padding:14px 20px;border-top:1px solid var(--line)}
-
-/* ---------------- строка команды в форме ---------------- */
-.team-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:11px 2px;font-size:14px}
-.team-row.sep{border-top:1px solid var(--line-soft)}
-.team-name-input{
-  flex-basis:100%;margin-left:40px;margin-top:2px;padding:7px 11px;font-size:13px;
-  border:1px dashed var(--line);border-radius:9px;background:transparent;
+.veto-teams { display: flex; align-items: stretch; gap: 12px; margin-bottom: 16px; }
+.veto-team {
+  display: grid;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
 }
-.team-name-input:focus{border-style:solid;background:var(--card)}
-.team-name-input::placeholder{color:var(--muted)}
-
-.logo-pick{position:relative;flex:none;display:inline-flex}
-.logo-add{
-  width:34px;height:34px;display:grid;place-items:center;padding:0;border-radius:10px;
-  border:1px dashed var(--line);background:transparent;color:var(--muted);
-  cursor:pointer;transition:.13s ease;
-}
-.logo-add:hover:not(:disabled){border-color:var(--seed-fg);color:var(--seed-fg);background:var(--card-2)}
-.logo-add:disabled{opacity:.5;cursor:not-allowed}
-.logo-preview{
-  width:34px;height:34px;border-radius:10px;object-fit:contain;
-  background:var(--card-2);border:1px solid var(--line);display:block;
-}
-.logo-clear{
-  position:absolute;right:-5px;top:-5px;width:17px;height:17px;padding:0;border-radius:50%;
-  display:grid;place-items:center;border:1px solid var(--line);
-  background:var(--panel);color:var(--danger);cursor:pointer;
-}
-.logo-clear:hover{background:var(--danger-bg)}
-
-/* ---------------- порядок и капитан в составе ---------------- */
-.team-order{display:flex;gap:3px;flex:none}
-.ord-btn{
-  display:grid;place-items:center;width:26px;height:26px;padding:0;border-radius:7px;
-  border:1px solid var(--line);background:var(--card);color:var(--muted);
-  cursor:pointer;transition:.13s ease;
-}
-.ord-btn:hover:not(:disabled){border-color:var(--muted);color:var(--text);background:var(--card-2)}
-.ord-btn:disabled{opacity:.35;cursor:not-allowed}
-
-
-.team-draft{display:flex;align-items:center;gap:6px;flex:1;min-width:0;flex-wrap:wrap}
-.team-plus{color:var(--muted)}
-.cap-pick{
-  display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;
-  border:1px solid transparent;background:transparent;cursor:pointer;font-size:14px;transition:.13s ease;
-}
-.cap-pick:hover{background:var(--card-2);border-color:var(--line)}
-.cap-pick.active{background:var(--gold-bg);color:var(--gold);border-color:var(--gold);font-weight:650}
-.cap-pick .icon{color:var(--gold)}
-
-/* ---------------- участники (админка) ---------------- */
-
-.user-list{list-style:none;margin:0;padding:0}
-.user-list li{display:flex;align-items:center;gap:11px;padding:10px 2px;border-top:1px solid var(--line-soft)}
-.user-list li:first-child{border-top:0}
-.u-name{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;font-size:14.5px}
-.u-nick{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.u-login{font-size:11.5px;color:var(--muted)}
-.u-login code{font:11.5px/1.3 var(--font-mono);
-  background:var(--card-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;user-select:all}
-.u-warn{
-  display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;
-  letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:5px;
-  background:var(--danger-bg);color:var(--danger);
+.veto-team.right { text-align: right; }
+.veto-team.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.veto-team b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.veto-team .cap { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); }
+.veto-team.right .cap { justify-content: flex-end; }
+.veto-team .cap .icon { color: var(--accent); }
+.veto-teams .vs {
+  align-self: center;
+  flex: none;
+  font: 700 11px var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
 }
 
-.creds-card{margin-bottom:18px;border-color:var(--accent)}
-.creds-head{margin-bottom:14px}
-.creds-head b{display:block;font-size:15px;margin-bottom:3px}
-.creds-head span{font-size:12.5px;color:var(--muted)}
-.creds-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.cred{background:var(--card-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
-.cred .lbl{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
-.cred code{font:600 15px/1.2 var(--font-mono);user-select:all;word-break:break-all}
-
-/* ---------------- статистика ---------------- */
-.prize-summary{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
-.ps-item{
-  flex:1;min-width:180px;padding:16px 18px;border:1px solid var(--line);
-  border-radius:13px;background:var(--card);
-}
-.ps-item b{display:block;font-size:22px;font-weight:750;letter-spacing:-.02em;color:var(--gold)}
-.ps-item span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;
-  letter-spacing:.05em;margin-top:5px}
-
-.bar-col{width:34%;min-width:120px}
-.bar{display:block;height:8px;border-radius:99px;background:var(--card-2);overflow:hidden}
-.bar-fill{display:block;height:100%;border-radius:99px;background:var(--gold)}
-
-
-.tabs{display:flex;gap:4px;margin-bottom:20px;border-bottom:1px solid var(--line)}
-.tab{
-  display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border:0;background:transparent;
-  cursor:pointer;font-size:13.5px;font-weight:600;color:var(--muted);
-  border-bottom:2px solid transparent;margin-bottom:-1px;transition:.14s ease;
-}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--text);border-bottom-color:var(--accent)}
-.tab .icon{color:currentColor}
-
-.sort-bar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:14px;
-  font-size:12px;color:var(--muted)}
-.chip{
-  padding:5px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card);
-  font-size:12.5px;font-weight:550;cursor:pointer;transition:.13s ease;
-}
-.chip:hover{border-color:var(--muted)}
-.chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
-
-.table-wrap{overflow-x:auto}
-.data-table{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
-.data-table th{
-  text-align:left;padding:12px 14px;font-size:11px;font-weight:700;letter-spacing:.05em;
-  text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);white-space:nowrap;
-}
-.data-table td{padding:11px 14px;border-bottom:1px solid var(--line-soft);white-space:nowrap}
-.data-table tr:last-child td{border-bottom:0}
-.data-table tbody tr:hover{background:var(--card-2)}
-.data-table .num{font-variant-numeric:tabular-nums;font-family:var(--font-mono)}
-.data-table .strong{font-weight:700;color:var(--accent)}
-.dt-player{display:flex;align-items:center;gap:10px}
-.dt-rank{min-width:20px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.dt-name{font-weight:600}
-
-.map-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-.map-stat{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--panel)}
-.ms-image{position:relative;aspect-ratio:16/9}
-.ms-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.ms-rows{display:flex;gap:14px;padding:12px 14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
-.ms-rows b{display:block;font-size:17px;font-weight:750;color:var(--text);
-  font-variant-numeric:tabular-nums}
-.ms-rows .pick b{color:var(--accent)}
-.ms-rows .ban b{color:var(--danger)}
-
-.history-list{display:flex;flex-direction:column;gap:12px}
-.hist{border:1px solid var(--line);border-radius:13px;background:var(--panel);overflow:hidden}
-.hist-head{
-  display:flex;align-items:center;gap:12px;width:100%;padding:15px 18px;
-  border:0;background:transparent;cursor:pointer;text-align:left;flex-wrap:wrap;
-}
-.hist-head:hover{background:var(--card-2)}
-.hist-name{font-size:15.5px;font-weight:650}
-.hist-champ{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--gold);font-weight:600}
-.hist-meta{margin-left:auto;font-size:12px;color:var(--muted)}
-.hist-head .icon.flip{transform:rotate(180deg)}
-.hist-body{border-top:1px solid var(--line);padding:6px 18px 16px}
-.hist-empty{padding:14px 0;color:var(--muted);font-size:13.5px}
-.hist-match{padding:14px 0;border-bottom:1px solid var(--line-soft)}
-.hist-match:last-of-type{border-bottom:0}
-.hm-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
-.hm-round{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
-  color:var(--muted);background:var(--card-2);padding:3px 8px;border-radius:5px}
-.hm-team{font-size:14px}
-.hm-team.won{font-weight:700;color:var(--accent)}
-.hm-vs{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.hm-maps{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:6px}
-.hm-maps li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-.hm-maps b{color:var(--text)}
-.hm-maps .icon{color:var(--muted)}
-.hm-score{font:600 12.5px/1 var(--font-mono);
-  background:var(--card-2);border:1px solid var(--line);border-radius:5px;padding:3px 7px}
-.hm-pick{font-size:11.5px;color:var(--accent)}
-.hm-bans{font-size:12px;color:var(--danger);opacity:.85}
-.hist-link{display:inline-flex;align-items:center;gap:7px;margin-top:10px;
-  font-size:13px;font-weight:600;color:var(--accent);text-decoration:none}
-
-.past-link{
-  display:inline-flex;align-items:center;gap:9px;margin-top:20px;padding:12px 16px;
-  border:1px dashed var(--line);border-radius:12px;text-decoration:none;
-  font-size:13.5px;color:var(--muted);transition:.14s ease;
-}
-.past-link:hover{border-color:var(--muted);color:var(--text);background:var(--card)}
-
-/* ---------------- ввод статистики карты ---------------- */
-.stats-modal{max-width:560px}
-/* Сводка по турниру: таблица игроков широкая, модалке нужно больше места. */
-.tstats-modal{max-width:900px}
-.tstats-modal .tabs{margin-top:0}
-.tstats-name{margin-left:auto;font-size:13px;color:var(--muted);
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:55%}
-.stats-hero{position:relative;height:130px;overflow:hidden}
-.stats-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.sh-name{position:absolute;left:20px;bottom:14px;color:#fff;font-size:22px;font-weight:750;
-  letter-spacing:-.01em;text-shadow:0 1px 4px rgba(0,0,0,.6)}
-.sh-close{position:absolute;right:12px;top:12px;width:30px;height:30px;border-radius:9px;
-  border:0;background:rgba(0,0,0,.45);color:#fff;cursor:pointer;font-size:14px;line-height:1}
-.sh-close:hover{background:rgba(0,0,0,.65)}
-
-.score-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;
-  padding-bottom:16px;border-bottom:1px solid var(--line)}
-.score-label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.score-inputs{display:flex;align-items:center;gap:8px}
-.score-inputs input{
-  width:64px;text-align:center;padding:9px 8px;border:1px solid var(--line);border-radius:10px;
-  background:var(--card);font-family:var(--font-display);font-size:20px;font-weight:700;line-height:1;
-  font-variant-numeric:tabular-nums;
-}
-.score-sep{font-size:19px;font-weight:700;color:var(--muted)}
-.score-note{font-size:12px;color:var(--muted);margin-left:auto}
-
-.stat-table{width:100%;border-collapse:collapse}
-.stat-table th{text-align:center;padding:0 6px 9px;font-size:10.5px;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.stat-table th:first-child{text-align:left}
-.stat-table td{padding:5px 6px}
-.stat-table tr.team-break td{border-top:1px solid var(--line);padding-top:13px}
-.st-player{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;min-width:0}
-.st-player span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stat-table input{
-  width:60px;text-align:center;padding:8px 6px;border:1px solid var(--line);border-radius:9px;
-  background:var(--card);font:600 15px/1 var(--font-mono);
-}
-.st-kd{text-align:center}
-.st-value{text-align:center;font:600 15px/1 var(--font-mono);
-  font-variant-numeric:tabular-nums}
-.score-static{font-size:20px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
-.sr-won{display:inline-flex;align-items:center;padding:5px 11px;border-radius:8px;
-  background:var(--accent-bg);color:var(--accent);font-size:12.5px;font-weight:650}
-.kd-pill{
-  display:inline-block;min-width:52px;padding:5px 8px;border-radius:8px;
-  background:var(--card-2);border:1px solid var(--line);
-  font:600 13px/1 var(--font-mono);
-  font-variant-numeric:tabular-nums;
-}
-.kd-pill.empty{color:var(--muted);opacity:.55}
-
-.sr-score{flex:none;font:700 13px/1 var(--font-mono);
-  background:var(--card-2);border:1px solid var(--line);border-radius:6px;padding:4px 8px}
-.sr-stats{display:inline-flex;align-items:center;gap:5px;flex:none;padding:5px 10px;border-radius:8px;
-  border:1px solid var(--line);background:var(--card);font-size:12px;font-weight:600;
-  color:var(--seed-fg);cursor:pointer;transition:.13s ease}
-.sr-stats:hover{border-color:var(--seed-fg);background:var(--seed-bg)}
-
-/* ---------------- личный кабинет ---------------- */
-.profile-card{margin-bottom:8px}
-.profile-top{display:flex;align-items:center;gap:16px;margin-bottom:22px}
-.profile-id{display:flex;flex-direction:column;gap:3px;min-width:0}
-.avatar-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
-.profile-nick{font-size:18px;font-weight:700;letter-spacing:-.01em}
-.profile-login{font:12px/1.4 var(--font-mono);color:var(--muted);margin-top:2px}
-
-.swatches{display:flex;gap:9px;flex-wrap:wrap}
-.swatch{
-  width:34px;height:34px;border-radius:10px;border:2px solid transparent;cursor:pointer;padding:0;
-  background:var(--ava-bg);transition:.13s ease;
-}
-.swatch:hover{transform:translateY(-1px)}
-.swatch.active{border-color:var(--text)}
-.swatch[data-color="sand"]{background:#ece4d8}
-.swatch[data-color="sky"]{background:#dde8f5}
-.swatch[data-color="moss"]{background:#dee9dc}
-.swatch[data-color="clay"]{background:#f0ddd4}
-.swatch[data-color="plum"]{background:#e7dcec}
-.swatch[data-color="steel"]{background:#e0e3e7}
-.swatch[data-color="amber"]{background:#f5e6c8}
-.swatch[data-color="rose"]{background:#f3dde2}
-:root[data-theme="dark"] .swatch[data-color="sand"]{background:#3a3327}
-:root[data-theme="dark"] .swatch[data-color="sky"]{background:#22344a}
-:root[data-theme="dark"] .swatch[data-color="moss"]{background:#25382a}
-:root[data-theme="dark"] .swatch[data-color="clay"]{background:#402b22}
-:root[data-theme="dark"] .swatch[data-color="plum"]{background:#33253c}
-:root[data-theme="dark"] .swatch[data-color="steel"]{background:#2c3138}
-:root[data-theme="dark"] .swatch[data-color="amber"]{background:#3d3118}
-:root[data-theme="dark"] .swatch[data-color="rose"]{background:#3c2229}
-
-.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-.stat-tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-align:center}
-.stat-tile b{display:block;font-size:24px;font-weight:700;line-height:1;
-  font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.stat-tile span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:6px}
-.stat-tile.win b{color:var(--accent)}
-.stat-tile.gold b{color:var(--gold)}
-
-.next-match{display:block;text-decoration:none;transition:.15s ease}
-.next-match:hover{border-color:var(--muted)}
-.nm-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
-.nm-tournament{font-size:12.5px;color:var(--muted)}
-.nm-vs{display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:15.5px;font-weight:600}
-.nm-x{font-size:11.5px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.06em}
-.nm-side.opp{color:var(--danger)}
-.nm-map{margin-top:12px;font-size:13px;color:var(--muted)}
-
-.match-log{list-style:none;margin:0;padding:0}
-.match-log li{display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line-soft)}
-.match-log li:first-child{border-top:0}
-.res{
-  flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
-  font-size:12px;font-weight:700;
-}
-.res.win{background:var(--accent-bg);color:var(--accent)}
-.res.loss{background:var(--danger-bg);color:var(--danger)}
-.ml-main{display:flex;flex-direction:column;gap:2px;min-width:0}
-.ml-opp{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ml-meta{font-size:11.5px;color:var(--muted)}
-
-/* ---------------- misc ---------------- */
-.toast{
-  position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);
-  background:var(--text);color:var(--bg);padding:9px 16px;border-radius:10px;
-  font-size:13.5px;opacity:0;pointer-events:none;transition:.2s ease;z-index:200;
-}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-
-.spinner{
-  width:22px;height:22px;border-radius:50%;border:2.5px solid var(--line);border-top-color:var(--seed-fg);
-  animation:spin .7s linear infinite;margin:40px auto;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-
-/* ============================================================
-   Адаптив. Телефон — полноценный сценарий: турнир смотрят с него
-   прямо во время игры, поэтому ничего не прячем, а перекладываем.
-   ============================================================ */
-
-/* Планшет и уже: сетка теснее, hero складывается в колонку. */
-@media (max-width:900px){
-  .page{padding:20px 14px 56px}
-  .bracket{gap:56px}
-  .round-matches{gap:20px}
-
-  .hero{flex-direction:column}
-  .hero-side{
-    border-left:0;border-top:1px solid var(--line);
-    padding:18px 22px;justify-content:flex-start;
-  }
+.veto-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  border: 1.5px dashed var(--line-2);
+  border-radius: var(--r);
+  color: var(--muted);
+  font-size: 14px;
 }
 
-/* Шапка перестраивается в две строки: сверху бренд и действия,
-   снизу навигация во всю ширину. В одну строку три раздела плюс
-   кнопка и профиль не помещаются и распирают страницу вбок. */
-@media (max-width:720px){
-  .topbar{
-    height:auto;min-height:56px;padding:9px 14px;
-    flex-wrap:wrap;row-gap:9px;column-gap:8px;
-  }
-  .brand{margin-right:auto}
-  .spacer{display:none}
-  .topnav{
-    order:5;width:100%;
-    overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;
-  }
-  .topnav::-webkit-scrollbar{display:none}
-  .topnav-link{white-space:nowrap}
-  /* Кнопка сжимается до иконки — подпись дублируется соседней вкладкой. */
-  .new-tournament span{display:none}
-  .new-tournament{padding:8px 11px}
+/* Чей ход и что сейчас будет: бан — чернилами, пик — оранжевым. */
+.turn-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  font-weight: 650;
+  font-size: 14px;
+  background: var(--paper);
+  color: var(--ink-2);
+  border: 1px solid var(--line);
+}
+.turn-banner.ban { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.turn-banner.pick { background: var(--accent); border-color: var(--accent); color: #fff; }
+.turn-banner b { font-weight: 800; }
+.turn-banner.mine { box-shadow: 0 0 0 3px var(--accent-soft); }
+
+.map-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+.map-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  border: 1.5px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, transform 0.25s var(--ease), box-shadow 0.2s, opacity 0.2s;
+}
+.mc-art { position: relative; display: block; aspect-ratio: 16 / 10; overflow: hidden; background: var(--paper); }
+.mc-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 85% 70%;
+  transition: scale 0.6s var(--ease);
+}
+.mc-name {
+  display: block;
+  padding: 7px 10px;
+  border-top: 1px solid var(--line);
+  font-weight: 700;
+  font-size: 13px;
+}
+.mc-tag {
+  position: absolute;
+  top: 7px;
+  left: 7px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font: 700 10px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.mc-tag.banned { background: var(--ink); color: var(--paper); }
+.mc-tag.picked { background: var(--accent); color: #fff; }
+.mc-tag.decider { background: var(--card); color: var(--ink); border: 1.5px solid var(--ink); }
+
+.map-card:not(:disabled):hover { transform: translateY(-2px); border-color: var(--ink); }
+.map-card:not(:disabled):hover .mc-art img { scale: 1.06; }
+.map-card:disabled { cursor: not-allowed; }
+.map-card.banned { opacity: 0.45; }
+.map-card.banned .mc-art img { filter: grayscale(1); }
+.map-card.banned .mc-name { text-decoration: line-through; color: var(--muted); }
+.map-card.picked { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.map-card.decider { border-color: var(--ink); box-shadow: 0 0 0 3px var(--line); }
+
+.veto-log { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.veto-log li { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.veto-log .who { font-weight: 700; color: var(--ink); }
+.log-act {
+  flex: none;
+  font: 700 9.5px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--ink);
+  color: var(--paper);
+}
+.log-act.pick { background: var(--accent); color: #fff; }
+
+/* результат серии */
+.series { border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; margin-bottom: 16px; }
+.series-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font: 600 11px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.series-score {
+  font: 700 16px/1 var(--mono);
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  letter-spacing: 0;
+}
+.series-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
+.series-row + .series-row { border-top: 1px solid var(--line); }
+.sr-map { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; font-weight: 700; font-size: 14px; }
+.sr-map .icon { color: var(--muted); }
+.sr-tag {
+  font: 700 9.5px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 5px;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+}
+.sr-pick { display: flex; gap: 6px; flex: none; }
+.sr-btn {
+  max-width: 130px;
+  padding: 6px 11px;
+  border-radius: 9px;
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: border-color 0.2s, background 0.2s;
+}
+.sr-btn:hover:not(:disabled) { border-color: var(--ink); }
+.sr-btn:disabled { cursor: default; }
+.sr-btn.won { background: var(--accent); border-color: var(--accent); color: #fff; }
+.sr-won {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 11px;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sr-score {
+  flex: none;
+  font: 700 13px/1 var(--mono);
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.sr-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.sr-stats:hover { border-color: var(--ink); }
+.series-hint { padding: 10px 14px; border-top: 1px dashed var(--line); font-size: 12.5px; color: var(--muted); }
+
+.veto-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 24px 20px;
+  border-top: 1px dashed var(--line-2);
 }
 
-@media (max-width:600px){
+/* Драфт — крупное окно: пул бывает и 7, и 9 карт, плитки должны читаться. */
+.veto-modal.draft { width: min(1120px, 100%); }
+.draft .veto-modal-head { padding: 26px 32px 0; gap: 14px; }
+.draft .veto-modal-head h3 { font-size: clamp(26px, 3vw, 34px); }
+.draft .bo-pill { margin-left: 0; font-size: 13px; padding: 5px 11px; }
+.pool-count { margin-left: auto; font-size: 12.5px; color: var(--muted); }
+.modal-close {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  cursor: pointer;
+  transition: border-color 0.2s, rotate 0.3s var(--ease);
+}
+.modal-close:hover { border-color: var(--ink); rotate: 90deg; }
+.draft .veto-modal-body { padding: 22px 32px 26px; }
+.draft .veto-teams { gap: 16px; margin-bottom: 18px; }
+.draft .veto-team { padding: 16px 20px; border-radius: 16px; }
+.draft .veto-team b { font: 500 20px/1.2 var(--display); letter-spacing: -0.02em; }
+.draft .veto-team .cap { font-size: 13.5px; }
+.draft .turn-banner { padding: 16px 20px; font-size: 16px; border-radius: 14px; margin-bottom: 18px; }
+.draft .veto-art { width: 340px; }
+.draft .veto-note { font-size: 15px; padding: 18px 20px; }
+.draft .map-grid {
+  grid-template-columns: repeat(auto-fill, minmax(196px, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.draft .map-card { border-radius: 16px; border-width: 2px; }
+.draft .mc-name { padding: 11px 14px; font-size: 15.5px; }
+.draft .mc-tag { top: 10px; left: 10px; font-size: 11px; padding: 4px 9px; }
+.draft .veto-modal-foot { padding: 18px 32px 24px; }
+
+/* Часы драфта: у каждой команды свой запас, тикает только в её ход. */
+.veto-team { position: relative; }
+.team-clock {
+  justify-self: start;
+  margin-bottom: 6px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.veto-team.right .team-clock { justify-self: end; }
+.veto-team.active .team-clock { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.team-clock.low { background: var(--accent) !important; border-color: var(--accent) !important; color: #fff !important; animation: blink 1s steps(2, jump-none) infinite; }
+.team-clock.out { animation: none; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+.turn-clock {
+  margin-left: auto;
+  order: 2;
+  padding: 3px 10px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.16);
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.turn-clock.low { background: #fff; color: var(--accent); }
+.vs-auto {
+  justify-self: start;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+/* Порядок драфта */
+.veto-steps {
+  list-style: none;
+  margin: 0 0 18px;
+  padding: 0 0 2px;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.veto-steps::-webkit-scrollbar { display: none; }
+.vs-step {
+  flex: 1 0 104px;
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1.5px dashed var(--line-2);
+  min-width: 0;
+}
+.vs-act { font-size: 10.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.vs-map { font-weight: 700; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vs-who { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vs-step.done { border-style: solid; border-color: var(--line); background: var(--card); }
+.vs-step.ban.done { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.vs-step.ban.done .vs-act,
+.vs-step.ban.done .vs-who { color: #a9a49a; }
+.vs-step.ban.done .vs-map { text-decoration: line-through; text-decoration-color: var(--accent); }
+.vs-step.pick.done { background: var(--accent); border-color: var(--accent); color: #fff; }
+.vs-step.pick.done .vs-act,
+.vs-step.pick.done .vs-who { color: rgb(255 255 255 / 0.8); }
+.vs-step.decider.done { border: 2px solid var(--ink); background: var(--card); }
+.vs-step.current { border-style: solid; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.vs-step.current .vs-map { color: var(--accent); }
+
+/* ───────── ввод статистики карты ───────── */
+.stats-modal { width: min(580px, 100%); }
+.tstats-modal { width: min(920px, 100%); }
+.tstats-modal .tabs { margin-top: 0; }
+.tstats-name {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 55%;
+}
+.stats-hero {
+  position: relative;
+  height: 150px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  background: var(--card);
+}
+.stats-hero img {
+  position: absolute;
+  right: -4%;
+  bottom: -10%;
+  height: 130%;
+  width: auto;
+  max-width: none;
+}
+.sh-name {
+  position: absolute;
+  left: 24px;
+  bottom: 18px;
+  font: 500 28px/1 var(--display);
+  letter-spacing: -0.03em;
+}
+.sh-close {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-size: 14px;
+  cursor: pointer;
+}
+.sh-close:hover { border-color: var(--ink); }
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  padding-bottom: 16px;
+  border-bottom: 1px dashed var(--line-2);
+}
+.score-label {
+  font: 600 11px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.score-inputs { display: flex; align-items: center; gap: 8px; }
+.score-inputs input[type="number"] {
+  width: 68px;
+  text-align: center;
+  padding: 9px 8px;
+  font: 700 22px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.score-sep { font: 700 20px var(--mono); color: var(--accent); }
+.score-note { font-size: 12.5px; color: var(--muted); margin-left: auto; }
+.score-static { font: 700 22px/1 var(--mono); font-variant-numeric: tabular-nums; }
+
+.stat-table { width: 100%; border-collapse: collapse; }
+.stat-table th {
+  text-align: center;
+  padding: 0 6px 9px;
+  font: 600 10.5px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.stat-table th:first-child { text-align: left; }
+.stat-table td { padding: 5px 6px; }
+.stat-table tr.team-break td { border-top: 1px dashed var(--line-2); padding-top: 13px; }
+.st-player { display: flex; align-items: center; gap: 9px; font-size: 14px; font-weight: 700; min-width: 0; }
+.st-player span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stat-table input[type="number"] {
+  width: 62px;
+  text-align: center;
+  padding: 8px 6px;
+  font: 700 15px/1 var(--mono);
+}
+.st-kd { text-align: center; }
+.st-value { text-align: center; font: 700 15px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.kd-pill {
+  display: inline-block;
+  min-width: 54px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: var(--ink);
+  color: var(--paper);
+  font: 700 13px/1 var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.kd-pill.empty { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
+
+/* ───────── формат и пул в форме турнира ───────── */
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.segmented {
+  display: flex;
+  flex-wrap: wrap;
+  width: fit-content;
+  max-width: 100%;
+  padding: 3px;
+  gap: 3px;
+  border-radius: 12px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.segmented button {
+  border: 0;
+  background: none;
+  padding: 8px 14px;
+  border-radius: 9px;
+  font: 700 13px var(--mono);
+  color: var(--muted);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.segmented button:hover { color: var(--ink); }
+.segmented button.active { background: var(--ink); color: var(--paper); }
+
+.pool-head { display: flex; align-items: center; gap: 8px; }
+.pool-head label {
+  margin-right: auto;
+  font: 600 11px/1.4 var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+.pool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.pool-tile { opacity: 0.55; }
+.pool-tile .mc-art img { filter: grayscale(1); transition: filter 0.3s, scale 0.6s var(--ease); }
+.pool-tile:hover { opacity: 0.85; border-color: var(--ink); }
+.pool-tile.selected { opacity: 1; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.pool-tile.selected .mc-art img { filter: none; }
+.pool-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1.5px solid var(--line-2);
+  background: var(--card);
+}
+.pool-tile.selected .pool-check { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+/* ───────── состав в форме турнира ───────── */
+.team-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 12px 2px; font-size: 14px; }
+.team-row.sep { border-top: 1px dashed var(--line-2); }
+.team-name-input[type="text"] {
+  flex-basis: 100%;
+  margin-left: 40px;
+  margin-top: 2px;
+  padding: 8px 12px;
+  font-size: 13.5px;
+  border-style: dashed;
+  background: transparent;
+}
+.team-name-input[type="text"]:focus { border-style: solid; background: #fff; }
+.team-name-input::placeholder { color: var(--muted); }
+
+.logo-pick { position: relative; flex: none; display: inline-flex; }
+.logo-add {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 10px;
+  border: 1.5px dashed var(--line-2);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.logo-add:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+.logo-add:disabled { opacity: 0.5; cursor: not-allowed; }
+.logo-preview {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  object-fit: contain;
+  background: var(--paper);
+  border: 1px solid var(--line);
+}
+.logo-clear {
+  position: absolute;
+  right: -5px;
+  top: -5px;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--accent-ink);
+  cursor: pointer;
+}
+.logo-clear:hover { background: var(--accent-soft); }
+
+.team-order { display: flex; gap: 3px; flex: none; }
+.ord-btn {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--muted);
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+.ord-btn:hover:not(:disabled) { border-color: var(--ink); color: var(--ink); }
+.ord-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+.team-draft { display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; flex-wrap: wrap; }
+.team-plus { color: var(--muted); }
+.cap-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.cap-pick:hover { background: var(--paper); border-color: var(--line); }
+.cap-pick.active { background: var(--accent-soft); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.cap-pick .icon { color: var(--accent); }
+
+/* ───────── участники (админка) ───────── */
+.user-list { list-style: none; margin: 0; padding: 0; }
+.user-list li { display: flex; align-items: center; gap: 12px; padding: 11px 2px; }
+.user-list li + li { border-top: 1px dashed var(--line); }
+.u-name { flex: 1; min-width: 0; display: grid; gap: 3px; font-size: 15px; }
+.u-nick { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-weight: 700; }
+.u-login { font-size: 12px; color: var(--muted); }
+.u-login code {
+  font: 500 12px/1.3 var(--mono);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 6px;
+  user-select: all;
+}
+.u-warn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: 700 10px var(--mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+}
+
+.creds-card { margin-bottom: 18px; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.creds-head { margin-bottom: 14px; }
+.creds-head b { display: block; font: 500 18px/1.2 var(--display); letter-spacing: -0.02em; margin-bottom: 4px; }
+.creds-head span { font-size: 13px; color: var(--muted); }
+.creds-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.cred { background: var(--ink); color: var(--paper); border-radius: 12px; padding: 12px 14px; }
+.cred .lbl {
+  display: block;
+  font: 600 10px var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a9a49a;
+  margin-bottom: 5px;
+}
+.cred code { font: 700 17px/1.2 var(--mono); user-select: all; word-break: break-all; }
+
+/* ───────── статистика ───────── */
+.tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.tab:hover { color: var(--ink); }
+.tab.active { color: var(--ink); }
+.tab.active::after {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.sort-bar { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; color: var(--muted); }
+.chip {
+  padding: 6px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+.chip:hover { border-color: var(--ink); }
+.chip.active { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+
+.table-wrap { overflow-x: auto; }
+.panel.table-wrap { padding: 0; }
+.data-table { width: 100%; border-collapse: collapse; min-width: 640px; }
+.data-table th {
+  text-align: left;
+  padding: 14px 16px;
+  font: 600 11px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.data-table td { padding: 11px 16px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.data-table tr:last-child td { border-bottom: 0; }
+.data-table tbody tr { transition: background 0.15s; }
+.data-table tbody tr:hover { background: var(--paper); }
+.data-table .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.data-table .strong { font-weight: 700; color: var(--accent); }
+/* Ячейка остаётся табличной (flex ломал линию строки), выравниваем инлайном. */
+.dt-player > * { vertical-align: middle; }
+.dt-player .ava { display: inline-grid; margin: 0 10px 0 6px; }
+.dt-rank { min-width: 20px; font: 600 12px var(--mono); color: var(--muted); }
+.data-table tbody tr:first-child .dt-rank { color: var(--accent); }
+.dt-name { font-weight: 700; }
+
+.podium { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+.podium-card {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  padding: 20px 22px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--card);
+  animation: enter 0.5s var(--ease) backwards;
+}
+.podium-card:nth-child(2) { animation-delay: 70ms; }
+.podium-card:nth-child(3) { animation-delay: 140ms; }
+.podium-card.first { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.podium-card .ava { margin-bottom: 8px; border-radius: 12px; }
+.podium-place { position: absolute; right: 18px; top: 16px; font-size: 12px; color: var(--muted); }
+.podium-card.first .podium-place { color: var(--accent); }
+.podium-nick { font: 500 22px/1.15 var(--display); letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.podium-value { font: 700 38px/1 var(--mono); margin-top: 14px; }
+.podium-card.first .podium-value { color: var(--accent); }
+.podium-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 4px; }
+.podium-card.first .podium-label { color: #a9a49a; }
+
+.prize-summary { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
+.ps-item {
+  flex: 1;
+  min-width: 200px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--card);
+}
+.ps-item:first-child { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.ps-item b { display: block; font: 700 30px/1 var(--mono); color: var(--accent); }
+.ps-item span {
+  display: block;
+  font: 600 11px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.ps-item:first-child span { color: #a9a49a; }
+
+.bar-col { width: 34%; min-width: 120px; }
+.bar { display: block; height: 8px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); overflow: hidden; }
+.bar-fill { display: block; height: 100%; border-radius: 99px; background: var(--accent); animation: grow 0.6s var(--ease); transform-origin: left; }
+@keyframes grow {
+  from { transform: scaleX(0); }
+}
+
+.map-stat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.map-stat {
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  background: var(--card);
+  transition: border-color 0.3s, transform 0.35s var(--ease);
+}
+.map-stat:hover { border-color: var(--ink); transform: translateY(-3px); }
+.ms-image { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: var(--paper); border-bottom: 1px solid var(--line); }
+.ms-image img { width: 100%; height: 100%; object-fit: cover; object-position: 85% 70%; }
+.ms-name { padding: 12px 16px 0; font: 500 18px/1.2 var(--display); letter-spacing: -0.02em; }
+.ms-rows { display: flex; gap: 16px; padding: 8px 16px 14px; font-size: 12px; color: var(--muted); flex-wrap: wrap; }
+.ms-rows b { display: block; font: 700 20px/1.2 var(--mono); color: var(--ink); }
+.ms-rows .pick b { color: var(--accent); }
+.ms-rows .ban b { color: var(--muted); }
+
+.history-list { display: grid; gap: 12px; }
+.hist { border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--card); overflow: hidden; }
+.hist-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 20px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  flex-wrap: wrap;
+  cursor: pointer;
+}
+.hist-head:hover { background: var(--paper); }
+.hist-name { font: 500 17px/1.2 var(--display); letter-spacing: -0.02em; }
+.hist-champ { display: inline-flex; align-items: center; gap: 6px; font-size: 13.5px; font-weight: 700; color: var(--accent); }
+.hist-meta { margin-left: auto; font: 500 12px var(--mono); color: var(--muted); }
+.hist-head .icon.flip { transform: rotate(180deg); }
+.hist-body { border-top: 1px solid var(--line); padding: 6px 20px 16px; }
+.hist-empty { padding: 14px 0; color: var(--muted); font-size: 14px; }
+.hist-match { padding: 14px 0; border-bottom: 1px dashed var(--line); }
+.hist-match:last-of-type { border-bottom: 0; }
+.hm-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 9px; }
+.hm-round {
+  font: 600 10.5px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+.hm-team { font-size: 14.5px; font-weight: 600; }
+.hm-team.won { font-weight: 800; color: var(--ink); text-decoration: underline 2px var(--accent); text-underline-offset: 4px; }
+.hm-vs { font: 600 11px var(--mono); color: var(--muted); text-transform: uppercase; }
+.hm-maps { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.hm-maps li { display: flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--muted); }
+.hm-maps b { color: var(--ink); }
+.hm-score {
+  font: 700 12.5px/1 var(--mono);
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 6px;
+  padding: 4px 7px;
+}
+.hm-pick { font-size: 12px; color: var(--accent); font-weight: 600; }
+.hm-bans { font-size: 12.5px; color: var(--muted); }
+.hist-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 10px;
+  font-weight: 700;
+  border-bottom: 1.5px solid var(--ink);
+  padding-bottom: 1px;
+}
+
+.past-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 20px;
+  padding: 12px 16px;
+  border: 1.5px dashed var(--line-2);
+  border-radius: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+.past-link:hover { border-color: var(--ink); color: var(--ink); }
+
+/* ───────── личный кабинет ───────── */
+.profile-card { margin-bottom: 8px; }
+.profile-top { display: flex; align-items: center; gap: 18px; margin-bottom: 22px; }
+.profile-top .ava { border-radius: 18px; }
+.profile-id { display: grid; gap: 3px; min-width: 0; }
+.avatar-actions { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 8px; }
+.profile-nick { font: 500 24px/1.15 var(--display); letter-spacing: -0.03em; }
+.profile-login { font: 500 12.5px/1.4 var(--mono); color: var(--muted); }
+
+.swatches { display: flex; gap: 9px; flex-wrap: wrap; }
+.swatch {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s var(--ease), border-color 0.2s;
+}
+.swatch:hover { transform: translateY(-2px); }
+.swatch.active { border-color: var(--ink); box-shadow: 0 0 0 3px var(--accent-soft); }
+.swatch[data-color="sand"] { background: #ece4d8; }
+.swatch[data-color="sky"] { background: #dde8f5; }
+.swatch[data-color="moss"] { background: #dee9dc; }
+.swatch[data-color="clay"] { background: #ffe1d4; }
+.swatch[data-color="plum"] { background: #e7dcec; }
+.swatch[data-color="steel"] { background: #e0e3e7; }
+.swatch[data-color="amber"] { background: #f5e6c8; }
+.swatch[data-color="rose"] { background: #f3dde2; }
+
+.stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 4px; }
+.stat-tile {
+  padding: 18px 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--card);
+  animation: enter 0.5s var(--ease) backwards;
+}
+.stat-tile:nth-child(2) { animation-delay: 60ms; }
+.stat-tile:nth-child(3) { animation-delay: 120ms; }
+.stat-tile:nth-child(4) { animation-delay: 180ms; }
+.stat-tile b { display: block; font: 700 30px/1 var(--mono); font-variant-numeric: tabular-nums; }
+.stat-tile span {
+  display: block;
+  font: 600 10.5px var(--mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 8px;
+}
+.stat-tile.win b,
+.stat-tile.gold b { color: var(--accent); }
+.stat-tile.gold { background: var(--ink); border-color: var(--ink); }
+.stat-tile.gold span { color: #a9a49a; }
+
+.next-match { display: block; transition: border-color 0.3s; margin-top: 4px; }
+.next-match:hover { border-color: var(--ink); }
+.nm-top { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.nm-tournament { font: 500 12.5px var(--mono); color: var(--muted); }
+.nm-vs { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font: 500 18px/1.2 var(--display); letter-spacing: -0.02em; }
+.nm-x { font: 700 11px var(--mono); color: var(--accent); text-transform: uppercase; letter-spacing: 0.06em; }
+.nm-side.opp { color: var(--muted); }
+.nm-map { margin-top: 12px; font-size: 13.5px; color: var(--muted); }
+
+.match-log { list-style: none; margin: 4px 0 0; padding: 0; }
+.match-log li { display: flex; align-items: center; gap: 12px; padding: 11px 2px; }
+.match-log li + li { border-top: 1px dashed var(--line); }
+.res {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font: 700 12px var(--mono);
+}
+.res.win { background: var(--accent); color: #fff; }
+.res.loss { background: var(--paper); color: var(--muted); border: 1px solid var(--line); }
+.ml-main { display: grid; gap: 2px; min-width: 0; }
+.ml-opp { font-size: 14.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ml-meta { font-size: 12px; color: var(--muted); }
+
+/* ───────── misc ───────── */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  z-index: 200;
+  transform: translate(-50%, 20px);
+  padding: 11px 18px;
+  border-radius: 12px;
+  background: var(--ink);
+  color: var(--paper);
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 18px 40px -16px rgb(0 0 0 / 0.4);
+  transition: opacity 0.2s, transform 0.3s var(--ease);
+}
+.toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  margin: 60px auto;
+  border-radius: 50%;
+  border: 2.5px solid var(--line);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.who { font-size: 13px; color: var(--muted); }
+.who b { color: var(--ink); font-weight: 700; }
+
+/* ───────── 404 ───────── */
+.nf { display: grid; justify-items: center; text-align: center; padding-top: 8px; }
+.nf-art { width: min(540px, 100%); margin-bottom: -40px; animation: float 7s ease-in-out infinite; }
+.nf-code { font: 700 clamp(72px, 12vw, 132px)/1 var(--display); letter-spacing: -0.06em; }
+.nf-code span { color: var(--accent); display: inline-block; animation: drift 4s ease-in-out infinite; }
+@keyframes drift {
+  50% { transform: translateY(-6px) rotate(-4deg); filter: blur(1.5px); opacity: 0.75; }
+}
+.nf h1 { font-size: clamp(26px, 3.2vw, 34px); margin-top: 6px; }
+.nf .lead { margin: 14px auto 28px; }
+.nf code {
+  font-size: 0.9em;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--ink);
+}
+
+/* ───────── адаптив ─────────
+   Телефон — полноценный сценарий: турнир смотрят с него прямо во время
+   игры, поэтому ничего не прячем, а перекладываем. */
+@media (max-width: 900px) {
+  .page-head.with-art { grid-template-columns: 1fr; }
+  .page-head-art { display: none; }
+  .featured-art,
+  .t-hero-art { opacity: 0.3; }
+  .bracket { gap: 56px; }
+  .round-matches { gap: 20px; }
+  .login { grid-template-columns: 1fr; gap: 12px; max-width: 520px; }
+  .login-art { order: -1; }
+  .login-art img { width: 280px; }
+  .login-art p { display: none; }
+}
+
+@media (max-width: 720px) {
+  .header-inner { gap: 12px; padding: 10px 16px; flex-wrap: wrap; }
+  .nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
+  .hide-sm,
+  .pt-name { display: none; }
+  .new-tournament { padding: 9px 11px; }
+}
+
+@media (max-width: 600px) {
   /* iOS увеличивает страницу, если поле мельче 16px. */
-  input[type=text], input[type=password], input[type=number],
-  input[type=datetime-local], textarea, select{font-size:16px}
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  input[type="datetime-local"],
+  textarea,
+  select { font-size: 16px; }
 
-  .page{padding:16px 12px 48px}
-  .section-head{margin:22px 0 12px}
-  .panel-pad{padding:18px}
-  .pt-name{display:none}
+  .page { padding: 28px 16px 60px; }
+  .panel-pad { padding: 18px; }
+  .grid { grid-template-columns: 1fr; }
+  .featured-body,
+  .t-hero-body { padding: 24px; }
+  .t-facts { gap: 12px 24px; }
+  .hud-unit { min-width: 50px; padding: 8px 9px 7px; }
+  .hud-unit b { font-size: 19px; }
+  .hud-label { flex-basis: 100%; margin: 4px 0 0; }
 
-  /* Вкладки статистики уезжают в горизонтальную прокрутку. */
-  .tabs{overflow-x:auto;scrollbar-width:none;flex-wrap:nowrap}
-  .tabs::-webkit-scrollbar{display:none}
-  .tab{white-space:nowrap;padding:10px 12px}
+  .announce { gap: 10px; padding: 12px 14px; }
+  .ann-unit b { font-size: 21px; }
+  .ann-note { margin-left: 0; flex-basis: 100%; }
 
-  .hero-main{padding:20px 18px}
-  .hero-side{padding:16px 18px}
-  .hero-facts{gap:16px 20px}
-  .hero-meta{margin-left:0;flex-basis:100%}
-  .hero-cta{margin-left:0}
-  .hud{gap:6px}
-  .hud-unit{min-width:46px;padding:7px 9px}
-  .hud-unit b{font-size:18px}
-  .hud-label{flex-basis:100%;margin-left:0;margin-top:2px}
+  .t-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  .t-actions .btn { width: 100%; white-space: normal; text-align: center; }
+  .podium { grid-template-columns: 1fr; }
 
-  .announce{gap:10px;padding:12px 14px}
-  .ann-clock{gap:12px}
-  .ann-unit b{font-size:21px}
-  .ann-note{margin-left:0;flex-basis:100%}
+  .row { flex-direction: column; }
+  .stat-row { grid-template-columns: repeat(2, 1fr); }
+  .creds-grid { grid-template-columns: 1fr; }
+  .prize-summary { flex-direction: column; }
+  .map-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
-  /* Действия над турниром — в две колонки, чтобы не было узких полосок. */
-  .t-head{gap:12px}
-  .t-head .actions{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .t-head .actions .btn{width:100%;text-align:center;justify-content:center}
+  .user-list li { flex-wrap: wrap; gap: 9px; }
+  .u-name { flex-basis: calc(100% - 46px); }
 
-  .row{flex-direction:column}
-  .stat-row{grid-template-columns:repeat(2,1fr)}
-  .creds-grid{grid-template-columns:1fr}
-  .prize-summary{flex-direction:column}
-  .map-stat-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .hist-head { gap: 8px; padding: 14px 16px; }
+  .hist-meta { margin-left: 0; flex-basis: 100%; }
+  .hist-body { padding: 6px 16px 14px; }
 
-  .user-list li{flex-wrap:wrap;gap:9px}
-  .u-name{flex-basis:calc(100% - 45px)}
+  .veto-backdrop { padding: 10px; }
+  .veto-modal { max-height: 96vh; border-radius: 18px; }
+  .veto-modal-head,
+  .veto-modal-body,
+  .veto-modal-foot { padding-left: 16px; padding-right: 16px; }
+  .veto-teams { flex-direction: column; gap: 8px; }
+  .veto-teams .vs { align-self: flex-start; }
+  .veto-team.right { text-align: left; }
+  .veto-team.right .cap { justify-content: flex-start; }
+  .map-grid,
+  .draft .map-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .draft .veto-modal-head,
+  .draft .veto-modal-body,
+  .draft .veto-modal-foot { padding-left: 16px; padding-right: 16px; }
+  .pool-count { display: none; }
+  .draft .bo-pill { margin-left: auto; }
+  .vs-step { flex-basis: 92px; }
+  .veto-modal-foot .btn { flex: 1; }
 
-  .hist-head{gap:8px;padding:13px 15px}
-  .hist-meta{margin-left:0;flex-basis:100%}
-  .hist-body{padding:6px 15px 14px}
+  .series-row { flex-wrap: wrap; gap: 8px; }
+  .sr-map { flex-basis: 100%; }
+  .sr-pick { flex: 1; }
+  .sr-btn { flex: 1; max-width: none; }
 
-  /* Диалоги занимают почти весь экран — так удобнее попадать пальцем. */
-  .veto-backdrop{padding:10px}
-  .veto-modal{max-height:96vh;border-radius:14px}
-  .veto-modal-head, .veto-modal-body, .veto-modal-foot{padding-left:15px;padding-right:15px}
-  .veto-teams{flex-direction:column;gap:8px}
-  .veto-teams .vs{align-self:flex-start}
-  .veto-team.right{text-align:left}
-  .veto-team.right .cap{justify-content:flex-start}
-  .map-grid{grid-template-columns:repeat(2,1fr);gap:8px}
-  .veto-modal-foot{flex-wrap:wrap}
-  .veto-modal-foot .btn{flex:1;text-align:center}
+  .stats-hero { height: 120px; }
+  .sh-name { font-size: 22px; left: 16px; }
+  .score-row { gap: 10px; }
+  .score-inputs input[type="number"] { width: 56px; font-size: 19px; }
+  .score-note { margin-left: 0; flex-basis: 100%; }
+  .stat-table input[type="number"] { width: 100%; min-width: 44px; }
+  .st-player { gap: 7px; font-size: 13px; }
+  .kd-pill { min-width: 44px; padding: 5px 6px; font-size: 12px; }
 
-  /* Строка карты в серии: счёт и кнопки уходят на вторую строчку. */
-  .series-row{flex-wrap:wrap;gap:8px}
-  .sr-map{flex-basis:100%}
-  .sr-pick{flex:1}
-  .sr-btn{flex:1;max-width:none}
-
-  /* Ввод статистики: поля ужимаются, чтобы таблица влезла в ширину. */
-  .stats-hero{height:110px}
-  .sh-name{font-size:19px;left:15px}
-  .score-row{gap:10px}
-  .score-inputs input{width:54px;font-size:18px}
-  .score-note{margin-left:0;flex-basis:100%}
-  .stat-table input{width:100%;min-width:44px}
-  .st-player{gap:7px;font-size:13px}
-  .kd-pill{min-width:44px;padding:5px 6px;font-size:12px}
-
-  /* Состав в форме турнира. */
-  .team-row{gap:8px}
-  .team-name-input{margin-left:0}
-  .bracket{gap:44px}
+  .team-row { gap: 8px; }
+  .form-row { grid-template-columns: 1fr; gap: 0; }
+  .pool-grid { grid-template-columns: repeat(2, 1fr); }
+  .team-name-input[type="text"] { margin-left: 0; }
+  .bracket { gap: 44px; }
+  .footer-meta { display: none; }
+  .login-panel { padding: 26px; }
 }
 
-/* Совсем узкие экраны. */
-@media (max-width:380px){
-  .brand-text{display:none}
-  .stat-row{grid-template-columns:1fr 1fr}
-  .map-stat-grid{grid-template-columns:1fr}
-  .t-head .actions{grid-template-columns:1fr}
+@media (max-width: 380px) {
+  .brand-word { display: none; }
+  .stat-row { grid-template-columns: 1fr 1fr; }
+  .map-stat-grid { grid-template-columns: 1fr; }
+  .t-actions { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* ─────────────── Пасхалка kefir: кефир течёт с верхнего края ───────────────
-   Оверлей во весь экран поверх шапки (z-index 40), но ниже выпадашки профиля
-   (50), модалок (100) и тостов (200) — потёки не должны мешать работать.
+   Оверлей во весь экран поверх шапки (z-index 50), но ниже выпадашки профиля
+   (60), модалок (100) и тостов (200) — потёки не должны мешать работать.
    pointer-events:none, поэтому по шапке под кефиром всё так же кликается. */
-.kefir{position:fixed;inset:0;z-index:45;pointer-events:none}
+.kefir { position: fixed; inset: 0; z-index: 55; pointer-events: none; }
 /* Без viewBox пользовательские единицы SVG = пиксели, а проценты в cx/cy
    считаются от окна: потёки сами растягиваются под любой экран, а лужицы
    на cy="100%" всегда лежат ровно на нижнем краю. */
-.kefir svg{width:100%;height:100%;display:block}
+.kefir svg { width: 100%; height: 100%; display: block; }
 
 /* Тень сдвинута вниз и вправо: видно объём, и белое не теряется на светлом. */
-.kefir-shadow{fill:#8e8aa6;opacity:.3;transform:translate(2px,7px)}
-.kefir-body{fill:#fdfdfa;opacity:.9}
-:root[data-theme="dark"] .kefir-shadow{fill:#000;opacity:.35}
-:root[data-theme="dark"] .kefir-body{opacity:.8}
+.kefir-shadow { fill: #8e8aa6; opacity: 0.3; transform: translate(2px, 7px); }
+.kefir-body { fill: #fdfdfa; opacity: 0.9; }
 
 /* Дорожка только двигает каплю по горизонтали: у неё transform-box:view-box,
    поэтому проценты считаются от ширины окна. Сама капля анимируется внутри
    со своим fill-box, иначе масштаб растягивал бы всю систему координат. */
-.kefir-lane{transform-box:view-box;translate:var(--x) 44px}
+.kefir-lane { transform-box: view-box; translate: var(--x) 44px; }
 
-.kefir-drop,.kefir-tongue,.kefir-splat,.kefir-bit{
+.kefir-drop, .kefir-tongue, .kefir-splat, .kefir-bit {
   /* Иначе масштаб считался бы от начала координат SVG и фигура уезжала бы вбок. */
-  transform-box:fill-box;
-  animation-iteration-count:infinite;animation-timing-function:linear;
+  transform-box: fill-box;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
 }
-.kefir-drop{animation-name:kefir-fall;transform-origin:50% 0}
-.kefir-tongue{animation-name:kefir-hang;animation-timing-function:ease-in-out;transform-origin:50% 0}
-.kefir-splat{animation-name:kefir-splat;transform-origin:50% 50%;opacity:0}
-.kefir-bit{animation-name:kefir-bit;transform-origin:50% 50%;opacity:0}
+.kefir-drop { animation-name: kefir-fall; transform-origin: 50% 0; }
+.kefir-tongue { animation-name: kefir-hang; animation-timing-function: ease-in-out; transform-origin: 50% 0; }
+.kefir-splat { animation-name: kefir-splat; transform-origin: 50% 50%; opacity: 0; }
+.kefir-bit { animation-name: kefir-bit; transform-origin: 50% 50%; opacity: 0; }
 
 /* Физика капли за один цикл. Проценты подобраны так, что само падение —
    это 64%→76%, то есть ~12% цикла (около секунды), а остальное время капля
    копится у края: медленно набухает, вытягивает шейку и рвёт её. */
-@keyframes kefir-fall{
+@keyframes kefir-fall {
   /* Растёт прямо из натёка. */
-  0%   {transform:translateY(-46px) scale(.05,.05);animation-timing-function:ease-out}
-  26%  {transform:translateY(-30px) scale(.75,.7);animation-timing-function:ease-in-out}
-  52%  {transform:translateY(-14px) scale(1,1.25);animation-timing-function:ease-in}
+  0%   { transform: translateY(-46px) scale(0.05, 0.05); animation-timing-function: ease-out; }
+  26%  { transform: translateY(-30px) scale(0.75, 0.7); animation-timing-function: ease-in-out; }
+  52%  { transform: translateY(-14px) scale(1, 1.25); animation-timing-function: ease-in; }
   /* Шейка вытянулась до предела и рвётся. */
-  60%  {transform:translateY(-6px) scale(.78,2.4);animation-timing-function:ease-in}
+  60%  { transform: translateY(-6px) scale(0.78, 2.4); animation-timing-function: ease-in; }
   /* Оторвалась — поверхностное натяжение собирает её обратно в шар. */
-  64%  {transform:translateY(26px) scale(1.05,1.1);animation-timing-function:cubic-bezier(.5,0,1,1)}
+  64%  { transform: translateY(26px) scale(1.05, 1.1); animation-timing-function: cubic-bezier(0.5, 0, 1, 1); }
   /* Свободное падение: cubic-bezier(.5,0,1,1) — это почти g·t²/2. На скорости
      капля вытягивается по вертикали. */
-  76%  {transform:translateY(calc(100vh - 56px)) scale(.8,1.6);animation-timing-function:cubic-bezier(.2,.85,.35,1)}
+  76%  { transform: translateY(calc(100vh - 56px)) scale(0.8, 1.6); animation-timing-function: cubic-bezier(0.2, 0.85, 0.35, 1); }
   /* Удар: расплющило в блин и разбило на брызги. */
-  78%  {transform:translateY(calc(100vh - 34px)) scale(1.75,.3)}
-  80%  {transform:translateY(calc(100vh - 30px)) scale(.05,.05)}
-  100% {transform:translateY(calc(100vh - 30px)) scale(.05,.05)}
+  78%  { transform: translateY(calc(100vh - 34px)) scale(1.75, 0.3); }
+  80%  { transform: translateY(calc(100vh - 30px)) scale(0.05, 0.05); }
+  100% { transform: translateY(calc(100vh - 30px)) scale(0.05, 0.05); }
 }
 
 /* Лужица на месте удара: растекается и впитывается. */
-@keyframes kefir-splat{
-  0%,77%{transform:scale(.15,.15);opacity:0}
-  79%   {transform:scale(1.1,.6);opacity:.95}
-  84%   {transform:scale(1.9,.32);opacity:.55}
-  93%   {transform:scale(2.5,.2);opacity:0}
-  100%  {transform:scale(.15,.15);opacity:0}
+@keyframes kefir-splat {
+  0%, 77% { transform: scale(0.15, 0.15); opacity: 0; }
+  79%     { transform: scale(1.1, 0.6); opacity: 0.95; }
+  84%     { transform: scale(1.9, 0.32); opacity: 0.55; }
+  93%     { transform: scale(2.5, 0.2); opacity: 0; }
+  100%    { transform: scale(0.15, 0.15); opacity: 0; }
 }
 /* Брызги: две капельки в стороны и вверх, потом падают обратно. */
-@keyframes kefir-bit{
-  0%,77%{transform:translate(0,0) scale(.2);opacity:0}
-  80%   {transform:translate(calc(var(--dx) * .5),-15px) scale(1);opacity:.9;
-         animation-timing-function:ease-in}
-  88%   {transform:translate(var(--dx),6px) scale(.6);opacity:0}
-  100%  {transform:translate(0,0) scale(.2);opacity:0}
+@keyframes kefir-bit {
+  0%, 77% { transform: translate(0, 0) scale(0.2); opacity: 0; }
+  80%     { transform: translate(calc(var(--dx) * 0.5), -15px) scale(1); opacity: 0.9; animation-timing-function: ease-in; }
+  88%     { transform: translate(var(--dx), 6px) scale(0.6); opacity: 0; }
+  100%    { transform: translate(0, 0) scale(0.2); opacity: 0; }
 }
 
 /* Язык то стекает ниже, то втягивается обратно в натёк. */
-@keyframes kefir-hang{
-  0%,100%{transform:translateY(0) scale(1,1)}
-  50%    {transform:translateY(16px) scale(.85,2.2)}
+@keyframes kefir-hang {
+  0%, 100% { transform: translateY(0) scale(1, 1); }
+  50%      { transform: translateY(16px) scale(0.85, 2.2); }
 }
 
-@media (prefers-reduced-motion:reduce){
-  .kefir-drop{animation:none;transform:translateY(30px) scale(.9,1.6)}
-  .kefir-tongue{animation:none;transform:translateY(10px) scale(.9,1.8)}
-  .kefir-splat,.kefir-bit{animation:none}
+@media (prefers-reduced-motion: reduce) {
+  .kefir-drop { animation: none; transform: translateY(30px) scale(0.9, 1.6); }
+  .kefir-tongue { animation: none; transform: translateY(10px) scale(0.9, 1.8); }
+  .kefir-splat, .kefir-bit { animation: none; }
 }

@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { apiErrorMessage } from "../api.js";
+import Icon from "../components/Icon.jsx";
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,7 +19,7 @@ export default function Login() {
     setBusy(true);
     try {
       await login(username, password);
-      navigate("/");
+      navigate(location.state?.from || "/", { replace: true });
     } catch (err) {
       setError(apiErrorMessage(err));
     } finally {
@@ -26,39 +28,51 @@ export default function Login() {
   };
 
   return (
-    <div className="app">
-      <div className="login-wrap">
-        <div className="login-box panel panel-pad">
-          <h1>CS2 Турниры</h1>
-          <p className="sub">Войдите под своей учётной записью</p>
-          {error ? <div className="error-box">{error}</div> : null}
-          <form onSubmit={submit}>
-            <div className="field">
-              <label htmlFor="u">Логин</label>
-              <input
-                id="u"
-                type="text"
-                autoFocus
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="p">Пароль</label>
-              <input
-                id="p"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-            <button className="btn primary" style={{ width: "100%" }} disabled={busy} type="submit">
-              {busy ? "Входим…" : "Войти"}
-            </button>
-          </form>
+    <div className="login">
+      <div className="login-panel">
+        <div className="brand login-brand">
+          <span className="brand-mark">
+            <img src="/img/logo-light.png" alt="" />
+          </span>
+          <span className="brand-word">thirteen</span>
         </div>
+
+        <h1>Вход</h1>
+        <p className="lead">Турниры CS2 2×2 среди своих. Логин и пароль выдаёт админ.</p>
+
+        {error ? <div className="error-box">{error}</div> : null}
+        <form onSubmit={submit} className="login-form">
+          <label className="field">
+            <span>Логин или ник</span>
+            <input
+              type="text"
+              autoFocus
+              autoComplete="username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </label>
+          <label className="field">
+            <span>Пароль</span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </label>
+          <button className="btn primary lg" disabled={busy} type="submit">
+            {busy ? "Входим…" : "Войти"}
+          </button>
+        </form>
+        <Link to="/" className="back login-guest">
+          Смотреть турниры без входа <Icon name="arrowRight" size={15} />
+        </Link>
+      </div>
+
+      <div className="login-art">
+        <img src="/img/door.webp" alt="Приоткрытая дверь с номером 13" />
+        <p className="mono">Играем до тринадцати.</p>
       </div>
     </div>
   );

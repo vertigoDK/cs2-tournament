@@ -2,9 +2,9 @@ import { useState } from "react";
 import { mapImage } from "../utils/maps.js";
 import Icon from "./Icon.jsx";
 
-// Карточка карты в драфте: прямоугольная, с картинкой — как в про-сцене CS.
-// Если картинки для карты нет, остаётся аккуратная подложка с названием,
-// поэтому добавление новой карты в пул не ломает интерфейс.
+// Плитка карты в драфте: иллюстрация сверху, название полосой снизу.
+// Если обложки для карты нет, остаётся пустая «бумага» с названием, поэтому
+// добавление новой карты в пул не ломает интерфейс.
 export default function MapCard({ name, state, disabled, onClick }) {
   const [noImage, setNoImage] = useState(false);
   const src = mapImage(name);
@@ -20,20 +20,18 @@ export default function MapCard({ name, state, disabled, onClick }) {
       onClick={onClick}
       title={name}
     >
-      {src && !noImage ? (
-        <img src={src} alt="" loading="lazy" onError={() => setNoImage(true)} />
-      ) : null}
-
-      <span className="mc-shade" />
-
-      {label ? (
-        <span className={`mc-tag ${state}`}>
-          {state === "decider" ? <Icon name="star" size={11} filled /> : null}
-          {state === "picked" ? <Icon name="check" size={11} /> : null}
-          {label}
-        </span>
-      ) : null}
-
+      <span className="mc-art">
+        {src && !noImage ? (
+          <img src={src} alt="" loading="lazy" onError={() => setNoImage(true)} />
+        ) : null}
+        {label ? (
+          <span className={`mc-tag ${state}`}>
+            {state === "decider" ? <Icon name="star" size={11} filled /> : null}
+            {state === "picked" ? <Icon name="check" size={11} /> : null}
+            {label}
+          </span>
+        ) : null}
+      </span>
       <span className="mc-name">{name}</span>
     </button>
   );

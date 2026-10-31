@@ -5,6 +5,7 @@ from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer, Large
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
+from .map_catalog import MAP_NAMES
 
 
 class Role(str, enum.Enum):
@@ -32,6 +33,9 @@ class User(Base):
     role: Mapped[Role] = mapped_column(Enum(Role), default=Role.player)
 
     display_name: Mapped[str] = mapped_column(String(80), default="")
+    # SteamID64: по нему Cybershoke опознаёт игрока в лобби и в результатах
+    # матча (ник там игровой и меняется). Пусто — аккаунт ещё не привязан.
+    steam_id: Mapped[str | None] = mapped_column(String(20), nullable=True, unique=True, index=True)
     avatar_color: Mapped[str] = mapped_column(String(20), default=DEFAULT_AVATAR_COLOR)
     # Загруженная картинка. Пусто — рисуем инициал на цветной подложке.
     avatar_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -42,7 +46,8 @@ class User(Base):
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
 
 
-DEFAULT_MAPS = ["Mirage", "Inferno", "Overpass", "Nuke", "Vertigo"]
+# Пул нового турнира по умолчанию — весь каталог карт (см. map_catalog.py).
+DEFAULT_MAPS = list(MAP_NAMES)
 
 
 class TournamentStatus(str, enum.Enum):

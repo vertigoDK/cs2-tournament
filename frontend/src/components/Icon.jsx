@@ -38,6 +38,7 @@ const paths = {
     </>
   ),
   arrowRight: <path d="M5 12h13M13 6.5 18.5 12 13 17.5" />,
+  arrowLeft: <path d="M19 12H6M11 6.5 5.5 12l5.5 5.5" />,
   users: (
     <>
       <circle cx="9" cy="8" r="3.2" />
@@ -46,6 +47,7 @@ const paths = {
     </>
   ),
   plus: <path d="M12 5.5v13M5.5 12h13" />,
+  close: <path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5" />,
   chevronDown: <path d="M6.5 9.5 12 15l5.5-5.5" />,
   arrowUp: <path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" />,
   arrowDown: <path d="M12 5v14M6.5 13.5 12 19l5.5-5.5" />,

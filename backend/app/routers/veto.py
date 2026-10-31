@@ -1,3 +1,5 @@
+import time
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -58,6 +60,9 @@ def _mutate(db: Session, tournament_id: int, r: int, i: int, action) -> Tourname
     t = _get_tournament(db, tournament_id)
     bracket = dict(t.bracket)
     _check_bounds(bracket, r, i)
+    # Сначала доигрываем просроченные ходы: тот, у кого кончилось время, уже
+    # не может походить, даже если запрос успел уйти.
+    B.veto_tick(bracket, time.time())
     try:
         action(bracket)
     except ValueError as e:
@@ -70,7 +75,7 @@ def start_veto(tournament_id: int, r: int, i: int, db: Session = Depends(get_db)
     """Открывает драфт: дальше карты выбирают сами капитаны."""
     t = _get_tournament(db, tournament_id)
     _require_underway(t)
-    t = _mutate(db, tournament_id, r, i, lambda br: B.veto_start(br, r, i))
+    t = _mutate(db, tournament_id, r, i, lambda br: B.veto_start(br, r, i, time.time()))
     from .tournaments import _to_out
     return _to_out(t, db)
 
@@ -86,10 +91,13 @@ def choose_map(
 ):
     t = _get_tournament(db, tournament_id)
     _require_underway(t)
-    bracket = t.bracket
+    bracket = dict(t.bracket)
     _check_bounds(bracket, r, i)
+    # Права хода проверяем по уже доигранному состоянию: если время вышло,
+    # ход перешёл к сопернику.
+    B.veto_tick(bracket, time.time())
     _require_can_choose(t, bracket, r, i, user)
-    t = _mutate(db, tournament_id, r, i, lambda br: B.veto_choose(br, r, i, payload.map))
+    t = _mutate(db, tournament_id, r, i, lambda br: B.veto_choose(br, r, i, payload.map, time.time()))
     from .tournaments import _to_out
     return _to_out(t, db)
 

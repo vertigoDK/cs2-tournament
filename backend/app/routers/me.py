@@ -8,6 +8,7 @@ from ..models import AVATAR_COLORS, Tournament, TournamentStatus, User
 from ..hydrate import hydrate_bracket
 from ..people import display_name_taken
 from ..uploads import delete_image, save_image
+from ..store import tick_vetoes
 
 router = APIRouter(prefix="/api/me", tags=["me"])
 
@@ -123,6 +124,7 @@ def active_veto(db: Session = Depends(get_db), user: User = Depends(get_current_
     )
 
     for t in tournaments:
+        t = tick_vetoes(db, t)
         bracket = t.bracket or {}
         for r, round_ in enumerate(bracket.get("rounds") or []):
             for i, match in enumerate(round_):

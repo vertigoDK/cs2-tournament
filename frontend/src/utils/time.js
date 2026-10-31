@@ -54,13 +54,8 @@ export function breakdownCountdown(ms) {
   };
 }
 
-export function formatCountdown(ms) {
-  const b = breakdownCountdown(ms);
-  if (!b) return null;
-  const parts = [];
-  if (b.days) parts.push(`${b.days}д`);
-  if (b.days || b.hours) parts.push(`${b.hours}ч`);
-  if (b.days || b.hours || b.mins) parts.push(`${b.mins}м`);
-  parts.push(`${b.secs}с`);
-  return parts.join(" ");
+// Короткая дата для карточек: «12 нояб.».
+export function formatDay(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 }

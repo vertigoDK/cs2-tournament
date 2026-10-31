@@ -109,7 +109,10 @@ class TeamIn(BaseModel):
 
 
 SeedMode = Literal["seed", "order", "random"]
-BestOf = Literal[1, 3]
+BestOf = Literal[1, 3, 5]
+
+# Время на весь драфт (секунды): у каждой команды половина. 0 — без таймера.
+VetoTime = Field(default=0, ge=0, le=3600)
 
 
 class TournamentCreate(BaseModel):
@@ -119,7 +122,24 @@ class TournamentCreate(BaseModel):
     teams: list[TeamIn]
     maps_pool: list[str] | None = None
     best_of: BestOf = 1
+    # Финал часто играют дольше остальных; не задан — как обычные матчи.
+    final_best_of: BestOf | None = None
+    veto_time: int = VetoTime
     starts_at: dt.datetime | None = None
+
+
+class QualifierCreate(BaseModel):
+    player_ids: list[int]
+    mode: SeedMode = "order"
+    map: str = Field(default="aim_map_s2", max_length=60)
+    note: str = Field(default="", max_length=300)
+
+
+class DuelResult(BaseModel):
+    """Пустой счёт и победитель — снять результат."""
+
+    score: list[int] | None = None
+    win: Literal[0, 1] | None = None
 
 
 class TournamentPatch(BaseModel):
@@ -135,6 +155,21 @@ class TournamentRegenerate(BaseModel):
     teams: list[TeamIn]
     maps_pool: list[str] | None = None
     best_of: BestOf = 1
+    final_best_of: BestOf | None = None
+    veto_time: int = VetoTime
+
+
+class MvpOut(BaseModel):
+    player_id: int
+    display_name: str
+    avatar_color: str
+    avatar_url: str | None = None
+    rating: float
+    kills: int
+    deaths: int
+    assists: int
+    rounds: int
+    maps: int
 
 
 class TournamentSummary(BaseModel):
@@ -151,11 +186,15 @@ class TournamentSummary(BaseModel):
     matches_played: int = 0
     matches_total: int = 0
     champion: str | None = None
+    # Лучший игрок завершённого турнира (см. bracket.tournament_mvp).
+    mvp: MvpOut | None = None
 
 
 class TournamentOut(TournamentSummary):
     maps_pool: list[str]
     bracket: dict
+    # Часы сервера (unix, сек): таймер драфта в браузере считается по ним.
+    server_time: float = 0
 
 
 class PickRequest(BaseModel):
@@ -204,6 +243,9 @@ class PlayerStat(BaseModel):
     titles: int = 0
     # Доля призовых: фонд делится между двумя игроками команды-победителя.
     prize: float = 0.0
+    # Отборочные дуэли 1×1 — отдельно от карт 2×2.
+    duel_wins: int = 0
+    duel_losses: int = 0
 
 
 class MapStat(BaseModel):

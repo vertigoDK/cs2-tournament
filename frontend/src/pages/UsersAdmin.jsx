@@ -3,6 +3,7 @@ import api, { apiErrorMessage } from "../api.js";
 import { useToast } from "../components/Toast.jsx";
 import Avatar from "../components/Avatar.jsx";
 import Icon from "../components/Icon.jsx";
+import PageHead, { EmptyState } from "../components/PageHead.jsx";
 
 export default function UsersAdmin() {
   const [users, setUsers] = useState(null);
@@ -84,9 +85,11 @@ export default function UsersAdmin() {
 
   return (
     <main className="page narrow">
-      <div className="section-head">
-        <h2>Участники</h2>
-      </div>
+      <PageHead
+        title="Участники"
+        sub="Один список на все турниры. Логин и пароль выдаются случайные и показываются один раз."
+        art="/img/teams.webp"
+      />
 
       {issued ? (
         <div className="panel panel-pad creds-card">
@@ -140,10 +143,7 @@ export default function UsersAdmin() {
         {!users ? (
           <div className="spinner" />
         ) : users.length === 0 ? (
-          <div className="empty-state">
-            <b>Участников ещё нет</b>
-            <span>Добавьте первого — из них собираются команды.</span>
-          </div>
+          <EmptyState art="/img/teams.webp" title="Участников ещё нет" text="Добавьте первого — из них собираются команды." />
         ) : (
           <ul className="user-list">
             {users.map((u) => (

@@ -2,10 +2,26 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
 import { almatyLocalToUtcIso, utcIsoToAlmatyLocal } from "../utils/time.js";
-import { sequenceLabel } from "../utils/veto.js";
+import { BEST_OF, minPool, sequenceLabel } from "../utils/veto.js";
+import { mapImage } from "../utils/maps.js";
 import Icon from "../components/Icon.jsx";
+import PageHead from "../components/PageHead.jsx";
 
-const DEFAULT_MAPS = ["Mirage", "Inferno", "Overpass", "Nuke", "Vertigo"];
+// Пул 2×2 на Cybershoke; держим в синхроне с backend/app/map_catalog.py.
+const DEFAULT_MAPS = [
+  "Nuke",
+  "Inferno",
+  "Dust2",
+  "Mirage",
+  "Train",
+  "Anubis",
+  "Rialto",
+  "Overpass",
+  "Vertigo",
+  "Lake",
+  "Eldorado",
+  "Debris",
+];
 
 export default function TournamentForm() {
   const { id } = useParams();
@@ -15,8 +31,12 @@ export default function TournamentForm() {
   const [name, setName] = useState("");
   const [prizePool, setPrizePool] = useState("");
   const [mode, setMode] = useState("seed");
-  const [mapsText, setMapsText] = useState(DEFAULT_MAPS.join(", "));
+  const [pool, setPool] = useState(DEFAULT_MAPS);
   const [bestOf, setBestOf] = useState(3);
+  // Финал часто играют дольше остальных матчей.
+  const [finalBo, setFinalBo] = useState(5);
+  // Время на весь драфт, у каждой команды половина; 0 — без таймера.
+  const [vetoMinutes, setVetoMinutes] = useState(5);
   const [startsAtLocal, setStartsAtLocal] = useState(""); // "YYYY-MM-DDTHH:mm" по времени UTC+5
 
   const [players, setPlayers] = useState(null);
@@ -26,6 +46,9 @@ export default function TournamentForm() {
   const [pickB, setPickB] = useState("");
 
   const [error, setError] = useState("");
+  // Как было при открытии формы: сетку пересобираем, только если поменялось
+  // то, из чего она строится, — иначе правка названия стирала бы результаты.
+  const original = useRef(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -37,8 +60,10 @@ export default function TournamentForm() {
           setName(t.name);
           setPrizePool(t.prize_pool || "");
           setMode(t.mode || "seed");
-          setMapsText((t.maps_pool || DEFAULT_MAPS).join(", "));
+          setPool(t.maps_pool || DEFAULT_MAPS);
           setBestOf(t.bracket.best_of || 1);
+          setFinalBo(t.bracket.final_best_of || t.bracket.best_of || 1);
+          setVetoMinutes(Math.round((t.bracket.veto_time || 0) / 60));
           setStartsAtLocal(utcIsoToAlmatyLocal(t.starts_at));
           setTeams(
             t.bracket.teams.map((tm) => ({
@@ -51,6 +76,23 @@ export default function TournamentForm() {
               logo_url: tm.logo_url || null,
             }))
           );
+          original.current = {
+            shape: bracketShape({
+              mode: t.mode || "seed",
+              teams: t.bracket.teams.map((tm) => ({
+                player_a_id: tm.player_a_id,
+                player_b_id: tm.player_b_id,
+                captain_id: tm.captain_id || tm.player_a_id,
+                name: tm.custom_name || "",
+                logo_url: tm.logo_url || null,
+              })),
+              pool: t.maps_pool || DEFAULT_MAPS,
+              bestOf: t.bracket.best_of || 1,
+              finalBo: t.bracket.final_best_of || t.bracket.best_of || 1,
+              vetoMinutes: Math.round((t.bracket.veto_time || 0) / 60),
+            }),
+            hasResults: t.status !== "setup" || Boolean(t.started_at),
+          };
         })
       : Promise.resolve();
 
@@ -71,10 +113,13 @@ export default function TournamentForm() {
 
   const available = useMemo(() => (players || []).filter((p) => !usedIds.has(p.id)), [players, usedIds]);
 
-  const mapsPool = mapsText
-    .split(/[,\n]/)
-    .map((m) => m.trim())
-    .filter(Boolean);
+  // Карты старых турниров, которых нет в каталоге, не теряем — показываем рядом.
+  const allMaps = useMemo(() => [...DEFAULT_MAPS, ...pool.filter((m) => !DEFAULT_MAPS.includes(m))], [pool]);
+  // В пул уходит в порядке каталога: так же карты стоят в драфте.
+  const mapsPool = allMaps.filter((m) => pool.includes(m));
+  const toggleMap = (name) =>
+    setPool((prev) => (prev.includes(name) ? prev.filter((m) => m !== name) : [...prev, name]));
+  const needMaps = minPool(Math.max(bestOf, finalBo));
 
   const addTeam = () => {
     if (!pickA || !pickB || pickA === pickB) return;
@@ -137,8 +182,8 @@ export default function TournamentForm() {
       setError("Нужно минимум 2 команды");
       return;
     }
-    if (mapsPool.length < 1) {
-      setError("Укажите хотя бы одну карту");
+    if (mapsPool.length < needMaps) {
+      setError(`Для BO${Math.max(bestOf, finalBo)} нужно минимум ${needMaps} карт в пуле`);
       return;
     }
     const payloadTeams = teams.map((t) => ({
@@ -151,13 +196,30 @@ export default function TournamentForm() {
     const startsAtIso = almatyLocalToUtcIso(startsAtLocal);
     setBusy(true);
     try {
-      if (isEdit) {
+      const shape = bracketShape({ mode, teams: payloadTeams, pool: mapsPool, bestOf, finalBo, vetoMinutes });
+      const rebuild = !isEdit || shape !== original.current?.shape;
+      if (
+        isEdit &&
+        rebuild &&
+        original.current?.hasResults &&
+        !confirm(
+          "Вы поменяли состав, посев, пул карт или формат. Сетка соберётся заново, и ВСЕ результаты турнира удалятся. Продолжить?"
+        )
+      ) {
+        setBusy(false);
+        return;
+      }
+      if (isEdit && rebuild) {
         await api.post(`/tournaments/${id}/regenerate`, {
           mode,
           teams: payloadTeams,
           maps_pool: mapsPool,
           best_of: bestOf,
+          final_best_of: finalBo,
+          veto_time: vetoMinutes * 60,
         });
+      }
+      if (isEdit) {
         await api.patch(`/tournaments/${id}`, {
           name,
           prize_pool: prizePool,
@@ -173,6 +235,8 @@ export default function TournamentForm() {
           teams: payloadTeams,
           maps_pool: mapsPool,
           best_of: bestOf,
+          final_best_of: finalBo,
+          veto_time: vetoMinutes * 60,
           starts_at: startsAtIso,
         });
         navigate(`/tournaments/${data.id}`);
@@ -196,9 +260,11 @@ export default function TournamentForm() {
 
   return (
     <main className="page narrow">
-      <div className="section-head">
-        <h2>{isEdit ? "Редактировать турнир" : "Новый турнир"}</h2>
-      </div>
+      <PageHead
+        title={isEdit ? "Редактировать турнир" : "Новый турнир"}
+        sub="Название, призовой, время старта по Алматы, формат серий и составы команд 2×2."
+        art="/img/draft.webp"
+      />
       <div className="panel panel-pad">
         {error ? <div className="error-box">{error}</div> : null}
 
@@ -365,18 +431,57 @@ export default function TournamentForm() {
             </div>
           </div>
 
-          <div className="field">
-            <label htmlFor="bestOf">Формат серии</label>
-            <select id="bestOf" value={bestOf} onChange={(e) => setBestOf(Number(e.target.value))}>
-              <option value={3}>BO3 — бан, бан, пик, пик, решающая карта</option>
-              <option value={1}>BO1 — четыре бана, решающая карта</option>
-            </select>
+          <div className="form-row">
+            <div className="field">
+              <label>Обычные матчи</label>
+              <Segmented options={BEST_OF} value={bestOf} onChange={setBestOf} format={(v) => `BO${v}`} />
+            </div>
+            <div className="field">
+              <label>Финал</label>
+              <Segmented options={BEST_OF} value={finalBo} onChange={setFinalBo} format={(v) => `BO${v}`} />
+            </div>
           </div>
 
           <div className="field">
-            <label htmlFor="maps">Карты для пик/бана</label>
-            <input id="maps" type="text" value={mapsText} onChange={(e) => setMapsText(e.target.value)} />
-            <div className="hint">Через запятую, обычно 5 карт. Порядок пик/бана: {sequenceLabel(bestOf)}.</div>
+            <label>Время на драфт</label>
+            <Segmented
+              options={[0, 3, 5, 7, 10]}
+              value={vetoMinutes}
+              onChange={setVetoMinutes}
+              format={(v) => (v ? `${v} мин` : "без таймера")}
+            />
+            <div className="hint">
+              {vetoMinutes
+                ? `У каждой команды ${formatHalf(vetoMinutes)} на все свои ходы — время идёт только в её ход. Не успела — оставшиеся баны и пики за неё делаются случайно.`
+                : "Капитаны ходят без ограничения по времени."}
+            </div>
+          </div>
+
+          <div className="field">
+            <div className="pool-head">
+              <label>Пул карт · {mapsPool.length} из {allMaps.length}</label>
+              <button type="button" className="btn sm" onClick={() => setPool(allMaps)}>
+                Все
+              </button>
+              <button type="button" className="btn sm" onClick={() => setPool([])}>
+                Снять все
+              </button>
+            </div>
+            <div className="pool-grid">
+              {allMaps.map((name) => (
+                <PoolTile key={name} name={name} selected={pool.includes(name)} onClick={() => toggleMap(name)} />
+              ))}
+            </div>
+            <div className="hint">
+              {mapsPool.length >= needMaps ? (
+                <>
+                  Вето: обычные матчи (BO{bestOf}) — {sequenceLabel(bestOf, mapsPool.length)}
+                  {finalBo !== bestOf ? `; финал (BO${finalBo}) — ${sequenceLabel(finalBo, mapsPool.length)}` : ""}.
+                </>
+              ) : (
+                `Для BO${Math.max(bestOf, finalBo)} нужно минимум ${needMaps} карт.`
+              )}
+            </div>
           </div>
 
           <div className="row">
@@ -440,4 +545,54 @@ function TeamLogoPicker({ team, busy, onPick, onClear }) {
       />
     </span>
   );
+}
+
+// «2:30» для половины от минут на драфт.
+function formatHalf(minutes) {
+  const sec = minutes * 30;
+  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}`;
+}
+
+function Segmented({ options, value, onChange, format }) {
+  return (
+    <div className="segmented" role="radiogroup">
+      {options.map((o) => (
+        <button
+          key={o}
+          type="button"
+          role="radio"
+          aria-checked={value === o}
+          className={value === o ? "active" : undefined}
+          onClick={() => onChange(o)}
+        >
+          {format(o)}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PoolTile({ name, selected, onClick }) {
+  const [noImage, setNoImage] = useState(false);
+  const src = mapImage(name);
+  return (
+    <button
+      type="button"
+      className={`map-card pool-tile${selected ? " selected" : ""}`}
+      onClick={onClick}
+      aria-pressed={selected}
+    >
+      <span className="mc-art">
+        {src && !noImage ? <img src={src} alt="" loading="lazy" onError={() => setNoImage(true)} /> : null}
+        <span className="pool-check">{selected ? <Icon name="check" size={13} /> : null}</span>
+      </span>
+      <span className="mc-name">{name}</span>
+    </button>
+  );
+}
+
+// Всё, из чего строится сетка, одной строкой — чтобы понять, менялось ли это.
+function bracketShape({ mode, teams, pool, bestOf, finalBo, vetoMinutes }) {
+  const team = (t) => [t.player_a_id, t.player_b_id, t.captain_id, (t.name || "").trim(), t.logo_url || null];
+  return JSON.stringify([mode, teams.map(team), [...pool].sort(), bestOf, finalBo, vetoMinutes]);
 }

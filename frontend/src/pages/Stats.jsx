@@ -4,6 +4,8 @@ import api, { apiErrorMessage } from "../api.js";
 import Avatar from "../components/Avatar.jsx";
 import Icon from "../components/Icon.jsx";
 import { EmptyStats, MapsGrid, PlayersTable } from "../components/StatsTables.jsx";
+import PageHead from "../components/PageHead.jsx";
+import StatusPill from "../components/StatusPill.jsx";
 
 const TABS = [
   { id: "players", label: "Игроки", icon: "medal" },
@@ -46,9 +48,11 @@ export default function Stats() {
 
   return (
     <main className="page">
-      <div className="section-head">
-        <h2>Статистика</h2>
-      </div>
+      <PageHead
+        title="Статистика"
+        sub="Игроки, призовые, карты и история всех турниров. Нажмите на показатель, чтобы пересортировать."
+        art="/img/stats.webp"
+      />
 
       <div className="tabs">
         {TABS.map((t) => (
@@ -64,7 +68,7 @@ export default function Stats() {
         ))}
       </div>
 
-      {tab === "players" && (!hasStats ? <EmptyStats /> : <PlayersTable players={data.players} />)}
+      {tab === "players" && (!hasStats ? <EmptyStats /> : <PlayersTable players={data.players} podium />)}
 
       {tab === "prizes" && <Prizes data={data} />}
 
@@ -157,14 +161,13 @@ function Prizes({ data }) {
   );
 }
 
-const STATUS_LABEL = { setup: "подготовка", active: "идёт", finished: "завершён" };
 
 function TournamentHistory({ t }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="hist">
       <button type="button" className="hist-head" onClick={() => setOpen((v) => !v)}>
-        <span className={`status-chip ${t.status}`}>{STATUS_LABEL[t.status] || t.status}</span>
+        <StatusPill t={t} />
         <span className="hist-name">{t.name}</span>
         {t.champion ? (
           <span className="hist-champ">

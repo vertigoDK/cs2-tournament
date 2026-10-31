@@ -22,9 +22,12 @@ def hydrate_bracket(db: Session, bracket: dict | None) -> dict:
     ids = {
         pid
         for t in teams
-        for pid in (t.get("player_a_id"), t.get("player_b_id"), t.get("captain_id"))
+        for pid in (t.get("player_a_id"), t.get("player_b_id"), t.get("captain_id"), *(t.get("subs") or []))
         if pid
     }
+    qualifier = bracket.get("qualifier") or {}
+    duelists = {pid for round_ in qualifier.get("rounds") or [] for m in round_ for pid in m["p"] if pid}
+    ids |= duelists
     if not ids:
         return bracket
 
@@ -47,6 +50,13 @@ def hydrate_bracket(db: Session, bracket: dict | None) -> dict:
             team["b_color"] = b.avatar_color
             team["b_avatar"] = b.avatar_url
 
+        # Замены — со свежими никами и аватарками, как и основной состав.
+        team["subs_info"] = [
+            {"id": u.id, "name": u.display_name, "color": u.avatar_color, "avatar": u.avatar_url}
+            for u in (people.get(pid) for pid in team.get("subs") or [])
+            if u
+        ]
+
         captain = people.get(team.get("captain_id"))
         if captain:
             team["captain_name"] = captain.display_name
@@ -54,5 +64,16 @@ def hydrate_bracket(db: Session, bracket: dict | None) -> dict:
         # Отображаемое имя пересобираем: своё название в приоритете,
         # иначе — из свежих ников.
         team["name"] = B.team_name(team.get("a", ""), team.get("b", ""), team.get("custom_name"))
+
+    if qualifier:
+        # Ники и аватарки дуэлянтов — свежие, как и у команд.
+        fresh["qualifier"] = {
+            **qualifier,
+            "people": {
+                str(u.id): {"name": u.display_name, "color": u.avatar_color, "avatar": u.avatar_url}
+                for u in (people.get(pid) for pid in duelists)
+                if u
+            },
+        }
 
     return fresh

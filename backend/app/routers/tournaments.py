@@ -1,14 +1,15 @@
 import datetime as dt
+import time
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import bracket as B
 from .. import schemas
-from ..deps import get_current_user, get_db, require_admin
+from ..deps import get_db, require_admin
 from ..models import Role, Tournament, TournamentStatus, User
 from ..hydrate import hydrate_bracket
-from ..store import save_bracket, sync_status
+from ..store import save_bracket, sync_status, tick_vetoes
 
 router = APIRouter(prefix="/api/tournaments", tags=["tournaments"])
 
@@ -111,6 +112,13 @@ def _summary(t: Tournament) -> schemas.TournamentSummary:
     )
 
 
+def _clean_pool(maps_pool: list[str], best_of: int) -> list[str]:
+    try:
+        return B.clean_pool(maps_pool, best_of)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
 def _get_or_404(db: Session, tournament_id: int) -> Tournament:
     t = db.get(Tournament, tournament_id)
     if not t:
@@ -121,21 +129,40 @@ def _get_or_404(db: Session, tournament_id: int) -> Tournament:
 def _to_out(t: Tournament, db: Session | None = None) -> schemas.TournamentOut:
     """Сетку отдаём с актуальными никами и аватарками участников."""
     return schemas.TournamentOut(
-        **_summary(t).model_dump(),
+        **_summary(t).model_dump(exclude={"mvp"}),
         maps_pool=t.maps_pool,
         bracket=hydrate_bracket(db, t.bracket) if db is not None else t.bracket,
+        server_time=time.time(),
+        mvp=_mvp(t, db),
+    )
+
+
+def _mvp(t: Tournament, db: Session | None) -> schemas.MvpOut | None:
+    """MVP показываем только у завершённого турнира — посреди турнира лидер
+    ещё может смениться."""
+    if db is None or t.status != TournamentStatus.finished:
+        return None
+    best = B.tournament_mvp(t.bracket or {})
+    user = db.get(User, best["player_id"]) if best else None
+    if not user:
+        return None
+    return schemas.MvpOut(
+        display_name=user.display_name, avatar_color=user.avatar_color, avatar_url=user.avatar_url, **best
     )
 
 
 @router.get("", response_model=list[schemas.TournamentSummary])
-def list_tournaments(db: Session = Depends(get_db), _: User = Depends(get_current_user)):
+def list_tournaments(db: Session = Depends(get_db)):
+    """Смотреть турниры можно без входа — вход нужен, только чтобы что-то менять."""
     rows = db.query(Tournament).order_by(Tournament.created_at.desc()).all()
-    return [_summary(t) for t in rows]
+    return [_summary(t).model_copy(update={"mvp": _mvp(t, db)}) for t in rows]
 
 
 @router.get("/{tournament_id}", response_model=schemas.TournamentOut)
-def get_tournament(tournament_id: int, db: Session = Depends(get_db), _: User = Depends(get_current_user)):
-    return _to_out(_get_or_404(db, tournament_id), db)
+def get_tournament(tournament_id: int, db: Session = Depends(get_db)):
+    # Страницу турнира опрашивают раз в пару секунд — заодно доигрываем ходы
+    # драфта, у которых вышло время.
+    return _to_out(tick_vetoes(db, _get_or_404(db, tournament_id)), db)
 
 
 @router.post("", response_model=schemas.TournamentOut, status_code=201)
@@ -145,12 +172,14 @@ def create_tournament(payload: schemas.TournamentCreate, db: Session = Depends(g
     maps_pool = payload.maps_pool or None
     from ..models import DEFAULT_MAPS
     teams = _resolve_teams(db, payload.teams)
-    bracket = B.build_bracket(teams, payload.mode, maps_pool or DEFAULT_MAPS, payload.best_of)
+    final_bo = payload.final_best_of or payload.best_of
+    maps_pool = _clean_pool(maps_pool or DEFAULT_MAPS, max(payload.best_of, final_bo))
+    bracket = B.build_bracket(teams, payload.mode, maps_pool, payload.best_of, final_bo, payload.veto_time)
     t = Tournament(
         name=payload.name,
         prize_pool=payload.prize_pool,
         mode=payload.mode,
-        maps_pool=maps_pool or DEFAULT_MAPS,
+        maps_pool=maps_pool,
         bracket=bracket,
         created_by=user.id,
         starts_at=_to_utc_naive(payload.starts_at) if payload.starts_at else None,
@@ -186,11 +215,53 @@ def regenerate_tournament(tournament_id: int, payload: schemas.TournamentRegener
     if len(payload.teams) < 2:
         raise HTTPException(status_code=400, detail="Нужно минимум 2 команды")
     from ..models import DEFAULT_MAPS
-    maps_pool = payload.maps_pool or t.maps_pool or DEFAULT_MAPS
+    final_bo = payload.final_best_of or payload.best_of
+    maps_pool = _clean_pool(payload.maps_pool or t.maps_pool or DEFAULT_MAPS, max(payload.best_of, final_bo))
     teams = _resolve_teams(db, payload.teams)
     t.mode = payload.mode
     t.maps_pool = maps_pool
-    save_bracket(db, t, B.build_bracket(teams, payload.mode, maps_pool, payload.best_of))
+    save_bracket(
+        db, t, B.build_bracket(teams, payload.mode, maps_pool, payload.best_of, final_bo, payload.veto_time)
+    )
+    return _to_out(t, db)
+
+
+@router.post("/{tournament_id}/qualifier", response_model=schemas.TournamentOut)
+def create_qualifier(tournament_id: int, payload: schemas.QualifierCreate, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    """Отборочные дуэли 1×1. Существующие заменяются целиком."""
+    t = _get_or_404(db, tournament_id)
+    known = {u.id for u in db.query(User).filter(User.id.in_(payload.player_ids)).all()}
+    if missing := [pid for pid in payload.player_ids if pid not in known]:
+        raise HTTPException(status_code=400, detail=f"Неизвестные участники: {missing}")
+    bracket = dict(t.bracket)
+    try:
+        bracket["qualifier"] = B.build_qualifier(payload.player_ids, payload.mode, payload.map, payload.note)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    save_bracket(db, t, bracket)
+    return _to_out(t, db)
+
+
+@router.put("/{tournament_id}/qualifier/{r}/{i}", response_model=schemas.TournamentOut)
+def set_duel(tournament_id: int, r: int, i: int, payload: schemas.DuelResult, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    t = _get_or_404(db, tournament_id)
+    bracket = dict(t.bracket)
+    if not bracket.get("qualifier"):
+        raise HTTPException(status_code=404, detail="У турнира нет дуэлей")
+    try:
+        B.qualifier_set_result(bracket["qualifier"], r, i, payload.score, payload.win)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    save_bracket(db, t, bracket)
+    return _to_out(t, db)
+
+
+@router.delete("/{tournament_id}/qualifier", response_model=schemas.TournamentOut)
+def delete_qualifier(tournament_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    t = _get_or_404(db, tournament_id)
+    bracket = dict(t.bracket)
+    bracket.pop("qualifier", None)
+    save_bracket(db, t, bracket)
     return _to_out(t, db)
 
 

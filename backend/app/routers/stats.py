@@ -13,8 +13,9 @@ from sqlalchemy.orm import Session
 
 from .. import bracket as B
 from .. import schemas
-from ..deps import get_current_user, get_db
+from ..deps import get_db
 from ..hydrate import hydrate_bracket
+from ..map_catalog import MAP_NAMES
 from ..models import Role, Tournament, User
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
@@ -60,11 +61,10 @@ def _parse_prize(text: str) -> tuple[float, str]:
 def stats(
     tournament_id: int | None = None,
     db: Session = Depends(get_db),
-    _: User = Depends(get_current_user),
 ):
     """Сводка по всем турнирам сразу или по одному, если передан `tournament_id`.
 
-    Считается всё тем же проходом: страница турнира показывает ту же таблицу,
+    Открыта без входа, как и турниры. Считается всё тем же проходом: страница турнира показывает ту же таблицу,
     что и общая статистика, только по своим матчам.
     """
     players = {
@@ -102,7 +102,9 @@ def stats(
         if currency:
             currencies[currency] += 1
 
-        # Участие в турнире и титулы считаем один раз на человека.
+        # Участие в турнире и титулы считаем один раз на человека — даже если
+        # он успел сыграть за две команды (замена в дружеском турнире).
+        counted: set[int] = set()
         for team in teams:
             members = [pid for pid in (team.get("player_a_id"), team.get("player_b_id")) if pid]
             is_champion = champion_seed is not None and team.get("seed") == champion_seed
@@ -111,12 +113,20 @@ def stats(
             for pid in members:
                 if pid not in players:
                     continue
-                players[pid].tournaments += 1
+                if pid not in counted:
+                    counted.add(pid)
+                    players[pid].tournaments += 1
                 if is_champion:
                     players[pid].titles += 1
                     # Турниры 2×2 — фонд делится на состав команды.
                     if amount and members:
                         players[pid].prize += amount / len(members)
+
+        for winner, loser in B.qualifier_results(bracket):
+            if winner in players:
+                players[winner].duel_wins += 1
+            if loser in players:
+                players[loser].duel_losses += 1
 
         matches: list[schemas.HistoryMatch] = []
         for r, round_ in enumerate(rounds):
@@ -164,7 +174,7 @@ def stats(
                         for slot, side in ((0, team_a), (1, team_b)):
                             if not side:
                                 continue
-                            if pid in (side.get("player_a_id"), side.get("player_b_id")):
+                            if pid in B.team_member_ids(side):
                                 if winner == slot:
                                     p.map_wins += 1
                                 elif winner is not None:
@@ -218,7 +228,24 @@ def stats(
         rows = [p for p in rows if p.tournaments]
 
     ranked = sorted(rows, key=lambda p: (-p.kills, p.display_name.lower()))
-    map_list = sorted(maps.values(), key=lambda m: (-(m.played + m.picked + m.banned), m.map))
+
+    # В общей сводке показываем весь каталог, даже несыгранные карты; карты
+    # старых турниров, которых в каталоге нет, остаются как есть.
+    if tournament_id is None:
+        known = {name.lower() for name in maps}
+        for name in MAP_NAMES:
+            if name.lower() not in known:
+                map_row(name)
+
+    catalog_order = {name.lower(): i for i, name in enumerate(MAP_NAMES)}
+    map_list = sorted(
+        maps.values(),
+        key=lambda m: (
+            -(m.played + m.picked + m.banned),
+            catalog_order.get(m.map.lower(), len(catalog_order)),
+            m.map,
+        ),
+    )
     return schemas.StatsOut(
         players=ranked,
         maps=map_list,

@@ -9,3 +9,4 @@ frontend/dist/
 fragg-3.0/
 .vercel
 .env*
+.venv/

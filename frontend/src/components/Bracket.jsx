@@ -82,6 +82,8 @@ function Slot({ team, seed, isWin, isLose, isTbd, clickable, onClick }) {
               <Icon name="star" size={10} filled />
               <Roster team={team} />
             </>
+          ) : team.subs_info?.length ? (
+            <>ещё играли: {team.subs_info.map((s) => s.name).join(", ")}</>
           ) : (
             <>
               <Icon name="star" size={10} filled /> капитан:{" "}
@@ -225,7 +227,8 @@ export default function Bracket({ bracket, isAdmin, started, onPick, onOpenVeto 
               {round.map((m, i) => {
               const teamA = m.p[0] != null ? teams[m.p[0]] : null;
               const teamB = m.p[1] != null ? teams[m.p[1]] : null;
-              const ready = teamA && teamB && m.win === null;
+              // «Идёт» — только после старта турнира: до него матчи просто ждут.
+              const ready = started && teamA && teamB && m.win === null && !m.bye;
               const bothKnown = Boolean(teamA && teamB) && !m.bye;
               const vetoDone = m.veto?.status === "done";
               return (
@@ -239,6 +242,8 @@ export default function Bracket({ bracket, isAdmin, started, onPick, onOpenVeto 
                   <div className="match-head">
                     <span className="match-no">
                       R{r + 1}·M{i + 1}
+                      {/* Формат показываем, только если он не такой, как у остальных (обычно финал). */}
+                      {m.bo && m.bo !== (bracket.best_of || 1) ? <span className="tag bo-tag">BO{m.bo}</span> : null}
                     </span>
                     {m.bye ? (
                       <span className="tag">bye</span>
