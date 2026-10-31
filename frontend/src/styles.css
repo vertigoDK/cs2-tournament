@@ -1455,6 +1455,38 @@ svg.links path.champion-link { stroke: var(--accent); stroke-width: 2; }
   color: var(--accent-ink);
 }
 
+/* Статистика игроков по картам в драфте */
+.draft-stats { margin-bottom: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.ds-toggle {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 12px 16px;
+  border: 0; background: none; font-weight: 700; font-size: 14px; cursor: pointer; text-align: left;
+}
+.ds-toggle:hover { color: var(--accent-ink); }
+.ds-caret { margin-left: auto; transition: transform 0.2s var(--ease); }
+.draft-stats.open .ds-caret { transform: rotate(180deg); }
+.draft-stats .spinner { margin: 16px auto 22px; }
+.ds-wrap { padding: 0 16px 14px; border-top: 1px dashed var(--line); }
+.ds-wrap .hint { margin-top: 10px; }
+.ds-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+.ds-table th { padding: 6px 8px 10px; font-weight: 700; font-size: 13px; text-align: left; vertical-align: bottom; }
+.ds-player > * { vertical-align: middle; }
+.ds-player .ava { display: inline-grid; margin-right: 7px; width: 26px; height: 26px; font-size: 11px; border-radius: 8px; }
+.ds-player.side-0 { border-bottom: 2px solid var(--ink); }
+.ds-player.side-1 { border-bottom: 2px solid var(--accent); }
+.ds-table td { padding: 7px 8px; border-top: 1px solid var(--line); }
+.ds-map { font-weight: 700; font-size: 14px; white-space: nowrap; }
+.ds-cell { white-space: nowrap; }
+.ds-cell.ds-none { color: var(--line-2); }
+.ds-cell.side-1 { background: rgb(255 77 26 / 0.03); }
+.ds-rating { display: inline-block; min-width: 42px; font-size: 14px; }
+.ds-rating.hot { color: var(--accent); }
+.ds-rating.cold { color: var(--muted); }
+.ds-wl, .ds-kd { font-size: 11.5px; color: var(--muted); margin-left: 6px; }
+@media (max-width: 760px) {
+  .ds-wrap { overflow-x: auto; }
+  .ds-kd { display: none; }
+}
+
 /* Порядок драфта */
 .veto-steps {
   list-style: none;

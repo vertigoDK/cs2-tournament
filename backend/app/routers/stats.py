@@ -253,3 +253,41 @@ def stats(
         currency=currencies.most_common(1)[0][0] if currencies else "",
         prize_total=round(prize_total, 2),
     )
+
+
+@router.get("/player-maps", response_model=dict[str, dict[str, schemas.PlayerMapStat]])
+def player_maps(ids: str, db: Session = Depends(get_db)):
+    """Статистика игроков по картам — капитанам перед драфтом.
+
+    `ids` — id участников через запятую. Ответ: {id: {карта: строка}}. Карты,
+    где игрок не играл, в ответ не попадают. Дуэли 1×1 сюда не входят.
+    """
+    wanted = {int(x) for x in ids.split(",") if x.strip().isdigit()}
+    out: dict[int, dict[str, schemas.PlayerMapStat]] = {pid: {} for pid in wanted}
+    for t in db.query(Tournament).all():
+        bracket = t.bracket or {}
+        teams = bracket.get("teams") or []
+        for round_ in bracket.get("rounds") or []:
+            for m in round_:
+                sides = [teams[idx] if idx is not None else None for idx in m.get("p", [None, None])]
+                for entry in m.get("maps") or []:
+                    rounds = sum(entry.get("rounds") or [])
+                    for key, line in (entry.get("stats") or {}).items():
+                        pid = int(key)
+                        if pid not in wanted:
+                            continue
+                        row = out[pid].setdefault(entry["map"], schemas.PlayerMapStat())
+                        row.kills += line.get("k", 0)
+                        row.deaths += line.get("d", 0)
+                        row.assists += line.get("a", 0)
+                        row.rounds += rounds
+                        slot = next((k for k, side in enumerate(sides) if side and pid in B.team_member_ids(side)), None)
+                        if entry.get("winner") in (0, 1) and slot is not None:
+                            if entry["winner"] == slot:
+                                row.wins += 1
+                            else:
+                                row.losses += 1
+    for rows in out.values():
+        for row in rows.values():
+            row.rating = round(B.player_rating(row.kills, row.deaths, row.rounds), 2)
+    return {str(pid): rows for pid, rows in out.items()}

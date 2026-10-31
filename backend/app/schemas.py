@@ -248,6 +248,16 @@ class PlayerStat(BaseModel):
     duel_losses: int = 0
 
 
+class PlayerMapStat(BaseModel):
+    wins: int = 0
+    losses: int = 0
+    kills: int = 0
+    deaths: int = 0
+    assists: int = 0
+    rounds: int = 0
+    rating: float = 0.0
+
+
 class MapStat(BaseModel):
     map: str
     picked: int = 0

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { formatClock, stepAction, vetoSequence } from "../utils/veto.js";
 import Icon from "./Icon.jsx";
 import MapCard from "./MapCard.jsx";
+import DraftStats from "./DraftStats.jsx";
 
 // Название приходит с сервера готовым: своё имя команды или «ник + ник».
 const teamLabel = (t) => t?.name || "TBD";
@@ -138,6 +139,8 @@ export default function VetoModal({
           {status !== "pending" && !veto?.skipped && (
             <VetoSteps veto={veto} bestOf={bo} poolSize={poolSize} teamA={teamA} teamB={teamB} />
           )}
+
+          <DraftStats teamA={teamA} teamB={teamB} mapsPool={mapsPool} />
 
           {status !== "pending" && !veto?.skipped && (
             <div className="map-grid">
