@@ -204,6 +204,10 @@ def patch_tournament(tournament_id: int, payload: schemas.TournamentPatch, db: S
         t.starts_at = None
     elif payload.starts_at is not None:
         t.starts_at = _to_utc_naive(payload.starts_at)
+    if payload.veto_time is not None:
+        bracket = dict(t.bracket)
+        bracket["veto_time"] = payload.veto_time
+        save_bracket(db, t, bracket)
     db.commit()
     db.refresh(t)
     return _to_out(t, db)

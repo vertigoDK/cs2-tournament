@@ -4,10 +4,8 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 
 // Статистика по картам для всех игроков матча — капитанам во время драфта:
-// своя, напарника и двух соперников. Раскрывается по кнопке, чтобы не
-// заслонять сами карты.
+// своя, напарника и двух соперников. Всегда раскрыта под картами.
 export default function DraftStats({ teamA, teamB, mapsPool }) {
-  const [open, setOpen] = useState(false);
   const [data, setData] = useState(null);
 
   const players = [teamA, teamB].flatMap((team, side) =>
@@ -21,26 +19,24 @@ export default function DraftStats({ teamA, teamB, mapsPool }) {
   const ids = players.map((p) => p.id).join(",");
 
   useEffect(() => {
-    if (!open || !ids) return;
+    if (!ids) return;
     let alive = true;
     api.get("/stats/player-maps", { params: { ids } }).then((res) => alive && setData(res.data));
     return () => {
       alive = false;
     };
-  }, [open, ids]);
+  }, [ids]);
 
   if (!players.length) return null;
 
   return (
-    <div className={`draft-stats${open ? " open" : ""}`}>
-      <button type="button" className="ds-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+    <div className="draft-stats open">
+      <div className="ds-toggle">
         <Icon name="chart" size={15} />
         Статистика игроков по картам
-        <Icon name="chevronDown" size={15} className="ds-caret" />
-      </button>
+      </div>
 
-      {open ? (
-        !data ? (
+      {!data ? (
           <div className="spinner" />
         ) : (
           <div className="ds-wrap">
@@ -93,8 +89,7 @@ export default function DraftStats({ teamA, teamB, mapsPool }) {
               турнирам, дуэли 1×1 не входят. «—» — на этой карте ещё не играл.
             </div>
           </div>
-        )
-      ) : null}
+      )}
     </div>
   );
 }

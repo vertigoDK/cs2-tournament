@@ -148,6 +148,9 @@ class TournamentPatch(BaseModel):
     status: Literal["setup", "active", "finished"] | None = None
     starts_at: dt.datetime | None = None
     clear_starts_at: bool = False
+    # Время на драфт можно поменять в любой момент: идущие драфты доигрывают
+    # со своим запасом, новое время действует со следующего.
+    veto_time: int | None = Field(default=None, ge=0, le=3600)
 
 
 class TournamentRegenerate(BaseModel):

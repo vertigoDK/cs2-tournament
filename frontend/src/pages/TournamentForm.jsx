@@ -36,7 +36,7 @@ export default function TournamentForm() {
   // Финал часто играют дольше остальных матчей.
   const [finalBo, setFinalBo] = useState(5);
   // Время на весь драфт, у каждой команды половина; 0 — без таймера.
-  const [vetoMinutes, setVetoMinutes] = useState(5);
+  const [vetoMinutes, setVetoMinutes] = useState(7);
   const [startsAtLocal, setStartsAtLocal] = useState(""); // "YYYY-MM-DDTHH:mm" по времени UTC+5
 
   const [players, setPlayers] = useState(null);
@@ -89,7 +89,6 @@ export default function TournamentForm() {
               pool: t.maps_pool || DEFAULT_MAPS,
               bestOf: t.bracket.best_of || 1,
               finalBo: t.bracket.final_best_of || t.bracket.best_of || 1,
-              vetoMinutes: Math.round((t.bracket.veto_time || 0) / 60),
             }),
             hasResults: t.status !== "setup" || Boolean(t.started_at),
           };
@@ -196,14 +195,14 @@ export default function TournamentForm() {
     const startsAtIso = almatyLocalToUtcIso(startsAtLocal);
     setBusy(true);
     try {
-      const shape = bracketShape({ mode, teams: payloadTeams, pool: mapsPool, bestOf, finalBo, vetoMinutes });
+      const shape = bracketShape({ mode, teams: payloadTeams, pool: mapsPool, bestOf, finalBo });
       const rebuild = !isEdit || shape !== original.current?.shape;
       if (
         isEdit &&
         rebuild &&
         original.current?.hasResults &&
         !confirm(
-          "Вы поменяли состав, посев, пул карт или формат. Сетка соберётся заново, и ВСЕ результаты турнира удалятся. Продолжить?"
+          "Вы поменяли состав, посев, пул карт или формат серий. Сетка соберётся заново, и ВСЕ результаты турнира удалятся. Продолжить?"
         )
       ) {
         setBusy(false);
@@ -225,6 +224,7 @@ export default function TournamentForm() {
           prize_pool: prizePool,
           starts_at: startsAtIso,
           clear_starts_at: !startsAtIso,
+          veto_time: vetoMinutes * 60,
         });
         navigate(`/tournaments/${id}`);
       } else {
@@ -592,7 +592,7 @@ function PoolTile({ name, selected, onClick }) {
 }
 
 // Всё, из чего строится сетка, одной строкой — чтобы понять, менялось ли это.
-function bracketShape({ mode, teams, pool, bestOf, finalBo, vetoMinutes }) {
+function bracketShape({ mode, teams, pool, bestOf, finalBo }) {
   const team = (t) => [t.player_a_id, t.player_b_id, t.captain_id, (t.name || "").trim(), t.logo_url || null];
-  return JSON.stringify([mode, teams.map(team), [...pool].sort(), bestOf, finalBo, vetoMinutes]);
+  return JSON.stringify([mode, teams.map(team), [...pool].sort(), bestOf, finalBo]);
 }

@@ -140,8 +140,6 @@ export default function VetoModal({
             <VetoSteps veto={veto} bestOf={bo} poolSize={poolSize} teamA={teamA} teamB={teamB} />
           )}
 
-          <DraftStats teamA={teamA} teamB={teamB} mapsPool={mapsPool} />
-
           {status !== "pending" && !veto?.skipped && (
             <div className="map-grid">
               {(mapsPool || []).map((name) => {
@@ -166,6 +164,8 @@ export default function VetoModal({
               })}
             </div>
           )}
+
+          <DraftStats teamA={teamA} teamB={teamB} mapsPool={mapsPool} />
 
           {status === "done" && match.maps?.length ? (
             <div className="series">
