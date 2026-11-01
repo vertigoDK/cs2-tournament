@@ -174,6 +174,8 @@ class QualifierCreate(BaseModel):
     mode: SeedMode = "order"
     map: str = Field(default="aim_map_s2", max_length=60)
     note: str = Field(default="", max_length=300)
+    # Утешительные дуэли: у каждого своё место (для 8 человек — 1–8).
+    places: bool = True
 
 
 class DuelResult(BaseModel):

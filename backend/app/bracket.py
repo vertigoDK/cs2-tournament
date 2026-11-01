@@ -499,21 +499,58 @@ def round_label(r: int, total: int) -> str:
 
 # ---------------- отборочные дуэли ----------------
 #
-# Этап перед основной сеткой: дуэли 1×1 на выбывание (обычно на аим-карте),
-# по итогам которых составляют пары или посев. Своего призового и титула у
-# него нет, поэтому это не отдельный турнир, а часть основного:
+# Этап перед основной сеткой: дуэли 1×1 (обычно на аим-карте), по итогам
+# которых составляют пары или посев. Своего призового и титула у него нет,
+# поэтому это не отдельный турнир, а часть основного.
+#
+# Кроме основной сетки на выбывание есть утешительные — за все места: кто
+# проиграл в раунде, играет мини-сетку за следующие места. Для 8 человек:
+# проигравшие в 1/4 разыгрывают 5–8 (их проигравшие — 7–8), проигравшие в
+# полуфинале — 3-е место. Каждый играет одинаково (3 дуэли), и в конце у всех
+# своё место от 1 до 8.
 #
 # bracket["qualifier"] = {
 #     "mode": "1×1", "map": "aim_map_s2",
 #     "note": str,                       # на что повлиял итог
-#     "rounds": [[{"p": [user_id, user_id], "score": [a, b], "win": 0 | 1,
-#                  "cybershoke_lobby": int | None}, ...], ...],
+#     "rounds": [[duel, ...], ...],      # основная сетка (места 1–2)
+#     "places": [                        # утешительные сетки, если включены
+#         {"place": 5, "src": [-1, 0], "rounds": [[duel, ...], ...]},
+#         ...                            # src: [группа (-1 — основная), раунд],
+#     ],                                 # чьи проигравшие сюда попадают
 # }
+# duel = {"p": [user_id, user_id], "score": [a, b], "win": 0 | 1, "cybershoke_lobby": int | None}
 # Статистика дуэлей в K/D и рейтинг турниров 2×2 не идёт — на аим-карте один
 # на один это совсем другие цифры.
 
-def build_qualifier(player_ids: list[int], mode: str, map_name: str, note: str = "") -> dict:
-    """Сетка дуэлей на выбывание: те же правила посева и bye, что у команд."""
+def _duel() -> dict:
+    return {"p": [None, None], "score": None, "win": None, "cybershoke_lobby": None}
+
+
+def _elim_rounds(n_first: int) -> list[list[dict]]:
+    """Пустая сетка на выбывание с n_first матчами в первом раунде."""
+    rounds, n = [[_duel() for _ in range(n_first)]], n_first
+    while n > 1:
+        n = (n + 1) // 2
+        rounds.append([_duel() for _ in range(n)])
+    return rounds
+
+
+def _add_places(q: dict, g: int, rounds: list, place: int) -> None:
+    """Утешительные сетки для группы g: проигравшие раунда r играют за места
+    place + (сколько было матчей в раунде r) и дальше. Финальный проигравший
+    берёт place + 1 без отдельной сетки."""
+    for r in range(len(rounds) - 1):
+        losers = len(rounds[r])
+        if losers < 2:
+            continue
+        sub = {"place": place + losers, "src": [g, r], "rounds": _elim_rounds(losers // 2)}
+        q["places"].append(sub)
+        _add_places(q, len(q["places"]) - 1, sub["rounds"], sub["place"])
+
+
+def build_qualifier(player_ids: list[int], mode: str, map_name: str, note: str = "", places: bool = True) -> dict:
+    """Сетка дуэлей: те же правила посева и bye, что у команд, плюс (по
+    умолчанию) утешительные сетки за все места."""
     ids = list(dict.fromkeys(player_ids))
     if len(ids) < 2:
         raise ValueError("Для дуэлей нужно минимум 2 участника")
@@ -521,43 +558,90 @@ def build_qualifier(player_ids: list[int], mode: str, map_name: str, note: str =
         random.shuffle(ids)
     size = next_pow2(len(ids))
     order = seed_order(size)
-    first = []
-    for k in range(0, size, 2):
-        a, b = order[k] - 1, order[k + 1] - 1
-        first.append({"p": [ids[a] if a < len(ids) else None, ids[b] if b < len(ids) else None],
-                      "score": None, "win": None, "cybershoke_lobby": None})
-    rounds, n = [first], len(first)
-    while n > 1:
-        n = (n + 1) // 2
-        rounds.append([{"p": [None, None], "score": None, "win": None, "cybershoke_lobby": None} for _ in range(n)])
+    rounds = _elim_rounds(size // 2)
+    for k, m in enumerate(rounds[0]):
+        a, b = order[2 * k] - 1, order[2 * k + 1] - 1
+        m["p"] = [ids[a] if a < len(ids) else None, ids[b] if b < len(ids) else None]
     q = {"mode": "1×1", "map": map_name or "aim_map_s2", "note": note, "rounds": rounds}
-    # Без соперника — проходит дальше сразу.
-    for k, m in enumerate(first):
-        if (m["p"][0] is None) != (m["p"][1] is None):
-            _qualifier_set(q, 0, k, None, 0 if m["p"][0] is not None else 1)
+    if places:
+        q["places"] = []
+        _add_places(q, -1, rounds, 1)
+    _qualifier_sync(q)
     return q
 
 
-def _qualifier_set(q: dict, r: int, i: int, score: list[int] | None, win: int | None) -> None:
-    rounds = q["rounds"]
-    m = rounds[r][i]
-    m["score"], m["win"] = score, win
-    # Дальше по сетке: снимаем всё, что зависело от этой дуэли, и продвигаем победителя.
-    rr, ii = r, i
-    while rr + 1 < len(rounds):
-        nxt = rounds[rr + 1][ii // 2]
-        slot = ii % 2
-        winner = rounds[rr][ii]["p"][rounds[rr][ii]["win"]] if rounds[rr][ii]["win"] in (0, 1) else None
-        if nxt["p"][slot] == winner:
-            break
-        nxt["p"][slot] = winner
-        nxt["score"], nxt["win"] = None, None
-        rr, ii = rr + 1, ii // 2
+def qualifier_add_places(q: dict) -> None:
+    """Дособирает игры за места к уже созданным дуэлям — внесённые результаты
+    остаются, проигравшие сразу попадают в утешительные сетки."""
+    if q.get("places") is not None:
+        raise ValueError("Игры за места уже есть")
+    q["places"] = []
+    _add_places(q, -1, q.get("rounds") or [], 1)
+    _qualifier_sync(q)
 
 
-def qualifier_set_result(q: dict, r: int, i: int, score: list[int] | None, win: int | None) -> None:
+def _group_rounds(q: dict, g: int) -> list:
+    return q["rounds"] if g == -1 else q["places"][g]["rounds"]
+
+
+def _qualifier_sync(q: dict) -> None:
+    """Расставляет участников по всем сеткам заново из уже внесённых
+    результатов: победители — дальше, проигравшие — в утешительную сетку.
+    Если в дуэли поменялся участник, её результат снимается. Пустые слоты
+    (bye) пропускают соперника дальше без игры.
+
+    Группы идут так, что источник всегда раньше получателя, поэтому хватает
+    одного прохода.
+    """
+    # Итог каждой дуэли: (решена ли, победитель, проигравший).
+    outcome: dict[tuple[int, int, int], tuple[bool, int | None, int | None]] = {}
+
+    def resolve(g: int, r: int, i: int, m: dict, settled: list[bool]) -> None:
+        a, b = m["p"]
+        if settled[0] and settled[1] and (a is None) != (b is None):
+            # Соперника не будет — проходит без игры.
+            m["score"], m["win"] = None, 0 if a is not None else 1
+        if m["win"] in (0, 1) and None not in m["p"]:
+            outcome[(g, r, i)] = (True, m["p"][m["win"]], m["p"][1 - m["win"]])
+        elif m["win"] in (0, 1):
+            outcome[(g, r, i)] = (True, m["p"][m["win"]], None)
+        elif settled[0] and settled[1] and a is None and b is None:
+            outcome[(g, r, i)] = (True, None, None)
+        else:
+            outcome[(g, r, i)] = (False, None, None)
+
+    def place(m: dict, values: list) -> None:
+        if m["p"] != values:
+            m["p"] = values
+            m["score"], m["win"] = None, None
+
+    groups = [(-1, None)] + [(k, grp["src"]) for k, grp in enumerate(q.get("places") or [])]
+    for g, src in groups:
+        rounds = _group_rounds(q, g)
+        for r, round_ in enumerate(rounds):
+            for i, m in enumerate(round_):
+                if r == 0 and g == -1:
+                    settled = [True, True]
+                else:
+                    vals, settled = [], []
+                    for slot in (0, 1):
+                        if r == 0:
+                            sg, sr = src
+                            done, _, loser = outcome[(sg, sr, 2 * i + slot)]
+                            vals.append(loser if done else None)
+                        else:
+                            done, winner, _ = outcome[(g, r - 1, 2 * i + slot)]
+                            vals.append(winner if done else None)
+                        settled.append(done)
+                    place(m, vals)
+                resolve(g, r, i, m, settled)
+
+
+def qualifier_set_result(q: dict, r: int, i: int, score: list[int] | None, win: int | None, g: int = -1) -> None:
     """Результат дуэли: счёт и/или победитель. Победитель по счёту, если он не указан."""
-    rounds = q.get("rounds") or []
+    if g != -1 and not (0 <= g < len(q.get("places") or [])):
+        raise ValueError("Такой дуэли нет")
+    rounds = _group_rounds(q, g) or []
     if not (0 <= r < len(rounds) and 0 <= i < len(rounds[r])):
         raise ValueError("Такой дуэли нет")
     m = rounds[r][i]
@@ -570,16 +654,24 @@ def qualifier_set_result(q: dict, r: int, i: int, score: list[int] | None, win: 
             win = 0 if score[0] > score[1] else 1
     if score is not None and win is None:
         raise ValueError("При равном счёте укажите победителя")
-    _qualifier_set(q, r, i, score, win)
+    m["score"], m["win"] = score, win
+    _qualifier_sync(q)
+
+
+def all_duels(q: dict):
+    for round_ in q.get("rounds") or []:
+        yield from round_
+    for grp in q.get("places") or []:
+        for round_ in grp["rounds"]:
+            yield from round_
 
 
 def qualifier_results(bracket: dict) -> list[tuple[int, int]]:
-    """(победитель, проигравший) по всем сыгранным дуэлям."""
+    """(победитель, проигравший) по всем сыгранным дуэлям, включая утешительные."""
     out = []
-    for round_ in (bracket.get("qualifier") or {}).get("rounds") or []:
-        for m in round_:
-            if m.get("win") in (0, 1) and None not in m["p"]:
-                out.append((m["p"][m["win"]], m["p"][1 - m["win"]]))
+    for m in all_duels(bracket.get("qualifier") or {}):
+        if m.get("win") in (0, 1) and None not in m["p"]:
+            out.append((m["p"][m["win"]], m["p"][1 - m["win"]]))
     return out
 
 
@@ -587,6 +679,21 @@ def qualifier_winner(bracket: dict) -> int | None:
     rounds = (bracket.get("qualifier") or {}).get("rounds") or []
     final = rounds[-1][0] if rounds and rounds[-1] else None
     return final["p"][final["win"]] if final and final.get("win") in (0, 1) else None
+
+
+def qualifier_places(q: dict) -> dict[int, int]:
+    """Итоговые места {user_id: место} — у кого уже определились."""
+    out: dict[int, int] = {}
+    groups = [(1, q.get("rounds") or [])] + [(grp["place"], grp["rounds"]) for grp in q.get("places") or []]
+    for place, rounds in groups:
+        final = rounds[-1][0] if rounds and rounds[-1] else None
+        if final and final.get("win") in (0, 1):
+            w, l = final["p"][final["win"]], final["p"][1 - final["win"]]
+            if w is not None:
+                out[w] = place
+            if l is not None:
+                out[l] = place + 1
+    return out
 
 
 # ---------------- MVP ----------------

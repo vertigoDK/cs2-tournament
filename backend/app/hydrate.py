@@ -26,7 +26,7 @@ def hydrate_bracket(db: Session, bracket: dict | None) -> dict:
         if pid
     }
     qualifier = bracket.get("qualifier") or {}
-    duelists = {pid for round_ in qualifier.get("rounds") or [] for m in round_ for pid in m["p"] if pid}
+    duelists = {pid for m in B.all_duels(qualifier) for pid in m["p"] if pid}
     ids |= duelists
     if not ids:
         return bracket

@@ -141,11 +141,11 @@ export default function TournamentView() {
     await runAction(() => api.post(`/tournaments/${id}/qualifier`, payload), "Сетка дуэлей готова");
     setQualifierSetup(false);
   };
-  const onSetDuel = async (r, i, payload) => {
+  const onSetDuel = async (r, i, payload, g = -1) => {
     setBusy(true);
     busyRef.current = true;
     try {
-      const { data } = await api.put(`/tournaments/${id}/qualifier/${r}/${i}`, payload);
+      const { data } = await api.put(`/tournaments/${id}/qualifier/${r}/${i}?g=${g}`, payload);
       setT(data);
       return true;
     } catch (err) {
@@ -156,6 +156,8 @@ export default function TournamentView() {
       busyRef.current = false;
     }
   };
+  const onAddPlaces = () =>
+    runAction(() => api.post(`/tournaments/${id}/qualifier/places`), "Игры за места добавлены");
   const onDeleteQualifier = () => {
     if (!confirm("Удалить отборочные дуэли вместе с результатами?")) return;
     runAction(() => api.delete(`/tournaments/${id}/qualifier`), "Дуэли удалены");
@@ -376,6 +378,7 @@ export default function TournamentView() {
           isAdmin={isAdmin}
           busy={busy}
           onSetDuel={onSetDuel}
+          onAddPlaces={onAddPlaces}
           onRebuild={() => setQualifierSetup(true)}
           onDelete={onDeleteQualifier}
         />

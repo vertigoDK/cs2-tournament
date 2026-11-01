@@ -252,7 +252,9 @@ def create_qualifier(tournament_id: int, payload: schemas.QualifierCreate, db: S
         raise HTTPException(status_code=400, detail=f"Неизвестные участники: {missing}")
     bracket = dict(t.bracket)
     try:
-        bracket["qualifier"] = B.build_qualifier(payload.player_ids, payload.mode, payload.map, payload.note)
+        bracket["qualifier"] = B.build_qualifier(
+            payload.player_ids, payload.mode, payload.map, payload.note, places=payload.places
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     save_bracket(db, t, bracket)
@@ -260,13 +262,37 @@ def create_qualifier(tournament_id: int, payload: schemas.QualifierCreate, db: S
 
 
 @router.put("/{tournament_id}/qualifier/{r}/{i}", response_model=schemas.TournamentOut)
-def set_duel(tournament_id: int, r: int, i: int, payload: schemas.DuelResult, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+def set_duel(
+    tournament_id: int,
+    r: int,
+    i: int,
+    payload: schemas.DuelResult,
+    g: int = -1,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    """g — сетка: -1 основная, иначе номер утешительной (за места)."""
     t = _get_or_404(db, tournament_id)
     bracket = dict(t.bracket)
     if not bracket.get("qualifier"):
         raise HTTPException(status_code=404, detail="У турнира нет дуэлей")
     try:
-        B.qualifier_set_result(bracket["qualifier"], r, i, payload.score, payload.win)
+        B.qualifier_set_result(bracket["qualifier"], r, i, payload.score, payload.win, g)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    save_bracket(db, t, bracket)
+    return _to_out(t, db)
+
+
+@router.post("/{tournament_id}/qualifier/places", response_model=schemas.TournamentOut)
+def add_qualifier_places(tournament_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    """Игры за места к уже созданным дуэлям, не стирая результатов."""
+    t = _get_or_404(db, tournament_id)
+    bracket = dict(t.bracket)
+    if not bracket.get("qualifier"):
+        raise HTTPException(status_code=404, detail="У турнира нет дуэлей")
+    try:
+        B.qualifier_add_places(bracket["qualifier"])
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     save_bracket(db, t, bracket)

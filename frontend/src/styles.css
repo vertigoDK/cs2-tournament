@@ -3437,3 +3437,39 @@ button.ds-toggle:hover { background: var(--paper); }
   .ws-sleigh, .wb-snow, .wb-flake, .fn.fn-flake, .ws-moon { animation: none; }
   .ws-sleigh { display: none; }
 }
+
+/* ───────── дуэли: утешительные сетки и итоговые места ───────── */
+.q-places, .q-standings { margin-top: 22px; }
+.q-places-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.q-places-head::after { content: ""; flex: 1; border-top: 1px dashed var(--line-2); }
+.q-grid-places { gap: 36px; }
+.q-place-group { display: flex; gap: 20px; padding-left: 18px; border-left: 1px dashed var(--line-2); }
+.q-place-group:first-child { padding-left: 0; border-left: 0; }
+.q-standings-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.q-standing {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  font-weight: 600;
+  font-size: 14px;
+}
+.q-standing .ava { border-radius: 7px; }
+.q-place { min-width: 22px; height: 22px; display: grid; place-items: center; border-radius: 6px; background: var(--paper); font-size: 12px; font-weight: 700; }
+.q-standing.first { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+.q-standing.first .q-place { background: var(--accent); color: #fff; }
+.check-row { display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 14px; font-size: 14px; line-height: 1.4; cursor: pointer; }
+.check-row input { margin-top: 3px; accent-color: var(--accent); }
