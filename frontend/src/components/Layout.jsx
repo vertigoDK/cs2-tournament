@@ -37,12 +37,15 @@ export default function Layout() {
 
       <header className="header">
         <div className="header-inner">
-          <Link to="/" className="brand" aria-label="THIRTEEN — на главную">
+          <Link to="/" className="brand" aria-label="NINE CUP — на главную">
             <span className="brand-mark">
               <img src="/img/logo-light.png" alt="" />
               <SantaHat />
             </span>
-            <span className="brand-word">thirteen</span>
+            <span className="brand-text">
+              <span className="brand-word">nine</span>
+              <span className="brand-sub mono">cup</span>
+            </span>
           </Link>
 
           <nav className="nav">
@@ -97,7 +100,7 @@ export default function Layout() {
       <footer className="footer">
         <div className="footer-inner">
           <img src="/img/logo.png" alt="" className="footer-mark" />
-          <span>Играем до тринадцати.</span>
+          <span>Играем до девяти.</span>
           <SnowToggle />
           <span className="footer-meta mono">2×2 · BO1 / BO3 / BO5 · {new Date().getFullYear()}</span>
         </div>

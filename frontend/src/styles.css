@@ -1,4 +1,4 @@
-/* ───────── THIRTEEN · identity ─────────
+/* ───────── NINE CUP · identity ─────────
    Бумага, чернила и один акцент. Оранжевый — только там, куда должен
    падать взгляд: идущий турнир, победитель, пик, призовой. */
 :root {
@@ -165,6 +165,9 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
 .brand-mark img { width: 30px; }
 .brand:hover .brand-mark { rotate: -8deg; }
 .brand-word { font: 700 19px/1 var(--display); letter-spacing: -0.04em; }
+/* «nine cup»: «cup» — мелко и бледно под словом. */
+.brand-text { display: inline-grid; justify-items: end; gap: 2px; }
+.brand-sub { font-size: 8.5px; line-height: 1; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); opacity: 0.7; margin-right: -0.22em; }
 
 .nav { display: flex; gap: 4px; }
 .nav-link {

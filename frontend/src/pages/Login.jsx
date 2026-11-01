@@ -45,7 +45,10 @@ export default function Login() {
           <span className="brand-mark">
             <img src="/img/logo-light.png" alt="" />
           </span>
-          <span className="brand-word">thirteen</span>
+          <span className="brand-text">
+              <span className="brand-word">nine</span>
+              <span className="brand-sub mono">cup</span>
+            </span>
         </div>
 
         <h1>Вход</h1>
@@ -95,8 +98,8 @@ export default function Login() {
       </div>
 
       <div className="login-art">
-        <img src="/img/door.webp" alt="Приоткрытая дверь с номером 13" />
-        <p className="mono">Играем до тринадцати.</p>
+        <img src="/img/door.webp" alt="Приоткрытая дверь с номером 9" />
+        <p className="mono">Играем до девяти.</p>
       </div>
     </div>
   );
