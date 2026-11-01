@@ -9,6 +9,8 @@ from ..hydrate import hydrate_bracket
 from ..people import display_name_taken
 from ..uploads import delete_image, save_image
 from ..store import tick_vetoes
+from .. import steam
+from .tournaments import _iso_utc
 
 router = APIRouter(prefix="/api/me", tags=["me"])
 
@@ -66,6 +68,30 @@ async def upload_avatar(
     user.avatar_url = url
     db.commit()
     db.refresh(user)
+    return _me_out(user)
+
+
+@router.get("/steam", response_model=schemas.SteamInfo)
+def my_steam(user: User = Depends(get_current_user)):
+    """Привязанный Steam: ник и аватарка из открытого профиля."""
+    if not user.steam_id:
+        return schemas.SteamInfo()
+    info = steam.profile(user.steam_id) or {}
+    return schemas.SteamInfo(
+        steam_id=user.steam_id,
+        persona=info.get("persona"),
+        avatar=info.get("avatar"),
+        profile_url=f"https://steamcommunity.com/profiles/{user.steam_id}",
+        avatar_from_steam=bool(user.avatar_url and user.avatar_url.startswith(steam.STEAM_PREFIX)),
+    )
+
+
+@router.post("/avatar/steam", response_model=schemas.MeOut)
+def avatar_from_steam(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    if not user.steam_id:
+        raise HTTPException(status_code=400, detail="Steam не привязан — попроси админа")
+    if not steam.use_steam_avatar(db, user):
+        raise HTTPException(status_code=502, detail="Steam не отдал аватарку — профиль закрыт или Steam молчит")
     return _me_out(user)
 
 
@@ -157,6 +183,7 @@ def cabinet(db: Session = Depends(get_db), user: User = Depends(get_current_user
     stats = schemas.CabinetStats(tournaments=0, matches_played=0, wins=0, losses=0, titles=0)
     current: schemas.CabinetMatch | None = None
     history: list[schemas.CabinetMatch] = []
+    upcoming: schemas.CabinetUpcoming | None = None
 
     for t in tournaments:
         bracket = hydrate_bracket(db, t.bracket)
@@ -168,6 +195,27 @@ def cabinet(db: Session = Depends(get_db), user: User = Depends(get_current_user
 
         stats.tournaments += 1
         partner = _partner_name(teams[my_idx], user.id)
+
+        if t.status != TournamentStatus.finished:
+            team = teams[my_idx]
+            captain_id = _team_captain_id(bracket, my_idx)
+            partner_id = team.get("player_b_id") if team.get("player_a_id") == user.id else team.get("player_a_id")
+            captain_name = (
+                team.get("a") if captain_id == team.get("player_a_id")
+                else team.get("b") if captain_id == team.get("player_b_id") else None
+            )
+            cand = schemas.CabinetUpcoming(
+                tournament_id=t.id, name=t.name, status=t.status.value,
+                starts_at=_iso_utc(t.starts_at), started_at=_iso_utc(t.started_at),
+                prize_pool=t.prize_pool, team=team.get("name"), partner=partner, partner_id=partner_id,
+                captain=captain_name, is_captain=captain_id == user.id,
+                best_of=bracket.get("best_of") or 1,
+                final_best_of=bracket.get("final_best_of") or bracket.get("best_of") or 1,
+                teams_count=len(teams),
+            )
+            # Из нескольких незавершённых — тот, что раньше стартует.
+            if upcoming is None or (cand.starts_at or "9") < (upcoming.starts_at or "9"):
+                upcoming = cand
 
         champion = B.champion(bracket) if rounds else None
         if champion and champion.get("seed") == teams[my_idx].get("seed"):
@@ -193,6 +241,18 @@ def cabinet(db: Session = Depends(get_db), user: User = Depends(get_current_user
                 else:
                     result = "loss"
 
+                maps = []
+                series = [0, 0]
+                for entry_map in match.get("maps") or []:
+                    sc = entry_map.get("rounds")
+                    if not sc:
+                        continue
+                    w = entry_map.get("winner")
+                    won = None if w is None else w == slot
+                    if won is not None:
+                        series[0 if won else 1] += 1
+                    maps.append(schemas.CabinetMap(map=entry_map["map"], mine=sc[slot], theirs=sc[1 - slot], won=won))
+
                 entry = schemas.CabinetMatch(
                     tournament_id=t.id,
                     tournament_name=t.name,
@@ -201,6 +261,8 @@ def cabinet(db: Session = Depends(get_db), user: User = Depends(get_current_user
                     partner=partner,
                     map=_match_map(match),
                     result=result,
+                    maps=maps,
+                    series=series if maps else None,
                 )
 
                 if result == "pending":
@@ -216,4 +278,4 @@ def cabinet(db: Session = Depends(get_db), user: User = Depends(get_current_user
                         stats.losses += 1
                     history.append(entry)
 
-    return schemas.CabinetOut(stats=stats, current=current, history=history)
+    return schemas.CabinetOut(stats=stats, current=current, history=history, upcoming=upcoming)

@@ -3245,3 +3245,65 @@ button.ds-toggle:hover { background: var(--paper); }
 .tl-award.mvp > .cup { margin-left: 4px; }
 .rw-list li.rw-mvp { display: flex; align-items: center; gap: 12px; }
 .rw-mvp-text { display: grid; gap: 3px; min-width: 0; }
+
+/* ───────── личный кабинет: Steam, ближайший турнир, награды ───────── */
+.profile-top .profile-public { margin-left: auto; align-self: flex-start; }
+
+.steam-block { margin-top: 24px; padding-top: 20px; border-top: 1px dashed var(--line-2); }
+.steam-block-title { display: block; margin-bottom: 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.steam-block-body { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.steam-ava { width: 44px; height: 44px; border-radius: 12px; object-fit: cover; background: var(--paper); flex: none; }
+.steam-who { display: grid; gap: 2px; min-width: 0; }
+.steam-who b { font: 500 16px/1.2 var(--display); letter-spacing: -0.02em; }
+.steam-who span { font-size: 12px; color: var(--muted); user-select: all; }
+.steam-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-left: auto; }
+.steam-ok { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--accent); }
+.steam-block .hint { margin-top: 10px; }
+.steam-block.off p { margin: 0; font-size: 13.5px; color: var(--muted); }
+
+.cab-next { display: grid; gap: 18px; margin-top: 4px; }
+.cn-head { display: flex; align-items: center; gap: 16px; }
+.cn-cup { width: 58px; height: 70px; object-fit: contain; flex: none; animation: float 6s ease-in-out infinite; }
+.cn-title { display: grid; gap: 6px; justify-items: start; min-width: 0; }
+.cn-name { font: 500 26px/1.1 var(--display); letter-spacing: -0.03em; color: inherit; text-decoration: none; }
+.cn-name:hover { color: var(--accent); }
+.cn-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--muted); }
+.cn-meta .accent { font-weight: 700; }
+.cn-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px 20px; margin: 0; padding: 16px 0 0; border-top: 1px dashed var(--line-2); }
+.cn-facts dt { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.cn-facts dd { margin: 4px 0 0; font-weight: 600; font-size: 15px; }
+.cn-facts dd a { color: inherit; text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px; }
+.cn-facts dd a:hover { text-decoration-color: var(--accent); }
+.cn-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.cab-awards { display: flex; flex-wrap: wrap; gap: 18px 44px; margin-top: 4px; }
+.cab-award-group { display: grid; gap: 10px; }
+.cab-award-label { font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.cab-award-row { display: flex; align-items: flex-end; gap: 10px; flex-wrap: wrap; }
+.cab-award-row .cup > img { width: 48px; height: 58px; object-fit: contain; }
+.cab-awards.empty { align-items: center; gap: 16px; flex-wrap: nowrap; }
+.cab-awards.empty img { width: 44px; opacity: 0.45; filter: grayscale(1); flex: none; }
+.cab-awards.empty p { margin: 0; font-size: 13.5px; color: var(--muted); }
+
+.stat-row-sm { margin-top: 12px; }
+.stat-row-sm .stat-tile { padding: 14px 16px 12px; }
+.stat-row-sm .stat-tile b { font-size: 22px; }
+.cab-maps { display: flex; flex-wrap: wrap; gap: 6px 22px; margin-top: 14px; font-size: 12.5px; color: var(--muted); }
+.cab-maps b { color: var(--ink); }
+.cab-maps i { font-style: normal; font-weight: 700; color: var(--accent); }
+
+.match-log .ml-row { display: flex; align-items: center; gap: 12px; width: 100%; color: inherit; text-decoration: none; }
+.match-log li:hover .ml-opp { color: var(--accent); }
+.match-log .ml-main { flex: 1; }
+.ml-maps { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+.ml-map { display: inline-flex; align-items: baseline; gap: 5px; padding: 3px 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); font-size: 12px; font-weight: 600; }
+.ml-map b { font-size: 11.5px; color: var(--muted); }
+.ml-map.won b { color: var(--accent); }
+.ml-series { flex: none; min-width: 44px; padding: 5px 8px; border-radius: 8px; text-align: center; font-size: 13px; font-weight: 700; background: var(--paper); border: 1px solid var(--line); }
+.ml-series.win { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+@media (max-width: 640px) {
+  .profile-top { flex-wrap: wrap; }
+  .steam-actions { margin-left: 0; }
+  .match-log .ml-row { flex-wrap: wrap; }
+  .ml-maps { order: 3; width: 100%; justify-content: flex-start; padding-left: 40px; }
+}

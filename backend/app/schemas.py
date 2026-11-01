@@ -62,6 +62,13 @@ class CredentialsOut(BaseModel):
 
 # ---------- личный кабинет ----------
 
+class CabinetMap(BaseModel):
+    map: str
+    mine: int
+    theirs: int
+    won: bool | None = None
+
+
 class CabinetMatch(BaseModel):
     tournament_id: int
     tournament_name: str
@@ -70,6 +77,36 @@ class CabinetMatch(BaseModel):
     partner: str | None
     map: str | None
     result: Literal["win", "loss", "pending"]
+    # Сыгранные карты со счётом с твоей стороны и счёт серии.
+    maps: list[CabinetMap] = []
+    series: list[int] | None = None
+
+
+class CabinetUpcoming(BaseModel):
+    """Ближайший незавершённый турнир, в котором ты в составе."""
+    tournament_id: int
+    name: str
+    status: str
+    starts_at: str | None = None
+    started_at: str | None = None
+    prize_pool: str = ""
+    team: str | None = None
+    partner: str | None = None
+    partner_id: int | None = None
+    captain: str | None = None
+    is_captain: bool = False
+    best_of: int = 1
+    final_best_of: int = 1
+    teams_count: int = 0
+
+
+class SteamInfo(BaseModel):
+    steam_id: str | None = None
+    persona: str | None = None
+    avatar: str | None = None
+    profile_url: str | None = None
+    # Стоит ли сейчас в профиле аватарка из Steam.
+    avatar_from_steam: bool = False
 
 
 class ActiveVetoOut(BaseModel):
@@ -94,6 +131,7 @@ class CabinetOut(BaseModel):
     stats: CabinetStats
     current: CabinetMatch | None
     history: list[CabinetMatch]
+    upcoming: CabinetUpcoming | None = None
 
 
 # ---------- tournaments ----------

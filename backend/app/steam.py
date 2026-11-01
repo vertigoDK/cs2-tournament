@@ -21,6 +21,7 @@ from .models import Role, User
 from .uploads import PUBLIC_PREFIX, delete_image, store_image
 
 _AVATAR = re.compile(r"<avatarFull><!\[CDATA\[(.*?)\]\]></avatarFull>")
+_PERSONA = re.compile(r"<steamID><!\[CDATA\[(.*?)\]\]></steamID>", re.S)
 _ALLOWED = ("https://avatars.steamstatic.com/", "https://avatars.fastly.steamstatic.com/",
             "https://avatars.akamai.steamstatic.com/", "https://avatars.cloudflare.steamstatic.com/")
 TIMEOUT = 8
@@ -111,3 +112,44 @@ def _safe_get(url: str) -> bytes | None:
 
 def _still_used(db: Session, url: str) -> bool:
     return db.query(User).filter(User.avatar_url == url).first() is not None
+
+
+def profile(steam_id: str) -> dict | None:
+    """Ник и аватарка из открытого профиля Steam — для личного кабинета."""
+    try:
+        xml = _get(f"https://steamcommunity.com/profiles/{int(steam_id)}/?xml=1").decode("utf-8", "replace")
+    except (OSError, ValueError):
+        return None
+    persona = _PERSONA.search(xml)
+    avatar = _AVATAR.search(xml)
+    return {
+        "persona": persona.group(1).strip() if persona else None,
+        "avatar": avatar.group(1) if avatar and avatar.group(1).startswith(_ALLOWED) else None,
+    }
+
+
+def use_steam_avatar(db: Session, user: User) -> bool:
+    """Ставит игроку его текущую аватарку из Steam (по его же просьбе). Коммит — здесь."""
+    link = avatar_link(user.steam_id) if user.steam_id else None
+    if not link:
+        return False
+    new_id = _image_id(link)
+    url = f"{PUBLIC_PREFIX}/{new_id}.png"
+    if user.avatar_url == url:
+        return True
+    if not db.get(models.Image, new_id):
+        raw = _safe_get(link)
+        if not raw:
+            return False
+        try:
+            url = store_image(raw, "avatars", db, image_id=new_id)
+        except Exception:
+            return False
+    old = user.avatar_url
+    user.avatar_url = url
+    db.flush()
+    if old and not _still_used(db, old):
+        delete_image(db, old)
+    db.commit()
+    db.refresh(user)
+    return True
