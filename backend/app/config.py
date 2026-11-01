@@ -15,6 +15,13 @@ class Settings(BaseSettings):
     admin_username: str = "admin"
     admin_password: str = "admin123"
 
+    # Pusher Channels: сигнал «турнир изменился» открытым страницам. Без ключей
+    # всё работает как раньше — страницы просто опрашивают сервер.
+    pusher_app_id: str = ""
+    pusher_key: str = ""
+    pusher_secret: str = ""
+    pusher_cluster: str = "eu"
+
 
 @lru_cache
 def get_settings() -> Settings:

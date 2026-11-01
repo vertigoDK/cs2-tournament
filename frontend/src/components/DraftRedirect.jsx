@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import api from "../api.js";
+import { onLive } from "../utils/live.js";
 
 const POLL_MS = 6000;
 
@@ -45,7 +46,10 @@ export default function DraftRedirect() {
     const timer = setInterval(tick, POLL_MS);
     // Вкладку могли свернуть до начала драфта — проверяем при возвращении.
     document.addEventListener("visibilitychange", tick);
+    // Админ открыл драфт — капитана перебрасывает сразу, а не через 6 секунд.
+    const offLive = onLive("tournaments", tick);
     return () => {
+      offLive();
       alive = false;
       clearInterval(timer);
       document.removeEventListener("visibilitychange", tick);

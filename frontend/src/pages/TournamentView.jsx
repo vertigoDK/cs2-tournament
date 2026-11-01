@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
+import { onLive } from "../utils/live.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Bracket from "../components/Bracket.jsx";
 import VetoModal from "../components/VetoModal.jsx";
@@ -84,9 +85,12 @@ export default function TournamentView() {
     };
     const timer = setInterval(tick, draftLive ? 2000 : 5000);
     document.addEventListener("visibilitychange", tick);
+    // Сигнал из Pusher — перечитываем сразу (ход соперника, «Готов», счёт).
+    const offLive = onLive(`tournament-${id}`, tick);
     return () => {
       clearInterval(timer);
       document.removeEventListener("visibilitychange", tick);
+      offLive();
     };
   }, [id, draftLive]);
 

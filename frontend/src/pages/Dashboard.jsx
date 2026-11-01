@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
+import { onLive } from "../utils/live.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import HeroTournamentCard from "../components/HeroTournamentCard.jsx";
 import TournamentCard from "../components/TournamentCard.jsx";
@@ -37,7 +38,9 @@ export default function Dashboard() {
     };
     const timer = setInterval(tick, 10000);
     document.addEventListener("visibilitychange", tick);
+    const offLive = onLive("tournaments", tick);
     return () => {
+      offLive();
       clearInterval(timer);
       document.removeEventListener("visibilitychange", tick);
     };

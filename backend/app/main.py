@@ -1,11 +1,15 @@
 from fastapi import FastAPI
 
 from .database import SessionLocal
+from . import live
 from .migrations import upgrade_db
 from .routers import auth, matches, me, players, stats, steam_auth, tournaments, uploads, users, veto
 from .seed import seed_admin
 
 app = FastAPI(title="CS2 Local Tournaments", version="0.3.0")
+
+# Сигналы «турнир изменился» в Pusher после каждого коммита (см. live.py).
+live.install(SessionLocal)
 
 
 @app.on_event("startup")
@@ -16,6 +20,14 @@ def on_startup() -> None:
         seed_admin(db)
     finally:
         db.close()
+
+
+@app.get("/api/live")
+def live_config():
+    """Публичный ключ Pusher для браузера; пусто — живых обновлений нет, только опрос."""
+    if not live.enabled():
+        return {}
+    return {"key": live.settings.pusher_key, "cluster": live.settings.pusher_cluster}
 
 
 @app.get("/api/health")
