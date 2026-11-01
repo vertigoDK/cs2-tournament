@@ -3,6 +3,7 @@ import api from "../api.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import { BlockBones } from "./Skeleton.jsx";
+import Backdrop from "./Backdrop.jsx";
 
 const STAGE = (r, total) =>
   total - r === 1 ? "Финал" : total - r === 2 ? "Полуфинал" : total - r === 3 ? "1/4" : `Раунд ${r + 1}`;
@@ -118,7 +119,7 @@ function DuelModal({ duel, a, b, busy, onClose, onSave }) {
   };
 
   return (
-    <div className="veto-backdrop" onClick={onClose}>
+    <Backdrop onClose={onClose}>
       <div className="veto-modal duel-modal" onClick={(e) => e.stopPropagation()}>
         <div className="veto-modal-head">
           <h3>Результат дуэли</h3>
@@ -172,7 +173,7 @@ function DuelModal({ duel, a, b, busy, onClose, onSave }) {
           ) : null}
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }
 
@@ -192,7 +193,7 @@ export function QualifierSetup({ tournament, existing, busy, onClose, onCreate }
   const toggle = (id) => setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
 
   return (
-    <div className="veto-backdrop" onClick={onClose}>
+    <Backdrop onClose={onClose}>
       <div className="veto-modal duel-modal" onClick={(e) => e.stopPropagation()}>
         <div className="veto-modal-head">
           <h3>{existing ? "Пересобрать дуэли" : "Дуэли 1×1"}</h3>
@@ -257,6 +258,6 @@ export function QualifierSetup({ tournament, existing, busy, onClose, onCreate }
           </button>
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }

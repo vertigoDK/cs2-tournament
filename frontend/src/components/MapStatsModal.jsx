@@ -3,6 +3,7 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import { mapImage } from "../utils/maps.js";
 import { rosterOf } from "../utils/roster.js";
+import Backdrop from "./Backdrop.jsx";
 
 // Форма переноса скорборда: счёт по раундам и K/D/A четверых.
 // Заточена под быстрый ввод — Tab идёт по строке K → D → A, Enter сохраняет.
@@ -76,7 +77,7 @@ export default function MapStatsModal({ open, onClose, entry, mapIndex, teamA, t
   const src = mapImage(entry.map);
 
   return (
-    <div className="veto-backdrop" onClick={onClose}>
+    <Backdrop onClose={onClose}>
       <div className="veto-modal stats-modal" onClick={(e) => e.stopPropagation()}>
         <div className="stats-hero">
           {src && !noImage ? <img src={src} alt="" onError={() => setNoImage(true)} /> : null}
@@ -197,6 +198,6 @@ export default function MapStatsModal({ open, onClose, entry, mapIndex, teamA, t
           </div>
         </form>
       </div>
-    </div>
+    </Backdrop>
   );
 }

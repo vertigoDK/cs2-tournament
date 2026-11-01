@@ -3,6 +3,7 @@ import api, { apiErrorMessage } from "../api.js";
 import Icon from "./Icon.jsx";
 import { EmptyStats, MapsGrid, PlayersTable } from "./StatsTables.jsx";
 import { BlockBones } from "./Skeleton.jsx";
+import Backdrop from "./Backdrop.jsx";
 
 // Те же таблицы, что и на странице «Статистика», но по одному турниру:
 // бэкенд считает сводку тем же проходом, отличается только фильтр.
@@ -39,7 +40,7 @@ export default function TournamentStatsModal({ open, onClose, tournamentId, tour
   const hasStats = Boolean(data?.players.some((p) => p.maps > 0));
 
   return (
-    <div className="veto-backdrop" onClick={onClose}>
+    <Backdrop onClose={onClose}>
       <div className="veto-modal tstats-modal" onClick={(e) => e.stopPropagation()}>
         <div className="veto-modal-head">
           <h3>Статистика турнира</h3>
@@ -89,6 +90,6 @@ export default function TournamentStatsModal({ open, onClose, tournamentId, tour
           </button>
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }

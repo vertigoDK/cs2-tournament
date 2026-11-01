@@ -4,6 +4,7 @@ import Icon from "./Icon.jsx";
 import MapCard from "./MapCard.jsx";
 import DraftStats from "./DraftStats.jsx";
 import MatchSummary from "./MatchSummary.jsx";
+import Backdrop from "./Backdrop.jsx";
 
 // Название приходит с сервера готовым: своё имя команды или «ник + ник».
 const teamLabel = (t) => t?.name || "TBD";
@@ -68,7 +69,7 @@ export default function VetoModal({
   const amCaptain = captainId(teamA) === meId || captainId(teamB) === meId;
 
   return (
-    <div className="veto-backdrop" onClick={onClose}>
+    <Backdrop onClose={onClose}>
       <div className="veto-modal draft" onClick={(e) => e.stopPropagation()}>
         <div className="veto-modal-head">
           <h3>Драфт карт</h3>
@@ -266,7 +267,7 @@ export default function VetoModal({
           </button>
         </div>
       </div>
-    </div>
+    </Backdrop>
   );
 }
 
