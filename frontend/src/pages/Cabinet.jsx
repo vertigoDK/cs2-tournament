@@ -442,7 +442,13 @@ function Upcoming({ u, first, veto }) {
           {veto ? (
             <Link to={`/tournaments/${veto.tournament_id}?veto=${veto.round}-${veto.index}`} className="btn primary live-draft">
               <span className="live-dot" />
-              {veto.my_turn ? "Твой ход в драфте" : "Идёт драфт — открыть"}
+              {veto.need_ready
+                ? "Драфт открыт — нажми «Готов»"
+                : veto.ready_check
+                ? "Ждём второго капитана"
+                : veto.my_turn
+                ? "Твой ход в драфте"
+                : "Идёт драфт — открыть"}
             </Link>
           ) : null}
           <Link to={`/tournaments/${u.tournament_id}`} className="btn">

@@ -155,18 +155,22 @@ def active_veto(db: Session = Depends(get_db), user: User = Depends(get_current_
         for r, round_ in enumerate(bracket.get("rounds") or []):
             for i, match in enumerate(round_):
                 veto = match.get("veto") or {}
-                if veto.get("status") != "in_progress":
+                if veto.get("status") not in ("in_progress", "ready_check"):
                     continue
                 captains = [_team_captain_id(bracket, idx) for idx in match.get("p", [])]
                 if user.id not in captains:
                     continue
                 turn = veto.get("turn")
+                ready_check = veto.get("status") == "ready_check"
+                my_slot = captains.index(user.id)
                 return schemas.ActiveVetoOut(
+                    ready_check=ready_check,
+                    need_ready=ready_check and not (veto.get("ready") or [False, False])[my_slot],
                     tournament_id=t.id,
                     tournament_name=t.name,
                     round=r,
                     index=i,
-                    my_turn=turn is not None and captains[turn] == user.id,
+                    my_turn=not ready_check and turn is not None and captains[turn] == user.id,
                 )
     return None
 

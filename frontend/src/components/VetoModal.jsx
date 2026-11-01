@@ -31,6 +31,8 @@ export default function VetoModal({
   serverOffset = 0,
   tournamentStarted,
   onStart,
+  onReady,
+  onSkipReady,
   onChoose,
   onMapWinner,
   onEditStats,
@@ -107,6 +109,19 @@ export default function VetoModal({
             </div>
           )}
 
+          {status === "ready_check" && (
+            <ReadyCheck
+              veto={veto}
+              teamA={teamA}
+              teamB={teamB}
+              meId={meId}
+              isAdmin={isAdmin}
+              busy={busy}
+              onReady={onReady}
+              onSkipReady={onSkipReady}
+            />
+          )}
+
           {status === "in_progress" && (
             <div className={`turn-banner ${nextAction}${myTurn ? " mine" : ""}`}>
               {clock(veto.turn) != null ? (
@@ -141,7 +156,7 @@ export default function VetoModal({
             <VetoSteps veto={veto} bestOf={bo} poolSize={poolSize} teamA={teamA} teamB={teamB} />
           )}
 
-          {status !== "pending" && !veto?.skipped && (
+          {status !== "pending" && status !== "ready_check" && !veto?.skipped && (
             <div className="map-grid">
               {(mapsPool || []).map((name) => {
                 const logEntry = veto.log.find((l) => l.map === name);
@@ -251,6 +266,60 @@ export default function VetoModal({
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Проверка готовности: драфт открыт, но часы стоят, пока оба капитана не
+// нажмут «Готов». Админ может запустить без ожидания — капитан не в сети.
+function ReadyCheck({ veto, teamA, teamB, meId, isAdmin, busy, onReady, onSkipReady }) {
+  const ready = veto.ready || [false, false];
+  const teams = [teamA, teamB];
+  const mySlot = teams.findIndex((t) => t && captainId(t) === meId);
+  const readyCount = ready.filter(Boolean).length;
+  const first = teams[veto.turn];
+  return (
+    <div className="ready-check">
+      <div className="rc-head">
+        <Icon name="users" size={16} />
+        <b>{readyCount === 0 ? "Ждём капитанов" : "Ожидаем второго капитана"}</b>
+        <span className="mono">{readyCount}/2 готовы</span>
+      </div>
+      <div className="rc-sides">
+        {teams.map((t, s) => (
+          <div key={s} className={`rc-side${ready[s] ? " ready" : ""}${s === mySlot ? " me" : ""}`}>
+            <span className="rc-cap">
+              <Icon name="star" size={11} filled /> {captainOf(t)}
+              {s === mySlot ? " (вы)" : ""}
+            </span>
+            <span className="rc-team">{teamLabel(t)}</span>
+            <span className="rc-state mono">
+              {ready[s] ? (
+                <>
+                  <Icon name="check" size={13} /> готов
+                </>
+              ) : (
+                <>
+                  <span className="rc-wait" /> ждём
+                </>
+              )}
+            </span>
+          </div>
+        ))}
+      </div>
+      {mySlot >= 0 && !ready[mySlot] ? (
+        <button className="btn primary lg rc-go" onClick={onReady} disabled={busy}>
+          <Icon name="check" size={16} /> Готов
+        </button>
+      ) : null}
+      <p className="rc-note">
+        Часы не идут, пока оба не готовы. Первым {first ? <b>{teamLabel(first)}</b> : "ходит команда по жребию"}.
+      </p>
+      {isAdmin ? (
+        <button className="btn sm" onClick={onSkipReady} disabled={busy}>
+          Начать без ожидания
+        </button>
+      ) : null}
     </div>
   );
 }

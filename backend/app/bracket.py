@@ -10,7 +10,8 @@ match: {
     "win": 0 | 1 | None,
     "bye": bool,
     "veto": {
-        "status": "pending" | "in_progress" | "done",
+        "status": "pending" | "ready_check" | "in_progress" | "done",
+        "ready": [bool, bool],        # ready_check: кто из капитанов нажал «Готов»
         "turn": 0 | 1 | None,
         "log": [{"action": "ban" | "pick", "team": 0|1, "map": str}, ...],
         "picks": [str, ...],          # maps chosen via "pick" steps, in order
@@ -277,8 +278,11 @@ def veto_start(bracket: dict, r: int, i: int, now: float) -> None:
     if m["bye"] or m["p"][0] is None or m["p"][1] is None:
         raise ValueError("Обеим командам нужно быть определены и матч не должен быть bye")
     total = bracket.get("veto_time") or 0
+    # Сначала — проверка готовности: часы стоят, пока оба капитана не нажмут
+    # «Готов» (или админ не запустит драфт без ожидания).
     m["veto"] = {
-        "status": "in_progress",
+        "status": "ready_check",
+        "ready": [False, False],
         "turn": random.choice([0, 1]),
         "log": [],
         "picks": [],
@@ -286,8 +290,33 @@ def veto_start(bracket: dict, r: int, i: int, now: float) -> None:
         "decider": None,
         # Запас времени каждой команды в секундах; None — драфт без таймера.
         "bank": [total / 2, total / 2] if total else None,
-        "turn_started_at": now,
+        "turn_started_at": None,
     }
+
+
+def _veto_begin(v: dict, now: float) -> None:
+    v["status"] = "in_progress"
+    v["turn_started_at"] = now
+
+
+def veto_ready(bracket: dict, r: int, i: int, slot: int, now: float) -> None:
+    """Капитан команды slot готов. Оба готовы — драфт пошёл, часы запущены."""
+    v = bracket["rounds"][r][i]["veto"]
+    if v.get("status") != "ready_check":
+        raise ValueError("Драфт уже идёт или ещё не открыт")
+    ready = v.setdefault("ready", [False, False])
+    ready[slot] = True
+    if all(ready):
+        _veto_begin(v, now)
+
+
+def veto_skip_ready(bracket: dict, r: int, i: int, now: float) -> None:
+    """Админ запускает драфт, не дожидаясь второго капитана."""
+    v = bracket["rounds"][r][i]["veto"]
+    if v.get("status") != "ready_check":
+        raise ValueError("Драфт уже идёт или ещё не открыт")
+    v["skipped_ready"] = True
+    _veto_begin(v, now)
 
 
 def veto_choose(bracket: dict, r: int, i: int, map_name: str, now: float, auto: bool = False) -> None:
@@ -296,6 +325,8 @@ def veto_choose(bracket: dict, r: int, i: int, map_name: str, now: float, auto: 
     happened — the caller doesn't choose the action, just the map."""
     m = bracket["rounds"][r][i]
     v = m["veto"]
+    if v["status"] == "ready_check":
+        raise ValueError("Ждём, пока оба капитана нажмут «Готов»")
     if v["status"] != "in_progress":
         raise ValueError("Пик/бан ещё не начат или уже завершён")
     if map_name not in v["remaining"]:

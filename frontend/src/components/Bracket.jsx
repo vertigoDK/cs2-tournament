@@ -100,6 +100,7 @@ function Slot({ team, seed, isWin, isLose, isTbd, clickable, onClick }) {
 function vetoLabel(match, started) {
   const veto = match.veto;
   if (!veto || veto.status === "pending") return started ? "Драфт карт" : "Драфт после старта";
+  if (veto.status === "ready_check") return "Ждём капитанов";
   if (veto.status === "in_progress") return "Драфт идёт";
   const maps = match.maps || [];
   const played = maps.filter((m) => m.winner === 0 || m.winner === 1).length;
@@ -251,7 +252,7 @@ export default function Bracket({ bracket, isAdmin, started, onPick, onOpenVeto 
                       <button
                         type="button"
                         className={`veto-btn${vetoDone ? " done" : ""}${
-                          m.veto?.status === "in_progress" ? " live" : ""
+                          m.veto?.status === "in_progress" || m.veto?.status === "ready_check" ? " live" : ""
                         }`}
                         onClick={() => onOpenVeto(r, i)}
                       >

@@ -117,6 +117,9 @@ class ActiveVetoOut(BaseModel):
     round: int
     index: int
     my_turn: bool
+    # Драфт открыт, но ждёт «Готов» от капитанов; need_ready — от тебя.
+    ready_check: bool = False
+    need_ready: bool = False
 
 
 class CabinetStats(BaseModel):

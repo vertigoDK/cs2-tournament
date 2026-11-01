@@ -65,7 +65,9 @@ export default function TournamentView() {
   // выбирают по очереди — соперник должен видеть ход почти сразу. Поэтому во
   // время активного драфта опрашиваем чаще, в остальное время реже.
   const draftLive = Boolean(
-    t?.bracket?.rounds?.some((round) => round.some((m) => m.veto?.status === "in_progress"))
+    t?.bracket?.rounds?.some((round) =>
+      round.some((m) => m.veto?.status === "in_progress" || m.veto?.status === "ready_check")
+    )
   );
 
   useEffect(() => {
@@ -183,6 +185,12 @@ export default function TournamentView() {
 
   const onVetoStart = () =>
     runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/start`));
+  const onVetoReady = () =>
+    runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/ready`));
+  const onVetoSkipReady = () => {
+    if (!confirm("Начать драфт, не дожидаясь капитанов? Часы пойдут сразу.")) return;
+    runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/skip-ready`));
+  };
   const onVetoChoose = (map) =>
     runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/choose`, { map }));
   const onMapWinner = (mapIndex, slot) => {
@@ -221,7 +229,7 @@ export default function TournamentView() {
   const liveDrafts = t.bracket.rounds.flatMap((round, r) =>
     round
       .map((m, i) => ({ m, r, i }))
-      .filter(({ m }) => m.veto?.status === "in_progress")
+      .filter(({ m }) => m.veto?.status === "in_progress" || m.veto?.status === "ready_check")
       .map(({ m, r, i }) => ({
         r,
         i,
@@ -401,6 +409,8 @@ export default function TournamentView() {
         serverOffset={serverOffset}
         tournamentStarted={Boolean(t.started_at) || t.status !== "setup"}
         onStart={onVetoStart}
+        onReady={onVetoReady}
+        onSkipReady={onVetoSkipReady}
         onChoose={onVetoChoose}
         onMapWinner={onMapWinner}
         onEditStats={setStatsMap}

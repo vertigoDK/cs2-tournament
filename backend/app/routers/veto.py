@@ -80,6 +80,32 @@ def start_veto(tournament_id: int, r: int, i: int, db: Session = Depends(get_db)
     return _to_out(t, db)
 
 
+@router.post("/ready", response_model=schemas.TournamentOut)
+def ready(tournament_id: int, r: int, i: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Капитан нажал «Готов». Когда готовы оба — драфт начинается."""
+    t = _get_tournament(db, tournament_id)
+    _require_underway(t)
+    bracket = t.bracket or {}
+    _check_bounds(bracket, r, i)
+    match = bracket["rounds"][r][i]
+    slots = [s for s, idx in enumerate(match["p"]) if idx is not None and _team_captain_id(bracket, idx) == user.id]
+    if not slots:
+        raise HTTPException(status_code=403, detail="«Готов» нажимают капитаны команд этого матча")
+    t = _mutate(db, tournament_id, r, i, lambda br: B.veto_ready(br, r, i, slots[0], time.time()))
+    from .tournaments import _to_out
+    return _to_out(t, db)
+
+
+@router.post("/skip-ready", response_model=schemas.TournamentOut)
+def skip_ready(tournament_id: int, r: int, i: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    """Админ запускает драфт без ожидания второго капитана."""
+    t = _get_tournament(db, tournament_id)
+    _require_underway(t)
+    t = _mutate(db, tournament_id, r, i, lambda br: B.veto_skip_ready(br, r, i, time.time()))
+    from .tournaments import _to_out
+    return _to_out(t, db)
+
+
 @router.post("/choose", response_model=schemas.TournamentOut)
 def choose_map(
     tournament_id: int,
