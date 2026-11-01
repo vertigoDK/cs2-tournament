@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../api.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
+import { BlockBones } from "./Skeleton.jsx";
 
 const STAGE = (r, total) =>
   total - r === 1 ? "Финал" : total - r === 2 ? "Полуфинал" : total - r === 3 ? "1/4" : `Раунд ${r + 1}`;
@@ -203,7 +204,7 @@ export function QualifierSetup({ tournament, existing, busy, onClose, onCreate }
           <div className="field">
             <label>Участники · {picked.length}</label>
             {!users ? (
-              <div className="spinner" />
+              <BlockBones rows={3} />
             ) : (
               <div className="duel-people">
                 {users.map((u) => (

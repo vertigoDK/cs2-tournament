@@ -6,6 +6,7 @@ import Icon from "../components/Icon.jsx";
 import { EmptyStats, MapsGrid, PlayersTable } from "../components/StatsTables.jsx";
 import PageHead from "../components/PageHead.jsx";
 import StatusPill from "../components/StatusPill.jsx";
+import { StatsSkeleton } from "../components/Skeleton.jsx";
 
 const TABS = [
   { id: "players", label: "Игроки", icon: "medal" },
@@ -37,11 +38,7 @@ export default function Stats() {
     );
   }
   if (!data) {
-    return (
-      <main className="page">
-        <div className="spinner" />
-      </main>
-    );
+    return <StatsSkeleton />;
   }
 
   const hasStats = data.players.some((p) => p.maps > 0);

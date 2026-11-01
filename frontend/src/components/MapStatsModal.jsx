@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import { mapImage } from "../utils/maps.js";
+import { rosterOf } from "../utils/roster.js";
 
 // Форма переноса скорборда: счёт по раундам и K/D/A четверых.
 // Заточена под быстрый ввод — Tab идёт по строке K → D → A, Enter сохраняет.
@@ -17,19 +18,6 @@ const toInt = (v) => {
 function kdRatio(k, d) {
   if (!k && !d) return "—";
   return d ? (k / d).toFixed(2) : k.toFixed(2);
-}
-
-function rosterOf(team, slot) {
-  if (!team) return [];
-  return [
-    { id: team.player_a_id, name: team.a, color: team.a_color, url: team.a_avatar, slot },
-    team.player_b_id
-      ? { id: team.player_b_id, name: team.b, color: team.b_color, url: team.b_avatar, slot }
-      : null,
-    // Кто ещё выходил за команду — у них тоже своя строка, иначе правка карты
-    // стёрла бы их статистику.
-    ...(team.subs_info || []).map((s) => ({ id: s.id, name: s.name, color: s.color, url: s.avatar, slot })),
-  ].filter(Boolean);
 }
 
 export default function MapStatsModal({ open, onClose, entry, mapIndex, teamA, teamB, onSave, busy, readOnly }) {

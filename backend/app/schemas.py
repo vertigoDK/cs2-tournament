@@ -306,3 +306,8 @@ class StatsOut(BaseModel):
 
 class UploadOut(BaseModel):
     url: str
+
+
+class SteamAvatarsOut(BaseModel):
+    updated: list[str]
+    failed: list[str]

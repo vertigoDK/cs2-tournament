@@ -6,6 +6,7 @@ import HeroTournamentCard from "../components/HeroTournamentCard.jsx";
 import TournamentCard from "../components/TournamentCard.jsx";
 import PageHead, { EmptyState } from "../components/PageHead.jsx";
 import Icon from "../components/Icon.jsx";
+import { DashboardSkeleton } from "../components/Skeleton.jsx";
 
 export default function Dashboard() {
   const { isAdmin } = useAuth();
@@ -28,11 +29,7 @@ export default function Dashboard() {
   }
 
   if (!tournaments) {
-    return (
-      <main className="page">
-        <div className="spinner" />
-      </main>
-    );
+    return <DashboardSkeleton />;
   }
 
   // Наверху — то, что происходит сейчас: идущий турнир, иначе ближайший анонс.

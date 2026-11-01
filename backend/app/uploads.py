@@ -83,6 +83,11 @@ async def save_image(file: UploadFile, kind: str, db: Session) -> str:
     if len(raw) > MAX_BYTES:
         raise HTTPException(status_code=413, detail="Файл больше 4 МБ")
 
+    return store_image(raw, kind, db)
+
+
+def store_image(raw: bytes, kind: str, db: Session) -> str:
+    """Ужимает байты картинки и кладёт в базу. Коммит — за вызывающим."""
     try:
         image = Image.open(io.BytesIO(raw))
         image.load()

@@ -3,6 +3,7 @@ import { formatClock, stepAction, vetoSequence } from "../utils/veto.js";
 import Icon from "./Icon.jsx";
 import MapCard from "./MapCard.jsx";
 import DraftStats from "./DraftStats.jsx";
+import MatchSummary from "./MatchSummary.jsx";
 
 // Название приходит с сервера готовым: своё имя команды или «ник + ник».
 const teamLabel = (t) => t?.name || "TBD";
@@ -165,7 +166,7 @@ export default function VetoModal({
             </div>
           )}
 
-          <DraftStats teamA={teamA} teamB={teamB} mapsPool={mapsPool} />
+          {status !== "done" ? <DraftStats teamA={teamA} teamB={teamB} mapsPool={mapsPool} /> : null}
 
           {status === "done" && match.maps?.length ? (
             <div className="series">
@@ -226,6 +227,12 @@ export default function VetoModal({
             </div>
           ) : null}
 
+          {status === "done" ? (
+            <>
+              <MatchSummary match={match} teamA={teamA} teamB={teamB} />
+              <DraftStats teamA={teamA} teamB={teamB} mapsPool={mapsPool} collapsible />
+            </>
+          ) : null}
         </div>
 
         <div className="veto-modal-foot">

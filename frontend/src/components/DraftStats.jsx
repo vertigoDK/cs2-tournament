@@ -2,11 +2,15 @@ import { useEffect, useState } from "react";
 import api from "../api.js";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
+import { BlockBones } from "./Skeleton.jsx";
 
 // Статистика по картам для всех игроков матча — капитанам во время драфта:
-// своя, напарника и двух соперников. Всегда раскрыта под картами.
-export default function DraftStats({ teamA, teamB, mapsPool }) {
+// своя, напарника и двух соперников. Пока идёт драфт, она всегда раскрыта;
+// после драфта главное — итог матча, и таблица сворачивается (`collapsible`).
+export default function DraftStats({ teamA, teamB, mapsPool, collapsible = false }) {
   const [data, setData] = useState(null);
+  const [expanded, setExpanded] = useState(false);
+  const open = !collapsible || expanded;
 
   const players = [teamA, teamB].flatMap((team, side) =>
     team
@@ -19,25 +23,34 @@ export default function DraftStats({ teamA, teamB, mapsPool }) {
   const ids = players.map((p) => p.id).join(",");
 
   useEffect(() => {
-    if (!ids) return;
+    if (!ids || !open) return;
     let alive = true;
     api.get("/stats/player-maps", { params: { ids } }).then((res) => alive && setData(res.data));
     return () => {
       alive = false;
     };
-  }, [ids]);
+  }, [ids, open]);
 
   if (!players.length) return null;
 
   return (
-    <div className="draft-stats open">
-      <div className="ds-toggle">
-        <Icon name="chart" size={15} />
-        Статистика игроков по картам
-      </div>
+    <div className={`draft-stats${open ? " open" : ""}`}>
+      {collapsible ? (
+        <button type="button" className="ds-toggle" onClick={() => setExpanded((v) => !v)} aria-expanded={open}>
+          <Icon name="chart" size={15} />
+          Статистика игроков по картам
+          <span className="ds-toggle-hint">{open ? "свернуть" : "по всем турнирам"}</span>
+          <Icon name="chevronDown" size={15} className="ds-caret" />
+        </button>
+      ) : (
+        <div className="ds-toggle">
+          <Icon name="chart" size={15} />
+          Статистика игроков по картам
+        </div>
+      )}
 
-      {!data ? (
-          <div className="spinner" />
+      {!open ? null : !data ? (
+          <BlockBones rows={4} />
         ) : (
           <div className="ds-wrap">
             <table className="ds-table">

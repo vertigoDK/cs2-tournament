@@ -6,6 +6,7 @@ import Avatar, { AVATAR_COLORS, COLOR_LABELS } from "../components/Avatar.jsx";
 import { useToast } from "../components/Toast.jsx";
 import Icon from "../components/Icon.jsx";
 import PageHead, { EmptyState } from "../components/PageHead.jsx";
+import { BlockBones } from "../components/Skeleton.jsx";
 
 export default function Cabinet() {
   const { auth, updateProfile } = useAuth();
@@ -149,7 +150,7 @@ export default function Cabinet() {
       </div>
 
       {!data ? (
-        <div className="spinner" />
+        <BlockBones rows={4} />
       ) : (
         <>
           <div className="section-head">

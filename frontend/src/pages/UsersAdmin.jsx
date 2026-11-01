@@ -4,6 +4,7 @@ import { useToast } from "../components/Toast.jsx";
 import Avatar from "../components/Avatar.jsx";
 import Icon from "../components/Icon.jsx";
 import PageHead, { EmptyState } from "../components/PageHead.jsx";
+import { ListBones } from "../components/Skeleton.jsx";
 
 export default function UsersAdmin() {
   const [users, setUsers] = useState(null);
@@ -73,6 +74,27 @@ export default function UsersAdmin() {
     }
   };
 
+  // Аватарки из Steam (их же показывает Cybershoke). Своё загруженное фото
+  // не трогаем — только пустые.
+  const steamAvatars = async () => {
+    setBusy(true);
+    try {
+      const { data } = await api.post("/users/steam-avatars");
+      await load();
+      toast(
+        data.updated.length
+          ? `Аватарки из Steam: ${data.updated.length}${data.failed.length ? `, не вышло: ${data.failed.join(", ")}` : ""}`
+          : data.failed.length
+          ? `Steam не отдал: ${data.failed.join(", ")}`
+          : "Всем уже стоят аватарки"
+      );
+    } catch (err) {
+      toast(apiErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const copyCreds = async () => {
     const text = `Логин: ${issued.username}\nПароль: ${issued.password}`;
     try {
@@ -89,7 +111,12 @@ export default function UsersAdmin() {
         title="Участники"
         sub="Один список на все турниры. Логин и пароль выдаются случайные и показываются один раз."
         art="/img/teams.webp"
-      />
+      >
+        <button className="btn" style={{ marginTop: 18 }} onClick={steamAvatars} disabled={busy}>
+          <Icon name="users" size={14} />
+          <span>Аватарки из Steam</span>
+        </button>
+      </PageHead>
 
       {issued ? (
         <div className="panel panel-pad creds-card">
@@ -141,7 +168,7 @@ export default function UsersAdmin() {
 
       <div className="panel panel-pad">
         {!users ? (
-          <div className="spinner" />
+          <ListBones />
         ) : users.length === 0 ? (
           <EmptyState art="/img/teams.webp" title="Участников ещё нет" text="Добавьте первого — из них собираются команды." />
         ) : (

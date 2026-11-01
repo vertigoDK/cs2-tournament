@@ -6,6 +6,7 @@ import { BEST_OF, minPool, sequenceLabel } from "../utils/veto.js";
 import { mapImage } from "../utils/maps.js";
 import Icon from "../components/Icon.jsx";
 import PageHead from "../components/PageHead.jsx";
+import { FormSkeleton } from "../components/Skeleton.jsx";
 
 // Пул 2×2 на Cybershoke; держим в синхроне с backend/app/map_catalog.py.
 const DEFAULT_MAPS = [
@@ -249,11 +250,7 @@ export default function TournamentForm() {
   };
 
   if (loading) {
-    return (
-      <main className="page narrow">
-        <div className="spinner" />
-      </main>
-    );
+    return <FormSkeleton />;
   }
 
   const noPlayers = (players || []).length === 0;

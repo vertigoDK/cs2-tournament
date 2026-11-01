@@ -13,6 +13,7 @@ import StatusPill from "../components/StatusPill.jsx";
 import MvpCard from "../components/MvpCard.jsx";
 import QualifierBracket, { QualifierSetup } from "../components/QualifierBracket.jsx";
 import { tournamentCover } from "../utils/maps.js";
+import { TournamentSkeleton } from "../components/Skeleton.jsx";
 
 export default function TournamentView() {
   const { id } = useParams();
@@ -211,12 +212,20 @@ export default function TournamentView() {
     );
   }
   if (!t) {
-    return (
-      <main className="page">
-        <div className="spinner" />
-      </main>
-    );
+    return <TournamentSkeleton />;
   }
+
+  // Идущие драфты — кнопкой наверху, чтобы не искать матч в сетке.
+  const liveDrafts = t.bracket.rounds.flatMap((round, r) =>
+    round
+      .map((m, i) => ({ m, r, i }))
+      .filter(({ m }) => m.veto?.status === "in_progress")
+      .map(({ m, r, i }) => ({
+        r,
+        i,
+        label: m.p.map((slot) => (slot != null ? t.bracket.teams[slot]?.name : "TBD")).join(" vs "),
+      }))
+  );
 
   const vetoMatch = vetoTarget ? t.bracket.rounds[vetoTarget.r]?.[vetoTarget.i] ?? null : null;
   const teamA = vetoMatch && vetoMatch.p[0] != null ? t.bracket.teams[vetoMatch.p[0]] : null;
@@ -268,6 +277,14 @@ export default function TournamentView() {
       </section>
 
       <div className="t-actions">
+        {liveDrafts.map((d) => (
+          <button key={`${d.r}-${d.i}`} className="btn live-draft" onClick={() => onOpenVeto(d.r, d.i)}>
+            <span className="live-dot" />
+            <span>
+              Смотреть драфт{liveDrafts.length > 1 ? <span className="ld-teams"> · {d.label}</span> : null}
+            </span>
+          </button>
+        ))}
         {t.status !== "setup" ? (
           <button className="btn" onClick={() => setStatsOpen(true)}>
             <Icon name="medal" size={15} />

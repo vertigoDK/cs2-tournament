@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api, { apiErrorMessage } from "../api.js";
 import Icon from "./Icon.jsx";
 import { EmptyStats, MapsGrid, PlayersTable } from "./StatsTables.jsx";
+import { BlockBones } from "./Skeleton.jsx";
 
 // Те же таблицы, что и на странице «Статистика», но по одному турниру:
 // бэкенд считает сводку тем же проходом, отличается только фильтр.
@@ -47,7 +48,7 @@ export default function TournamentStatsModal({ open, onClose, tournamentId, tour
 
         <div className="veto-modal-body">
           {error ? <div className="error-box">{error}</div> : null}
-          {!data && !error ? <div className="spinner" /> : null}
+          {!data && !error ? <BlockBones rows={5} /> : null}
 
           {data ? (
             <>
