@@ -83,15 +83,14 @@ function PlayerCard({ p, place, index }) {
             )}
           </span>
         </div>
-        {place ? <span className="pc-place mono">#{place}</span> : null}
+        <div className="pc-score">
+          <span className="mono">{place ? `#${place} · балл` : "балл"}</span>
+          <b>{p.score != null ? p.score.toFixed(1) : "—"}</b>
+        </div>
       </div>
 
       <div className="pc-body">
-        <Radar values={p.axes} size={150} labels={false} />
-        <div className="pc-score">
-          <span className="mono">общий балл</span>
-          <b>{p.score != null ? p.score.toFixed(1) : "—"}</b>
-        </div>
+        <Radar values={p.axes} size={300} labels="compact" />
       </div>
 
       <dl className="pc-facts mono">

@@ -17,6 +17,7 @@ from ..deps import get_db
 from ..hydrate import hydrate_bracket
 from ..map_catalog import MAP_NAMES
 from ..models import Role, Tournament, User
+from .tournaments import _mvp
 
 router = APIRouter(prefix="/api/stats", tags=["stats"])
 
@@ -200,15 +201,24 @@ def stats(
                     )
                 )
 
+        duel_winner = B.qualifier_winner(bracket)
+        duel_user = db.get(User, duel_winner) if duel_winner else None
         history.append(
             schemas.HistoryTournament(
                 id=t.id,
                 name=t.name,
                 status=t.status.value,
                 created_at=t.created_at.isoformat(),
+                date=(t.started_at or t.starts_at or t.created_at).isoformat(),
                 prize_pool=t.prize_pool,
                 champion=champion["name"] if champion else None,
                 teams_count=len(teams),
+                teams=[team.get("name") or "" for team in teams],
+                best_of=bracket.get("best_of") or 1,
+                final_best_of=bracket.get("final_best_of") or bracket.get("best_of") or 1,
+                maps_pool=t.maps_pool or [],
+                mvp=_mvp(t, db),
+                duel_winner=duel_user.display_name if duel_user else None,
                 matches=matches,
             )
         )

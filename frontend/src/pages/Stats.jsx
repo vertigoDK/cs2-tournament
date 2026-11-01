@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
 import Avatar from "../components/Avatar.jsx";
 import Icon from "../components/Icon.jsx";
 import { EmptyStats, MapsGrid, PlayersTable } from "../components/StatsTables.jsx";
 import PageHead from "../components/PageHead.jsx";
-import StatusPill from "../components/StatusPill.jsx";
 import { StatsSkeleton } from "../components/Skeleton.jsx";
+import HistoryTimeline from "../components/HistoryTimeline.jsx";
 
 const TABS = [
   { id: "players", label: "Игроки", icon: "medal" },
@@ -80,11 +79,7 @@ export default function Stats() {
         (data.tournaments.length === 0 ? (
           <EmptyStats text="Турниров пока не было." />
         ) : (
-          <div className="history-list">
-            {data.tournaments.map((t) => (
-              <TournamentHistory key={t.id} t={t} />
-            ))}
-          </div>
+          <HistoryTimeline tournaments={data.tournaments} currency={data.currency} prizeTotal={data.prize_total} />
         ))}
     </main>
   );
@@ -158,66 +153,3 @@ function Prizes({ data }) {
   );
 }
 
-
-function TournamentHistory({ t }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="hist">
-      <button type="button" className="hist-head" onClick={() => setOpen((v) => !v)}>
-        <StatusPill t={t} />
-        <span className="hist-name">{t.name}</span>
-        {t.champion ? (
-          <span className="hist-champ">
-            <Icon name="trophy" size={14} />
-            {t.champion}
-          </span>
-        ) : null}
-        <span className="hist-meta">
-          {t.teams_count} команд · {new Date(t.created_at).toLocaleDateString("ru-RU")}
-        </span>
-        <Icon name="chevronDown" size={16} className={open ? "flip" : undefined} />
-      </button>
-
-      {open ? (
-        <div className="hist-body">
-          {t.matches.length === 0 ? (
-            <div className="hist-empty">Матчи ещё не сыграны.</div>
-          ) : (
-            t.matches.map((m, idx) => (
-              <div className="hist-match" key={idx}>
-                <div className="hm-top">
-                  <span className="hm-round">{m.round_label}</span>
-                  <span className={`hm-team${m.winner === 0 ? " won" : ""}`}>{m.team_a || "TBD"}</span>
-                  <span className="hm-vs">vs</span>
-                  <span className={`hm-team${m.winner === 1 ? " won" : ""}`}>{m.team_b || "TBD"}</span>
-                </div>
-
-                {m.maps.length ? (
-                  <ul className="hm-maps">
-                    {m.maps.map((mp, mi) => (
-                      <li key={mi}>
-                        <Icon name="map" size={13} />
-                        <b>{mp.map}</b>
-                        {mp.rounds ? (
-                          <span className="hm-score">
-                            {mp.rounds[0]}:{mp.rounds[1]}
-                          </span>
-                        ) : null}
-                        {mp.picked_by ? <span className="hm-pick">пик: {mp.picked_by}</span> : null}
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-
-                {m.bans.length ? <div className="hm-bans">Баны: {m.bans.join(", ")}</div> : null}
-              </div>
-            ))
-          )}
-          <Link to={`/tournaments/${t.id}`} className="hist-link">
-            Открыть сетку <Icon name="arrowRight" size={14} />
-          </Link>
-        </div>
-      ) : null}
-    </div>
-  );
-}

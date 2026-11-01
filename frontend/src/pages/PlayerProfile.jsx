@@ -211,7 +211,7 @@ export default function PlayerProfile() {
       {p.history.length ? (
         <section className="section">
           <h2 className="section-title">Турниры</h2>
-          <div className="panel history-list">
+          <div className="panel p-history">
             {p.history.map((h) => (
               <Link key={h.id} to={`/tournaments/${h.id}`} className="hl-row">
                 <span className="hl-date mono">{formatDay(h.date)}</span>

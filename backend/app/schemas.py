@@ -289,9 +289,17 @@ class HistoryTournament(BaseModel):
     name: str
     status: str
     created_at: str
+    # Когда турнир играли (или когда сыграют): старт, иначе дата создания.
+    date: str = ""
     prize_pool: str
     champion: str | None
     teams_count: int
+    teams: list[str] = []
+    best_of: int = 1
+    final_best_of: int = 1
+    maps_pool: list[str] = []
+    mvp: MvpOut | None = None
+    duel_winner: str | None = None
     matches: list[HistoryMatch]
 
 
