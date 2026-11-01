@@ -1,6 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import api from "../api.js";
 import Avatar from "./Avatar.jsx";
 import { mapImage } from "../utils/maps.js";
+import { playerRating } from "../utils/roster.js";
 import { EmptyState } from "./PageHead.jsx";
 
 // Одни и те же таблицы показывает страница «Статистика» (по всем турнирам)
@@ -11,6 +13,7 @@ export const SORTS = [
   { id: "kills", label: "Килы", get: (p) => p.kills },
   { id: "kd", label: "K/D", get: (p) => p.kd },
   { id: "kpr", label: "Килов в раунде", get: (p) => p.kpr },
+  { id: "rating", label: "Рейтинг", get: (p) => p.rating },
   { id: "map_wins", label: "Побед на картах", get: (p) => p.map_wins },
   { id: "titles", label: "Титулы", get: (p) => p.titles },
 ];
@@ -28,26 +31,93 @@ export function EmptyStats({ text }) {
 const fmt = (sortId, p) => {
   const cmp = SORTS.find((s) => s.id === sortId) || SORTS[0];
   const v = cmp.get(p);
-  return sortId === "kd" || sortId === "kpr" ? v.toFixed(2) : String(v);
+  return sortId === "kd" || sortId === "kpr" || sortId === "rating" ? v.toFixed(2) : String(v);
 };
 
-export function PlayersTable({ players, showTitles = true, podium = false }) {
-  const [sort, setSort] = useState("kills");
+const round2 = (a, b) => (b ? a / b : a);
+
+// `mapOptions` — карты для фильтра «статистика на карте». Без них фильтра нет.
+export function PlayersTable({ players, showTitles = true, podium = false, mapOptions = [] }) {
+  const [sortChoice, setSort] = useState("kills");
+  const [map, setMap] = useState("");
+  const titlesOn = showTitles && !map;
+  // Титулы к отдельной карте не относятся — на карте сортируем по килам.
+  const sort = !titlesOn && sortChoice === "titles" ? "kills" : sortChoice;
+  // {id игрока: {карта: строка}} — грузим один раз, когда впервые выбрали карту.
+  const [byMap, setByMap] = useState(null);
+
+  useEffect(() => {
+    if (!map || byMap) return;
+    api
+      .get("/stats/player-maps", { params: { ids: players.map((p) => p.id).join(",") } })
+      .then((res) => setByMap(res.data));
+  }, [map, byMap, players]);
+
+  const source = useMemo(() => {
+    if (!map) return players.map((p) => ({ ...p, rating: playerRating(p.kills, p.deaths, p.rounds) }));
+    if (!byMap) return null;
+    // На одной карте: те же столбцы, но только по ней. Дуэли и титулы к карте
+    // не относятся.
+    return players
+      .map((p) => {
+        const m = byMap[String(p.id)]?.[map];
+        if (!m) return null;
+        return {
+          ...p,
+          maps: m.wins + m.losses,
+          kills: m.kills,
+          deaths: m.deaths,
+          assists: m.assists,
+          rounds: m.rounds,
+          kd: round2(m.kills, m.deaths),
+          kpr: round2(m.kills, m.rounds),
+          map_wins: m.wins,
+          map_losses: m.losses,
+          rating: m.rating,
+        };
+      })
+      .filter(Boolean);
+  }, [players, map, byMap]);
 
   const rows = useMemo(() => {
+    if (!source) return [];
     const cmp = SORTS.find((s) => s.id === sort) || SORTS[0];
-    return [...players].sort(
+    return [...source].sort(
       (a, b) => cmp.get(b) - cmp.get(a) || a.display_name.localeCompare(b.display_name)
     );
-  }, [players, sort]);
+  }, [source, sort]);
 
-  const sorts = showTitles ? SORTS : SORTS.filter((s) => s.id !== "titles");
+  const sorts = titlesOn ? SORTS : SORTS.filter((s) => s.id !== "titles");
   // Дуэли 1×1 — отдельный столбец, только если они вообще были.
-  const showDuels = players.some((p) => p.duel_wins || p.duel_losses);
+  const showDuels = !map && players.some((p) => p.duel_wins || p.duel_losses);
   const sortLabel = (SORTS.find((s) => s.id === sort) || SORTS[0]).label;
 
   return (
     <>
+      {mapOptions.length ? (
+        <div className="map-filter">
+          <button type="button" className={`mf-chip all${!map ? " active" : ""}`} onClick={() => setMap("")}>
+            Все карты
+          </button>
+          {mapOptions.map((name) => (
+            <button
+              key={name}
+              type="button"
+              className={`mf-chip${map === name ? " active" : ""}`}
+              onClick={() => setMap(name)}
+            >
+              {mapImage(name) ? <img src={mapImage(name)} alt="" /> : null}
+              <span>{name}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {map && !source ? <BlockLoading /> : null}
+      {map && source && !rows.length ? (
+        <div className="hint">На {map} статистику ещё не вносили.</div>
+      ) : null}
+
       {podium && rows.length >= 3 ? (
         <div className="podium">
           {rows.slice(0, 3).map((p, i) => (
@@ -56,12 +126,17 @@ export function PlayersTable({ players, showTitles = true, podium = false }) {
               <Avatar name={p.display_name} color={p.avatar_color} url={p.avatar_url} size={40} />
               <div className="podium-nick">{p.display_name}</div>
               <div className="podium-value mono">{fmt(sort, p)}</div>
-              <div className="podium-label mono">{sortLabel}</div>
+              <div className="podium-label mono">
+                {sortLabel}
+                {map ? ` · ${map}` : ""}
+              </div>
             </div>
           ))}
         </div>
       ) : null}
 
+      {map && !rows.length ? null : (
+      <>
       <div className="sort-bar">
         <span>Сортировка</span>
         {sorts.map((s) => (
@@ -87,9 +162,10 @@ export function PlayersTable({ players, showTitles = true, podium = false }) {
               <th>A</th>
               <th>K/D</th>
               <th title="Килов в раунде">KPR</th>
+              <th title="Как у MVP: 1.00 — средний игрок">Рейтинг</th>
               <th>Карты W-L</th>
               {showDuels ? <th title="Отборочные дуэли 1×1 — в K/D не входят">Дуэли W-L</th> : null}
-              {showTitles ? <th>Титулы</th> : null}
+              {titlesOn ? <th>Титулы</th> : null}
             </tr>
           </thead>
           <tbody>
@@ -106,19 +182,32 @@ export function PlayersTable({ players, showTitles = true, podium = false }) {
                 <td>{p.assists}</td>
                 <td className="num strong">{p.kd.toFixed(2)}</td>
                 <td className="num">{p.kpr.toFixed(2)}</td>
+                <td className={`num${p.rating >= 1.1 ? " strong" : ""}`}>{p.rounds ? p.rating.toFixed(2) : "—"}</td>
                 <td>
                   {p.map_wins}–{p.map_losses}
                 </td>
                 {showDuels ? (
                   <td>{p.duel_wins || p.duel_losses ? `${p.duel_wins}–${p.duel_losses}` : "—"}</td>
                 ) : null}
-                {showTitles ? <td>{p.titles || "—"}</td> : null}
+                {titlesOn ? <td>{p.titles || "—"}</td> : null}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      </>
+      )}
     </>
+  );
+}
+
+function BlockLoading() {
+  return (
+    <div className="sk-block" aria-busy="true">
+      {[92, 78, 64].map((w) => (
+        <span key={w} className="bone" style={{ width: `${w}%`, height: 14 }} />
+      ))}
+    </div>
   );
 }
 

@@ -64,7 +64,11 @@ export default function Stats() {
         ))}
       </div>
 
-      {tab === "players" && (!hasStats ? <EmptyStats /> : <PlayersTable players={data.players} podium />)}
+      {tab === "players" && (!hasStats ? <EmptyStats /> : <PlayersTable
+            players={data.players}
+            podium
+            mapOptions={data.maps.filter((m) => m.played > 0).map((m) => m.map)}
+          />)}
 
       {tab === "prizes" && <Prizes data={data} />}
 
