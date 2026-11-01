@@ -10,6 +10,8 @@ import TournamentForm from "./pages/TournamentForm.jsx";
 import UsersAdmin from "./pages/UsersAdmin.jsx";
 import Cabinet from "./pages/Cabinet.jsx";
 import Stats from "./pages/Stats.jsx";
+import Players from "./pages/Players.jsx";
+import PlayerProfile from "./pages/PlayerProfile.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
 export default function App() {
@@ -23,6 +25,8 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<Dashboard />} />
           <Route path="/stats" element={<Stats />} />
+          <Route path="/players" element={<Players />} />
+          <Route path="/players/:id" element={<PlayerProfile />} />
           <Route path="/tournaments/:id" element={<TournamentView />} />
 
           <Route element={<ProtectedRoute />}>

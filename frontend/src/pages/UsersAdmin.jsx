@@ -75,7 +75,7 @@ export default function UsersAdmin() {
   };
 
   // Аватарки из Steam (их же показывает Cybershoke). Своё загруженное фото
-  // не трогаем — только пустые.
+  // не трогаем, неизменившиеся не перекачиваем.
   const steamAvatars = async () => {
     setBusy(true);
     try {
@@ -86,7 +86,7 @@ export default function UsersAdmin() {
           ? `Аватарки из Steam: ${data.updated.length}${data.failed.length ? `, не вышло: ${data.failed.join(", ")}` : ""}`
           : data.failed.length
           ? `Steam не отдал: ${data.failed.join(", ")}`
-          : "Всем уже стоят аватарки"
+          : "Аватарки в Steam не менялись"
       );
     } catch (err) {
       toast(apiErrorMessage(err));

@@ -64,8 +64,6 @@ def create_user(payload: schemas.UserCreate, db: Session = Depends(get_db), _: U
 @router.post("/steam-avatars", response_model=schemas.SteamAvatarsOut)
 def steam_avatars(force: bool = False, db: Session = Depends(get_db), _: User = Depends(require_admin)):
     """Подтягивает аватарки из Steam (см. `steam.refresh_avatars`).
-
-    Раз в сутки то же самое делает крон, кнопка — чтобы не ждать.
     """
     return schemas.SteamAvatarsOut(**refresh_avatars(db, force=force))
 

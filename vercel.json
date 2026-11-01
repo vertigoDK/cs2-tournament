@@ -21,11 +21,5 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/steam-avatars",
-      "schedule": "0 3 * * *"
-    }
   ]
 }

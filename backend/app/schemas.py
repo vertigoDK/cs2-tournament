@@ -312,3 +312,62 @@ class SteamAvatarsOut(BaseModel):
     updated: list[str]
     unchanged: list[str] = []
     failed: list[str]
+
+
+class AxisInfo(BaseModel):
+    key: str
+    label: str
+    hint: str
+
+
+class PlayerProfileSummary(BaseModel):
+    id: int
+    display_name: str
+    avatar_color: str
+    avatar_url: str | None = None
+    rating: float = 0.0
+    kills: int = 0
+    deaths: int = 0
+    assists: int = 0
+    rounds: int = 0
+    maps: int = 0
+    map_wins: int = 0
+    map_losses: int = 0
+    duel_wins: int = 0
+    duel_losses: int = 0
+    tournaments: int = 0
+    titles: int = 0
+    prize: float = 0.0
+    # Оси пятиугольника, 1–10 относительно остальных; None — ещё не играл.
+    axes: dict[str, float] | None = None
+    score: float | None = None
+
+
+class PlayerMapLine(BaseModel):
+    map: str
+    wins: int
+    losses: int
+    kills: int
+    deaths: int
+    assists: int
+    rounds: int
+    rating: float
+
+
+class PlayerHistoryRow(BaseModel):
+    id: int
+    name: str
+    status: str
+    team: str | None = None
+    place: str
+    champion: bool
+    prize_pool: str = ""
+    date: str
+
+
+class PlayerProfile(PlayerProfileSummary):
+    best_map_rating: float | None = None
+    maps_breakdown: list[PlayerMapLine] = []
+    history: list[PlayerHistoryRow] = []
+    players_rated: int = 0
+    axes_info: list[AxisInfo] = []

@@ -28,7 +28,7 @@ function WakeNote() {
   );
 }
 
-function SkeletonPage({ children, narrow }) {
+export function SkeletonPage({ children, narrow }) {
   return (
     <main className={`page skeleton${narrow ? " narrow" : ""}`} aria-busy="true">
       {children}

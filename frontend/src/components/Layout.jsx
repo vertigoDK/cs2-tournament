@@ -40,6 +40,9 @@ export default function Layout() {
             <NavLink to="/" end className={navClass}>
               Турниры
             </NavLink>
+            <NavLink to="/players" className={navClass}>
+              Игроки
+            </NavLink>
             <NavLink to="/stats" className={navClass}>
               Статистика
             </NavLink>
