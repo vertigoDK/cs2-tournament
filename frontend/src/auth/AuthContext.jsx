@@ -47,6 +47,23 @@ export function AuthProvider({ children }) {
     [persist]
   );
 
+  // Вход через Steam: сервер уже выдал токен, профиль берём из /auth/me.
+  const loginWithToken = useCallback(
+    async (token) => {
+      const { data } = await api.get("/auth/me", { headers: { Authorization: `Bearer ${token}` } });
+      persist({
+        token,
+        id: data.id,
+        role: data.role,
+        username: data.username,
+        displayName: data.display_name,
+        avatarColor: data.avatar_color,
+        avatarUrl: data.avatar_url,
+      });
+    },
+    [persist]
+  );
+
   const logout = useCallback(() => persist(null), [persist]);
 
   // Профиль меняется в кабинете — шапка должна обновиться сразу.
@@ -56,8 +73,8 @@ export function AuthProvider({ children }) {
   );
 
   const value = useMemo(
-    () => ({ auth, isAdmin: auth?.role === "admin", login, logout, updateProfile }),
-    [auth, login, logout, updateProfile]
+    () => ({ auth, isAdmin: auth?.role === "admin", login, loginWithToken, logout, updateProfile }),
+    [auth, login, loginWithToken, logout, updateProfile]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from .database import SessionLocal
 from .migrations import upgrade_db
-from .routers import auth, matches, me, players, stats, tournaments, uploads, users, veto
+from .routers import auth, matches, me, players, stats, steam_auth, tournaments, uploads, users, veto
 from .seed import seed_admin
 
 app = FastAPI(title="CS2 Local Tournaments", version="0.3.0")
@@ -24,6 +24,7 @@ def health():
 
 
 app.include_router(auth.router)
+app.include_router(steam_auth.router)
 app.include_router(me.router)
 app.include_router(users.router)
 app.include_router(uploads.router)

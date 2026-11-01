@@ -4,6 +4,7 @@ import { AdminRoute, ProtectedRoute } from "./components/ProtectedRoute.jsx";
 import Layout from "./components/Layout.jsx";
 import Cursor from "./components/Cursor.jsx";
 import Login from "./pages/Login.jsx";
+import SteamCallback from "./pages/SteamCallback.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import TournamentView from "./pages/TournamentView.jsx";
 import TournamentMedia from "./pages/TournamentMedia.jsx";
@@ -22,6 +23,7 @@ export default function App() {
       <Cursor />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/login/steam" element={<SteamCallback />} />
 
         {/* Смотреть можно без входа; вход нужен, чтобы что-то менять. */}
         <Route element={<Layout />}>

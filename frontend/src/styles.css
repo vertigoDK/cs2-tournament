@@ -560,6 +560,29 @@ input[type="radio"] { accent-color: var(--accent); }
 .login-panel h1 { font-size: 40px; }
 .login-panel .lead { font-size: 15.5px; margin: 10px 0 26px; }
 .login-form .btn { margin-top: 6px; }
+.steam-btn {
+  width: 100%;
+  justify-content: center;
+  gap: 10px;
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+  text-decoration: none;
+}
+.steam-btn:hover { background: var(--ink-2); border-color: var(--ink-2); }
+.login-or {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.login-or::before,
+.login-or::after { content: ""; flex: 1; border-top: 1px dashed var(--line-2); }
+.steam-id { display: block; margin-top: 6px; font-size: 12px; opacity: 0.8; user-select: all; }
 .login-guest { margin: 18px 0 0; }
 .login-art { display: grid; justify-items: center; gap: 4px; }
 .login-art img { width: min(560px, 100%); animation: float 7s ease-in-out infinite; }

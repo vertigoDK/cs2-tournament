@@ -13,6 +13,9 @@ export default defineConfig({
       "/api": {
         target: proxyTarget,
         changeOrigin: true,
+        // Адрес фронта (X-Forwarded-Host) нужен входу через Steam: туда Steam
+        // вернёт пользователя.
+        xfwd: true,
       },
     },
   },
