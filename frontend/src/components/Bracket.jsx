@@ -258,6 +258,7 @@ export default function Bracket({ bracket, isAdmin, started, onPick, onOpenVeto 
                         {vetoDone ? <Icon name="map" size={13} /> : null}
                         {!started && !vetoDone ? <Icon name="lock" size={12} /> : null}
                         {vetoLabel(m, started)}
+                        <Icon name="chevronRight" size={12} className="vb-chev" />
                       </button>
                     ) : null}
                   </div>

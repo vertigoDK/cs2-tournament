@@ -291,6 +291,12 @@ export default function TournamentView() {
             <span>Статистика турнира</span>
           </button>
         ) : null}
+        {t.matches_played || t.status === "finished" ? (
+          <Link to={`/tournaments/${id}/media`} className="btn">
+            <Icon name="film" size={15} />
+            <span>Записи</span>
+          </Link>
+        ) : null}
         {isAdmin ? (
           <>
             {t.status !== "finished" && !t.started_at ? (

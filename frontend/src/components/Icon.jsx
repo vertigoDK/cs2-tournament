@@ -31,6 +31,24 @@ const paths = {
     </>
   ),
   play: <path d="M8 5.5v13l11-6.5-11-6.5Z" />,
+  pause: <path d="M8 5.5v13M16 5.5v13" />,
+  download: <path d="M12 4.5v11M7 11l5 5 5-5M5 19.5h14" />,
+  grid: (
+    <>
+      <rect x="4.5" y="4.5" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13" y="4.5" width="6.5" height="6.5" rx="1.5" />
+      <rect x="4.5" y="13" width="6.5" height="6.5" rx="1.5" />
+      <rect x="13" y="13" width="6.5" height="6.5" rx="1.5" />
+    </>
+  ),
+  single: <rect x="4" y="6" width="16" height="12" rx="2" />,
+  expand: <path d="M4.5 9V4.5H9M15 4.5h4.5V9M19.5 15v4.5H15M9 19.5H4.5V15" />,
+  film: (
+    <>
+      <rect x="4" y="4.5" width="16" height="15" rx="2" />
+      <path d="M8 4.5v15M16 4.5v15M4 9h4M4 15h4M16 9h4M16 15h4" />
+    </>
+  ),
   warning: (
     <>
       <path d="M12 4.5 2.8 20h18.4L12 4.5Z" />
@@ -49,6 +67,7 @@ const paths = {
   plus: <path d="M12 5.5v13M5.5 12h13" />,
   close: <path d="M6.5 6.5 17.5 17.5M17.5 6.5 6.5 17.5" />,
   chevronDown: <path d="M6.5 9.5 12 15l5.5-5.5" />,
+  chevronRight: <path d="M9.5 6.5 15 12l-5.5 5.5" />,
   arrowUp: <path d="M12 19V5M6.5 10.5 12 5l5.5 5.5" />,
   arrowDown: <path d="M12 5v14M6.5 13.5 12 19l5.5-5.5" />,
   user: (

@@ -6,6 +6,7 @@ import Cursor from "./components/Cursor.jsx";
 import Login from "./pages/Login.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
 import TournamentView from "./pages/TournamentView.jsx";
+import TournamentMedia from "./pages/TournamentMedia.jsx";
 import TournamentForm from "./pages/TournamentForm.jsx";
 import UsersAdmin from "./pages/UsersAdmin.jsx";
 import Cabinet from "./pages/Cabinet.jsx";
@@ -30,6 +31,7 @@ export default function App() {
           <Route path="/players/:id" element={<PlayerProfile />} />
           <Route path="/history" element={<History />} />
           <Route path="/tournaments/:id" element={<TournamentView />} />
+          <Route path="/tournaments/:id/media" element={<TournamentMedia />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path="/me" element={<Cabinet />} />
