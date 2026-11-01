@@ -33,7 +33,7 @@ export default function TournamentForm() {
   const [prizePool, setPrizePool] = useState("");
   const [mode, setMode] = useState("seed");
   const [pool, setPool] = useState(DEFAULT_MAPS);
-  const [bestOf, setBestOf] = useState(3);
+  const [bestOf, setBestOf] = useState(5);
   // Финал часто играют дольше остальных матчей.
   const [finalBo, setFinalBo] = useState(5);
   // Время на весь драфт, у каждой команды половина; 0 — без таймера.
