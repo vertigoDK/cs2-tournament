@@ -4,6 +4,7 @@ import Icon from "./Icon.jsx";
 import MvpCard from "./MvpCard.jsx";
 import StatusPill, { statusKind } from "./StatusPill.jsx";
 import { tournamentCover } from "../utils/maps.js";
+import CupTip from "./CupTip.jsx";
 import { formatLocal } from "../utils/time.js";
 
 // Текущий турнир на главной: крупная карточка с обложкой справа.
@@ -49,14 +50,14 @@ export default function HeroTournamentCard({ t }) {
           <div className="t-awards">
             {t.champion ? (
               <div className="champ-banner">
-                <img src="/img/trophy-tight.webp" alt="" />
+                <CupTip id={t.id} name={t.name} date={t.started_at || t.starts_at || t.created_at} team={t.champion} prize={t.prize_pool} />
                 <div>
                   <span className="mono">Чемпион</span>
                   <b>{t.champion}</b>
                 </div>
               </div>
             ) : null}
-            {t.mvp ? <MvpCard mvp={t.mvp} /> : null}
+            {t.mvp ? <MvpCard mvp={t.mvp} number={t.number} tournament={{ name: t.name, date: t.started_at || t.starts_at || t.created_at }} /> : null}
           </div>
         ) : null}
 

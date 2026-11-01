@@ -11,8 +11,10 @@ import { useToast } from "../components/Toast.jsx";
 import Icon from "../components/Icon.jsx";
 import StatusPill from "../components/StatusPill.jsx";
 import MvpCard from "../components/MvpCard.jsx";
+import WinnerReward from "../components/WinnerReward.jsx";
 import QualifierBracket, { QualifierSetup } from "../components/QualifierBracket.jsx";
 import { tournamentCover } from "../utils/maps.js";
+import CupTip from "../components/CupTip.jsx";
 import { TournamentSkeleton } from "../components/Skeleton.jsx";
 
 export default function TournamentView() {
@@ -336,18 +338,20 @@ export default function TournamentView() {
         finished={t.status === "finished"}
       />
 
+      {!t.champion && t.status !== "finished" ? <WinnerReward name={t.name} prizePool={t.prize_pool} number={t.number} /> : null}
+
       {t.champion || t.mvp ? (
         <div className="t-awards">
           {t.champion ? (
             <div className="champ-banner">
-              <img src="/img/trophy-tight.webp" alt="" />
+              <CupTip name={t.name} date={t.started_at || t.starts_at || t.created_at} team={t.champion} prize={t.prize_pool} />
               <div>
                 <span className="mono">Чемпион</span>
                 <b>{t.champion}</b>
               </div>
             </div>
           ) : null}
-          {t.mvp ? <MvpCard mvp={t.mvp} /> : null}
+          {t.mvp ? <MvpCard mvp={t.mvp} number={t.number} tournament={{ name: t.name, date: t.started_at || t.starts_at || t.created_at }} /> : null}
         </div>
       ) : null}
 

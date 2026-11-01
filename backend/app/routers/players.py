@@ -37,7 +37,7 @@ def _empty() -> dict:
         "kills": 0, "deaths": 0, "assists": 0, "rounds": 0, "maps": 0,
         "map_wins": 0, "map_losses": 0, "duel_wins": 0, "duel_losses": 0,
         "tournaments": 0, "titles": 0, "prize": 0.0,
-        "map_ratings": [], "per_map": defaultdict(lambda: defaultdict(int)), "history": [],
+        "map_ratings": [], "per_map": defaultdict(lambda: defaultdict(int)), "history": [], "mvps": [],
     }
 
 
@@ -64,7 +64,9 @@ def _collect(db: Session) -> tuple[dict[int, User], dict[int, dict]]:
     users = {u.id: u for u in db.query(User).filter(User.role == Role.player).all()}
     data = {pid: _empty() for pid in users}
 
-    for t in db.query(Tournament).order_by(Tournament.created_at.desc()).all():
+    all_tournaments = db.query(Tournament).order_by(Tournament.created_at.desc(), Tournament.id.desc()).all()
+    for n, t in enumerate(all_tournaments):
+        number = len(all_tournaments) - n
         bracket = hydrate_bracket(db, t.bracket)
         teams = bracket.get("teams") or []
         rounds = bracket.get("rounds") or []
@@ -73,6 +75,15 @@ def _collect(db: Session) -> tuple[dict[int, User], dict[int, dict]]:
         champ = B.champion(bracket)
         amount, currency = _parse_prize(t.prize_pool)
         finished = t.status == TournamentStatus.finished
+        date = (t.started_at or t.starts_at or t.created_at).isoformat()
+
+        # Медаль MVP — только у завершённого турнира, как и на его странице.
+        mvp = B.tournament_mvp(bracket) if finished else None
+        if mvp and mvp["player_id"] in data:
+            data[mvp["player_id"]]["mvps"].append({
+                "id": t.id, "name": t.name, "number": number, "date": date, "rating": mvp["rating"],
+                "kills": mvp["kills"], "deaths": mvp["deaths"], "assists": mvp["assists"], "maps": mvp["maps"],
+            })
 
         # Турнир в истории игрока — один раз, даже если он играл за две команды:
         # берём команду с лучшим результатом.
@@ -87,7 +98,7 @@ def _collect(db: Session) -> tuple[dict[int, User], dict[int, dict]]:
                 row = {
                     "id": t.id, "name": t.name, "status": t.status.value, "team": team.get("name"),
                     "place": place, "champion": is_champ, "prize_pool": t.prize_pool,
-                    "date": (t.started_at or t.starts_at or t.created_at).isoformat(),
+                    "date": date, "number": number,
                 }
                 if pid not in seen or (is_champ and not seen[pid]["champion"]):
                     seen[pid] = row
@@ -216,6 +227,7 @@ def player(player_id: int, db: Session = Depends(get_db)):
         best_map_rating=round(best, 2) if best is not None else None,
         maps_breakdown=maps,
         history=[schemas.PlayerHistoryRow(**row) for row in p["history"]],
+        mvps=[schemas.PlayerMvpRow(**row) for row in sorted(p["mvps"], key=lambda r: r["number"])],
         players_rated=len(scores),
         axes_info=[schemas.AxisInfo(key=k, label=label, hint=hint) for k, label, hint in AXES],
     )

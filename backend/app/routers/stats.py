@@ -85,6 +85,10 @@ def stats(
     def map_row(name: str) -> schemas.MapStat:
         return maps.setdefault(name, schemas.MapStat(map=name))
 
+    # Порядковые номера турниров (они же — на медалях MVP).
+    order = db.query(Tournament.id).order_by(Tournament.created_at, Tournament.id).all()
+    numbers = {tid: n for n, (tid,) in enumerate(order, start=1)}
+
     query = db.query(Tournament).order_by(Tournament.created_at.desc())
     if tournament_id is not None:
         query = query.filter(Tournament.id == tournament_id)
@@ -218,6 +222,7 @@ def stats(
                 final_best_of=bracket.get("final_best_of") or bracket.get("best_of") or 1,
                 maps_pool=t.maps_pool or [],
                 mvp=_mvp(t, db),
+                number=numbers.get(t.id, 0),
                 duel_winner=duel_user.display_name if duel_user else None,
                 prize_amount=amount,
                 champion_ids=[pid for pid in ((champion or {}).get("player_a_id"), (champion or {}).get("player_b_id")) if pid],

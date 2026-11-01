@@ -6,6 +6,9 @@ import Icon from "../components/Icon.jsx";
 import Radar, { AXES } from "../components/Radar.jsx";
 import { Bone, SkeletonPage } from "../components/Skeleton.jsx";
 import { mapImage } from "../utils/maps.js";
+import { cupOf } from "../utils/cups.js";
+import CupTip from "../components/CupTip.jsx";
+import MedalTip from "../components/Medal.jsx";
 import { formatDay } from "../utils/time.js";
 import { topAxis } from "./Players.jsx";
 
@@ -94,14 +97,28 @@ export default function PlayerProfile() {
               "Ещё не сыграл ни одной карты с внесённой статистикой."
             )}
           </p>
-          {p.titles ? (
-            <div className="ph-titles">
-              {Array.from({ length: p.titles }, (_, i) => (
-                <img key={i} src="/img/trophy-tight.webp" alt="" title="Титул" />
-              ))}
-              <span className="mono">
-                {p.titles} {p.titles === 1 ? "титул" : p.titles < 5 ? "титула" : "титулов"}
-              </span>
+          {p.titles || p.mvps?.length ? (
+            <div className="ph-awards">
+              {p.titles ? (
+                <div className="ph-titles">
+                  {p.history
+                    .filter((h) => h.champion)
+                    .map((h) => (
+                      <CupTip key={h.id} id={h.id} name={h.name} date={h.date} team={h.team} prize={h.prize_pool} />
+                    ))}
+                  <span className="mono">
+                    {p.titles} {p.titles === 1 ? "титул" : p.titles < 5 ? "титула" : "титулов"}
+                  </span>
+                </div>
+              ) : null}
+              {p.mvps?.length ? (
+                <div className="ph-titles ph-medals">
+                  {p.mvps.map((m) => (
+                    <MedalTip key={m.id} mvp={m} size={38} />
+                  ))}
+                  <span className="mono">{p.mvps.length} MVP</span>
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
@@ -221,7 +238,7 @@ export default function PlayerProfile() {
                 </span>
                 <span className="hl-prize mono">{h.prize_pool}</span>
                 <span className={`hl-place${h.champion ? " champ" : ""}`}>
-                  {h.champion ? <img src="/img/trophy-tight.webp" alt="" /> : null}
+                  {h.champion ? <img src={cupOf(h.name).img} alt="" /> : null}
                   {h.champion ? "чемпион" : (PLACE_TEXT[h.place] || h.place).toLowerCase()}
                 </span>
               </Link>

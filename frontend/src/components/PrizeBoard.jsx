@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import { formatDay } from "../utils/time.js";
+import { cupOf } from "../utils/cups.js";
+import CupTip from "./CupTip.jsx";
 
 // Призовые: сколько разыграно, кто сколько забрал и за что, следующий приз.
 // Фонд турнира делится поровну между двумя игроками команды-чемпиона.
@@ -73,7 +75,7 @@ export default function PrizeBoard({ players, tournaments, currency, prizeTotal 
 
         {next ? (
           <Link to={`/tournaments/${next.id}`} className="pz-next">
-            <img src="/img/trophy-tight.webp" alt="" />
+            <img src={cupOf(next.name).img} alt="" />
             <span className="mono">следующий призовой</span>
             <b>
               {money(next.prize_amount)}
@@ -99,9 +101,17 @@ export default function PrizeBoard({ players, tournaments, currency, prizeTotal 
                   <Avatar name={p.display_name} color={p.avatar_color} url={p.avatar_url} size={44} />
                   <b>{p.display_name}</b>
                 </Link>
-                <span className="pz-trophies" title={`Титулов: ${p.titles}`}>
-                  {Array.from({ length: p.titles }, (_, k) => (
-                    <img key={k} src="/img/trophy-tight.webp" alt="" />
+                <span className="pz-trophies">
+                  {(wins[p.id] || []).map((w) => (
+                    <CupTip
+                      key={w.id}
+                      id={w.id}
+                      name={w.name}
+                      date={w.date}
+                      team={w.team}
+                      prize={`+${money(w.share)}${cur}`}
+                      prizeLabel="выплата"
+                    />
                   ))}
                 </span>
               </div>

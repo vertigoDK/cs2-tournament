@@ -2261,7 +2261,7 @@ button.ds-toggle:hover { background: var(--paper); }
 .pz-player b { font: 500 18px/1.2 var(--display); letter-spacing: -0.03em; overflow-wrap: anywhere; }
 .pz-player:hover b { color: var(--accent); }
 .pz-trophies { margin-left: auto; display: flex; gap: 2px; }
-.pz-trophies img { width: 22px; height: 26px; object-fit: contain; }
+.pz-trophies .cup > img { width: 24px; height: 30px; object-fit: contain; }
 .pz-amount { font: 500 34px/1 var(--display); letter-spacing: -0.04em; }
 .pz-amount span { font-size: 20px; color: var(--muted); }
 .pz-card.first .pz-amount { color: var(--accent); }
@@ -2518,9 +2518,10 @@ button.ds-toggle:hover { background: var(--paper); }
 .ph-main h1 { font-size: clamp(32px, 5vw, 52px); overflow-wrap: anywhere; }
 .ph-sub { margin: 10px 0 0; color: var(--muted); max-width: 560px; }
 .ph-sub b { color: var(--accent); }
-.ph-titles { display: flex; align-items: center; gap: 6px; margin-top: 14px; }
-.ph-titles img { width: 30px; height: 34px; object-fit: contain; }
-.ph-titles span { font-size: 12px; color: var(--muted); margin-left: 4px; }
+.ph-awards { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 28px; margin-top: 14px; }
+.ph-titles { display: flex; align-items: center; gap: 6px; }
+.ph-titles .cup > img { width: 40px; height: 48px; object-fit: contain; }
+.ph-titles > span { font-size: 12px; color: var(--muted); margin-left: 4px; }
 .ph-score {
   display: grid;
   justify-items: center;
@@ -3085,3 +3086,139 @@ button.ds-toggle:hover { background: var(--paper); }
   .th-scorebug { top: auto; bottom: 64px; right: 8px; font-size: 11px; }
   .th-time { display: none; }
 }
+
+/* ───────── кубки турниров ─────────
+   Свой кубок у каждого турнира (utils/cups.js). Наведи — карточка с тем,
+   что за кубок, когда и за какую команду взят. */
+.cup { position: relative; display: inline-flex; color: inherit; text-decoration: none; outline: none; }
+.cup > img { transition: transform 0.25s var(--ease); transform-origin: 50% 100%; }
+.cup:hover > img,
+.cup:focus-visible > img { transform: translateY(-2px) rotate(-5deg); }
+.cup:focus-visible > img { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+
+.cup-tip {
+  position: fixed;
+  z-index: 1000;
+  display: flex;
+  gap: 12px;
+  width: 300px;
+  padding: 12px 14px 12px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--card);
+  color: var(--ink);
+  font: 400 14px/1.4 var(--body);
+  text-align: left;
+  text-transform: none;
+  letter-spacing: normal;
+  box-shadow: 0 18px 40px -18px rgba(21, 21, 21, 0.4), 0 2px 0 var(--line);
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.16s var(--ease), transform 0.16s var(--ease);
+}
+.cup-tip.on { opacity: 1; transform: none; }
+.cup-tip.below { transform: translateY(-4px); }
+.cup-tip.below.on { transform: none; }
+.cup-tip::after {
+  content: "";
+  position: absolute;
+  left: calc(var(--arrow, 50%) - 6px);
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  background: var(--card);
+  border-right: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
+  transform: rotate(45deg);
+}
+.cup-tip.below::after { bottom: auto; top: -7px; transform: rotate(225deg); }
+
+.cup-tip-art {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 66px;
+  height: 80px;
+  border-radius: 10px;
+  background: var(--paper);
+}
+.cup-tip-art img { width: 54px; height: 70px; object-fit: contain; }
+.cup-tip-body { display: grid; align-content: start; gap: 3px; min-width: 0; flex: 1; }
+.cup-tip-kicker { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+.cup-tip-name { font: 500 15px/1.2 var(--display); letter-spacing: -0.02em; }
+.cup-tip-note { font-size: 12px; line-height: 1.35; color: var(--muted); }
+.cup-tip-rows {
+  display: grid;
+  gap: 3px;
+  margin-top: 6px;
+  padding-top: 7px;
+  border-top: 1px dashed var(--line-2);
+  font-size: 11.5px;
+}
+.cup-tip-rows > span { display: flex; justify-content: space-between; gap: 10px; min-width: 0; }
+.cup-tip-rows > span > :last-child,
+.cup-tip-rows > span { white-space: nowrap; }
+.cup-tip-rows i { font-style: normal; color: var(--muted); flex: none; }
+.cup-tip-rows em { font-style: normal; font-weight: 700; color: var(--accent); }
+
+/* ───────── «за победу» на странице турнира ─────────
+   Пока чемпиона нет — что он заберёт: кубок, призовые, титул. */
+.reward {
+  display: grid;
+  grid-template-columns: auto minmax(170px, 0.7fr) 2.3fr;
+  align-items: center;
+  gap: 22px;
+  margin-top: 16px;
+  padding: 16px 22px 16px 16px;
+  border: 1px dashed var(--accent);
+  border-radius: var(--r);
+  background: var(--card);
+}
+.rw-art {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 108px;
+  border-radius: 12px;
+  background: var(--paper);
+}
+.rw-art img { width: 74px; height: 92px; object-fit: contain; animation: float 6s ease-in-out infinite; }
+.rw-head { display: grid; gap: 4px; min-width: 0; }
+.rw-kicker { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); }
+.rw-cup { font: 500 22px/1.15 var(--display); letter-spacing: -0.03em; }
+.rw-note { font-size: 13px; line-height: 1.35; color: var(--muted); }
+.rw-list { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 0; list-style: none; }
+.rw-list li { display: grid; align-content: start; gap: 3px; padding: 4px 18px; border-left: 1px dashed var(--line-2); min-width: 0; }
+.rw-list span.mono { font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.rw-list b { font: 500 15px/1.25 var(--display); letter-spacing: -0.02em; }
+.rw-list b.mono { font: 700 20px/1.2 var(--mono); }
+.rw-list i { font-style: normal; font-size: 12px; line-height: 1.35; color: var(--muted); }
+.rw-prize b { color: var(--accent); }
+@media (max-width: 900px) {
+  .reward { grid-template-columns: auto 1fr; }
+  .rw-list { grid-column: 1 / -1; grid-template-columns: 1fr; gap: 10px; }
+  .rw-list li { border-left: 0; border-top: 1px dashed var(--line-2); padding: 10px 0 0; }
+}
+
+/* ───────── медаль MVP ─────────
+   Одна картинка на всех, номер турнира — поверх, в пустом круге медали
+   (центр круга — 48% ширины и 66.7% высоты картинки). */
+.medal { position: relative; display: inline-block; flex: none; width: var(--mw, 40px); line-height: 0; }
+.medal img { width: 100%; height: auto; display: block; }
+.medal b {
+  position: absolute;
+  left: 48%;
+  top: 66.7%;
+  transform: translate(-50%, -50%);
+  font: 600 calc(var(--mw, 40px) * 0.3) / 1 var(--display);
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+.medal-link .medal { transition: transform 0.25s var(--ease); transform-origin: 50% 0; }
+.medal-link:hover .medal,
+.medal-link:focus-visible .medal { transform: rotate(-7deg); }
+.mvp-card > .cup { margin-left: 10px; flex: none; }
+.tl-award.mvp > .cup { margin-left: 4px; }
+.rw-list li.rw-mvp { display: flex; align-items: center; gap: 12px; }
+.rw-mvp-text { display: grid; gap: 3px; min-width: 0; }

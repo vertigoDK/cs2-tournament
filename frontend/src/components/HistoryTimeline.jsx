@@ -3,6 +3,8 @@ import Avatar from "./Avatar.jsx";
 import Icon from "./Icon.jsx";
 import StatusPill from "./StatusPill.jsx";
 import { tournamentCover } from "../utils/maps.js";
+import CupTip from "./CupTip.jsx";
+import MedalTip from "./Medal.jsx";
 
 // История турниров лентой: сверху итог, ниже турниры по датам. У каждого —
 // награды и все серии с картами и счётом, без раскрывашек.
@@ -107,7 +109,7 @@ function TimelineItem({ t, index }) {
           <div className="tl-awards">
             {t.champion ? (
               <div className="tl-award champ">
-                <img src="/img/trophy-tight.webp" alt="" />
+                <CupTip id={t.id} name={t.name} date={t.date} team={t.champion} prize={t.prize_pool} />
                 <div>
                   <span className="mono">чемпион</span>
                   <b>{t.champion}</b>
@@ -121,6 +123,13 @@ function TimelineItem({ t, index }) {
                   <span className="mono">mvp · рейтинг {t.mvp.rating.toFixed(2)}</span>
                   <b>{t.mvp.display_name}</b>
                 </div>
+                {t.number ? (
+                  <MedalTip
+                    link={false}
+                    size={30}
+                    mvp={{ ...t.mvp, number: t.number, name: t.name, date: t.date, player: t.mvp.display_name }}
+                  />
+                ) : null}
               </Link>
             ) : null}
             {t.duel_winner ? (

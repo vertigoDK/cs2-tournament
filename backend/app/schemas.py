@@ -191,6 +191,8 @@ class TournamentSummary(BaseModel):
     champion: str | None = None
     # Лучший игрок завершённого турнира (см. bracket.tournament_mvp).
     mvp: MvpOut | None = None
+    # Порядковый номер турнира: первый созданный — №1. Он же стоит на медали MVP.
+    number: int = 0
 
 
 class TournamentOut(TournamentSummary):
@@ -299,6 +301,7 @@ class HistoryTournament(BaseModel):
     final_best_of: int = 1
     maps_pool: list[str] = []
     mvp: MvpOut | None = None
+    number: int = 0
     duel_winner: str | None = None
     # Призовой числом и кому он достался (основной состав чемпионов).
     prize_amount: float = 0.0
@@ -374,11 +377,26 @@ class PlayerHistoryRow(BaseModel):
     champion: bool
     prize_pool: str = ""
     date: str
+    number: int = 0
+
+
+class PlayerMvpRow(BaseModel):
+    """Медаль MVP: за какой турнир и с какой игрой."""
+    id: int
+    name: str
+    number: int
+    date: str
+    rating: float
+    kills: int
+    deaths: int
+    assists: int
+    maps: int
 
 
 class PlayerProfile(PlayerProfileSummary):
     best_map_rating: float | None = None
     maps_breakdown: list[PlayerMapLine] = []
     history: list[PlayerHistoryRow] = []
+    mvps: list[PlayerMvpRow] = []
     players_rated: int = 0
     axes_info: list[AxisInfo] = []

@@ -126,10 +126,21 @@ def _get_or_404(db: Session, tournament_id: int) -> Tournament:
     return t
 
 
+def _number(t: Tournament, db: Session | None) -> int:
+    """Порядковый номер турнира среди всех — по времени создания."""
+    if db is None:
+        return 0
+    earlier = db.query(Tournament).filter(
+        (Tournament.created_at < t.created_at) | ((Tournament.created_at == t.created_at) & (Tournament.id < t.id))
+    ).count()
+    return earlier + 1
+
+
 def _to_out(t: Tournament, db: Session | None = None) -> schemas.TournamentOut:
     """Сетку отдаём с актуальными никами и аватарками участников."""
     return schemas.TournamentOut(
-        **_summary(t).model_dump(exclude={"mvp"}),
+        **_summary(t).model_dump(exclude={"mvp", "number"}),
+        number=_number(t, db),
         maps_pool=t.maps_pool,
         bracket=hydrate_bracket(db, t.bracket) if db is not None else t.bracket,
         server_time=time.time(),
@@ -154,8 +165,10 @@ def _mvp(t: Tournament, db: Session | None) -> schemas.MvpOut | None:
 @router.get("", response_model=list[schemas.TournamentSummary])
 def list_tournaments(db: Session = Depends(get_db)):
     """Смотреть турниры можно без входа — вход нужен, только чтобы что-то менять."""
-    rows = db.query(Tournament).order_by(Tournament.created_at.desc()).all()
-    return [_summary(t).model_copy(update={"mvp": _mvp(t, db)}) for t in rows]
+    rows = db.query(Tournament).order_by(Tournament.created_at.desc(), Tournament.id.desc()).all()
+    return [
+        _summary(t).model_copy(update={"mvp": _mvp(t, db), "number": len(rows) - i}) for i, t in enumerate(rows)
+    ]
 
 
 @router.get("/{tournament_id}", response_model=schemas.TournamentOut)
