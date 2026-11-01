@@ -5,8 +5,7 @@ from .. import schemas
 from ..deps import get_current_user, get_db, require_admin
 from ..models import DEFAULT_AVATAR_COLOR, Role, User
 from ..people import display_name_taken
-from ..steam import fetch_avatars
-from ..uploads import delete_image, store_image
+from ..steam import refresh_avatars
 from ..security import generate_password, generate_username, hash_password
 
 router = APIRouter(prefix="/api/users", tags=["users"])
@@ -64,32 +63,11 @@ def create_user(payload: schemas.UserCreate, db: Session = Depends(get_db), _: U
 
 @router.post("/steam-avatars", response_model=schemas.SteamAvatarsOut)
 def steam_avatars(force: bool = False, db: Session = Depends(get_db), _: User = Depends(require_admin)):
-    """Подтягивает аватарки из Steam тем, у кого есть Steam ID.
+    """Подтягивает аватарки из Steam (см. `steam.refresh_avatars`).
 
-    По умолчанию — только тем, кто не ставил свою: загруженное фото не трогаем.
-    `force` обновляет всех (например, если в Steam сменили аватарку).
+    Раз в сутки то же самое делает крон, кнопка — чтобы не ждать.
     """
-    users = [
-        u for u in db.query(User).filter(User.role == Role.player, User.steam_id.isnot(None)).all()
-        if force or not u.avatar_url
-    ]
-    images = fetch_avatars([u.steam_id for u in users])
-    updated, failed = [], []
-    for u in users:
-        raw = images.get(u.steam_id)
-        if not raw:
-            failed.append(u.display_name)
-            continue
-        try:
-            url = store_image(raw, "avatars", db)
-        except HTTPException:
-            failed.append(u.display_name)
-            continue
-        delete_image(db, u.avatar_url)
-        u.avatar_url = url
-        updated.append(u.display_name)
-    db.commit()
-    return schemas.SteamAvatarsOut(updated=updated, failed=failed)
+    return schemas.SteamAvatarsOut(**refresh_avatars(db, force=force))
 
 
 @router.post("/{user_id}/reset-password", response_model=schemas.CredentialsOut)

@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from .database import SessionLocal
 from .migrations import upgrade_db
-from .routers import auth, matches, me, stats, tournaments, uploads, users, veto
+from .routers import auth, cron, matches, me, stats, tournaments, uploads, users, veto
 from .seed import seed_admin
 
 app = FastAPI(title="CS2 Local Tournaments", version="0.3.0")
@@ -31,3 +31,4 @@ app.include_router(stats.router)
 app.include_router(tournaments.router)
 app.include_router(matches.router)
 app.include_router(veto.router)
+app.include_router(cron.router)

@@ -310,4 +310,5 @@ class UploadOut(BaseModel):
 
 class SteamAvatarsOut(BaseModel):
     updated: list[str]
+    unchanged: list[str] = []
     failed: list[str]

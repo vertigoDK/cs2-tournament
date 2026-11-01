@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     admin_username: str = "admin"
     admin_password: str = "admin123"
 
+    # Секрет, которым Vercel Cron подписывает вызовы; пусто — крон-эндпоинты закрыты.
+    cron_secret: str = ""
+
 
 @lru_cache
 def get_settings() -> Settings:

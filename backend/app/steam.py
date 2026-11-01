@@ -2,16 +2,29 @@
 
 Cybershoke показывает обычные аватарки Steam, а Steam ID у участников есть.
 Открытый XML профиля отдаёт ссылку на аватарку без ключа API.
+
+Аватарку из Steam сохраняем под id `steam-<хэш ссылки>`. По префиксу видно,
+что фото пришло из Steam (его можно обновлять), а не загружено самим игроком
+(его не трогаем). По хэшу видно, сменилась ли аватарка: если ссылка та же,
+картинку не качаем и не пересохраняем.
 """
 
+import hashlib
 import re
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
+
+from sqlalchemy.orm import Session
+
+from . import models
+from .models import Role, User
+from .uploads import PUBLIC_PREFIX, delete_image, store_image
 
 _AVATAR = re.compile(r"<avatarFull><!\[CDATA\[(.*?)\]\]></avatarFull>")
 _ALLOWED = ("https://avatars.steamstatic.com/", "https://avatars.fastly.steamstatic.com/",
             "https://avatars.akamai.steamstatic.com/", "https://avatars.cloudflare.steamstatic.com/")
 TIMEOUT = 8
+STEAM_PREFIX = f"{PUBLIC_PREFIX}/steam-"
 
 
 def _get(url: str) -> bytes:
@@ -20,20 +33,81 @@ def _get(url: str) -> bytes:
         return resp.read(4 * 1024 * 1024)
 
 
-def fetch_avatar(steam_id: str) -> bytes | None:
-    """Картинка аватарки игрока или None, если профиль закрыт или Steam молчит."""
+def avatar_link(steam_id: str) -> str | None:
+    """Ссылка на текущую аватарку или None, если профиль закрыт или Steam молчит."""
     try:
         xml = _get(f"https://steamcommunity.com/profiles/{int(steam_id)}/?xml=1").decode("utf-8", "replace")
-        match = _AVATAR.search(xml)
-        # Качаем только с CDN Steam: ссылка пришла извне.
-        if not match or not match.group(1).startswith(_ALLOWED):
-            return None
-        return _get(match.group(1))
     except (OSError, ValueError):
+        return None
+    match = _AVATAR.search(xml)
+    # Качаем только с CDN Steam: ссылка пришла извне.
+    if not match or not match.group(1).startswith(_ALLOWED):
+        return None
+    return match.group(1)
+
+
+def _image_id(link: str) -> str:
+    # Хост CDN у одной и той же картинки бывает разный — хэшируем только имя файла.
+    return "steam-" + hashlib.sha1(link.rsplit("/", 1)[-1].encode()).hexdigest()[:20]
+
+
+def refresh_avatars(db: Session, force: bool = False) -> dict[str, list[str]]:
+    """Ставит аватарки из Steam тем, у кого фото нет или оно тоже из Steam.
+
+    Загруженное вручную фото не трогаем; `force` заменяет и его. Коммит — здесь же.
+    """
+    users = [
+        u for u in db.query(User).filter(User.role == Role.player, User.steam_id.isnot(None)).all()
+        if force or not u.avatar_url or u.avatar_url.startswith(STEAM_PREFIX)
+    ]
+    # Параллельно: у функции на Vercel ограничено время, а игроков десяток.
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        links = list(pool.map(avatar_link, [u.steam_id for u in users]))
+
+    changed = []
+    out = {"updated": [], "unchanged": [], "failed": []}
+    for u, link in zip(users, links):
+        if not link:
+            out["failed"].append(u.display_name)
+            continue
+        new_id = _image_id(link)
+        if u.avatar_url == f"{PUBLIC_PREFIX}/{new_id}.png":
+            out["unchanged"].append(u.display_name)
+            continue
+        changed.append((u, link, new_id))
+
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        images = list(pool.map(lambda item: _safe_get(item[1]), changed))
+
+    for (u, _, new_id), raw in zip(changed, images):
+        if not raw:
+            out["failed"].append(u.display_name)
+            continue
+        # У двух игроков может быть одна и та же аватарка — картинка уже лежит.
+        if db.get(models.Image, new_id):
+            url = f"{PUBLIC_PREFIX}/{new_id}.png"
+        else:
+            try:
+                url = store_image(raw, "avatars", db, image_id=new_id)
+            except Exception:  # битая картинка — просто пропускаем игрока
+                out["failed"].append(u.display_name)
+                continue
+        old = u.avatar_url
+        u.avatar_url = url
+        db.flush()
+        if old and not _still_used(db, old):
+            delete_image(db, old)
+        out["updated"].append(u.display_name)
+    db.commit()
+    return out
+
+
+def _safe_get(url: str) -> bytes | None:
+    try:
+        return _get(url)
+    except OSError:
         return None
 
 
-def fetch_avatars(steam_ids: list[str]) -> dict[str, bytes | None]:
-    """Параллельно: у функции на Vercel ограничено время, а игроков десяток."""
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        return dict(zip(steam_ids, pool.map(fetch_avatar, steam_ids)))
+def _still_used(db: Session, url: str) -> bool:
+    return db.query(User).filter(User.avatar_url == url).first() is not None

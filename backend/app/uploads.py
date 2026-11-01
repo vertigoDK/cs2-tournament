@@ -86,7 +86,7 @@ async def save_image(file: UploadFile, kind: str, db: Session) -> str:
     return store_image(raw, kind, db)
 
 
-def store_image(raw: bytes, kind: str, db: Session) -> str:
+def store_image(raw: bytes, kind: str, db: Session, image_id: str | None = None) -> str:
     """Ужимает байты картинки и кладёт в базу. Коммит — за вызывающим."""
     try:
         image = Image.open(io.BytesIO(raw))
@@ -101,7 +101,7 @@ def store_image(raw: bytes, kind: str, db: Session) -> str:
 
     out = io.BytesIO()
     image.save(out, format="PNG", optimize=True)
-    name = secrets.token_hex(8)
+    name = image_id or secrets.token_hex(8)
     db.add(models.Image(id=name, data=out.getvalue()))
     return f"{PUBLIC_PREFIX}/{name}.png"
 
