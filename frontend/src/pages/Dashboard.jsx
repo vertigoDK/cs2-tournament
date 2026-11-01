@@ -20,6 +20,29 @@ export default function Dashboard() {
       .catch((err) => setError(apiErrorMessage(err)));
   }, []);
 
+  // Главную держат открытой, пока ждут старта: статус, счёт и новые турниры
+  // подтягиваются сами. Реже, чем на странице турнира, — тут нет драфта.
+  useEffect(() => {
+    const tick = () => {
+      if (document.hidden) return;
+      api
+        .get("/tournaments")
+        .then((res) => {
+          setTournaments(res.data);
+          setError("");
+        })
+        .catch(() => {
+          /* сеть моргнула — просто ждём следующего тика */
+        });
+    };
+    const timer = setInterval(tick, 10000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, []);
+
   if (error) {
     return (
       <main className="page">
