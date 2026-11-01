@@ -5,6 +5,8 @@ import MvpCard from "./MvpCard.jsx";
 import StatusPill, { statusKind } from "./StatusPill.jsx";
 import { tournamentCover } from "../utils/maps.js";
 import CupTip from "./CupTip.jsx";
+import { WinterBanner } from "./Winter.jsx";
+import { isWinterTournament } from "../utils/season.js";
 import { formatLocal } from "../utils/time.js";
 
 // Текущий турнир на главной: крупная карточка с обложкой справа.
@@ -66,6 +68,7 @@ export default function HeroTournamentCard({ t }) {
         </span>
       </div>
       <img src={tournamentCover(t.id)} alt="" className="featured-art" />
+      {isWinterTournament(t.name) ? <WinterBanner /> : null}
     </Link>
   );
 }

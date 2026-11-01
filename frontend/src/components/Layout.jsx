@@ -5,6 +5,8 @@ import Icon from "./Icon.jsx";
 import ProfileMenu from "./ProfileMenu.jsx";
 import KefirDrips from "./KefirDrips.jsx";
 import DraftRedirect from "./DraftRedirect.jsx";
+import { SantaHat, Snowfall, SnowToggle, WinterNotes, WinterSky } from "./Winter.jsx";
+import { isWinter } from "../utils/season.js";
 
 export default function Layout() {
   const { auth, isAdmin } = useAuth();
@@ -21,10 +23,16 @@ export default function Layout() {
     <div className="app">
       {/* Тактические пометки на полях широкого экрана — чистое украшение. */}
       <div className="field-notes" aria-hidden>
-        <img src="/img/doodle-arc.webp" alt="" className="fn fn-1" />
-        <img src="/img/doodle-site-a.webp" alt="" className="fn fn-2" />
-        <img src="/img/doodle-steps.webp" alt="" className="fn fn-3" />
-        <img src="/img/doodle-site-b.webp" alt="" className="fn fn-4" />
+        {isWinter() ? (
+          <WinterNotes />
+        ) : (
+          <>
+            <img src="/img/doodle-arc.webp" alt="" className="fn fn-1" />
+            <img src="/img/doodle-site-a.webp" alt="" className="fn fn-2" />
+            <img src="/img/doodle-steps.webp" alt="" className="fn fn-3" />
+            <img src="/img/doodle-site-b.webp" alt="" className="fn fn-4" />
+          </>
+        )}
       </div>
 
       <header className="header">
@@ -32,6 +40,7 @@ export default function Layout() {
           <Link to="/" className="brand" aria-label="THIRTEEN — на главную">
             <span className="brand-mark">
               <img src="/img/logo-light.png" alt="" />
+              <SantaHat />
             </span>
             <span className="brand-word">thirteen</span>
           </Link>
@@ -80,7 +89,8 @@ export default function Layout() {
       </div>
 
       {/* Панорама карт стоит на верхней линии подвала. */}
-      <div className="skyline" aria-hidden>
+      <div className={`skyline${isWinter() ? " winter" : ""}`} aria-hidden>
+        <WinterSky />
         <img src="/img/skyline.webp" alt="" loading="lazy" />
       </div>
 
@@ -88,10 +98,12 @@ export default function Layout() {
         <div className="footer-inner">
           <img src="/img/logo.png" alt="" className="footer-mark" />
           <span>Играем до тринадцати.</span>
+          <SnowToggle />
           <span className="footer-meta mono">2×2 · BO1 / BO3 / BO5 · {new Date().getFullYear()}</span>
         </div>
       </footer>
 
+      <Snowfall />
       {auth ? <DraftRedirect /> : null}
       <KefirDrips />
     </div>

@@ -193,7 +193,7 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
   padding: 40px 24px 0;
   pointer-events: none;
 }
-.skyline img {
+.skyline > img {
   display: block;
   width: 100%;
   max-width: var(--w);
@@ -3346,3 +3346,91 @@ button.ds-toggle:hover { background: var(--paper); }
 .rc-go { min-width: 200px; justify-content: center; }
 .rc-note { margin: 0; font-size: 13px; color: var(--muted); }
 .rc-note b { color: var(--ink); }
+
+/* ───────── зима ─────────
+   Снег за карточками, луна и Санта над панорамой, колпак на логотипе,
+   снежная шапка на баннере зимнего турнира. См. components/Winter.jsx. */
+.snowfall { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1; }
+
+.brand-mark { position: relative; }
+.santa-hat { position: absolute; width: 30px; top: -15px; right: -12px; rotate: 18deg; pointer-events: none; }
+
+/* Небо над панорамой: зимой у подвала выше верхний отступ, там луна и Санта. */
+.skyline.winter { padding-top: 130px; }
+.winter-sky { position: absolute; inset: 0 0 auto; height: 150px; max-width: var(--w); margin: 0 auto; }
+.ws-moon { position: absolute; right: 5%; top: 8px; width: 96px; height: auto; rotate: -8deg; animation: float 8s ease-in-out infinite; }
+.ws-sleigh {
+  position: absolute;
+  left: 0;
+  top: 34px;
+  width: 250px;
+  height: auto;
+  opacity: 0;
+  animation: sleigh-fly 38s linear infinite;
+  animation-delay: 4s;
+}
+@keyframes sleigh-fly {
+  0% { transform: translate(-320px, 30px) rotate(-4deg); opacity: 0; }
+  2% { opacity: 1; }
+  20% { transform: translate(calc(min(100vw, var(--w)) * 0.55), -14px) rotate(-2deg); }
+  38% { transform: translate(calc(min(100vw, var(--w)) + 40px), 6px) rotate(-5deg); opacity: 1; }
+  40%, 100% { transform: translate(calc(min(100vw, var(--w)) + 60px), 6px); opacity: 0; }
+}
+.skyline { position: relative; overflow: hidden; }
+@media (max-width: 700px) {
+  .skyline.winter { padding-top: 90px; }
+  .ws-moon { width: 62px; top: 6px; }
+  .ws-sleigh { width: 160px; top: 26px; }
+}
+
+.fn.fn-flake { opacity: 0.32; animation: flake-spin 40s linear infinite; }
+.fn-2.fn-flake { animation-duration: 55s; animation-direction: reverse; }
+.fn-4.fn-flake { animation-duration: 48s; }
+@keyframes flake-spin { to { rotate: 360deg; } }
+
+.snow-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.snow-toggle img { width: 14px; height: 14px; }
+.snow-toggle[aria-pressed="false"] img { filter: grayscale(1); opacity: 0.5; }
+.snow-toggle + .footer-meta { margin-left: 12px; }
+
+.winter-banner { position: absolute; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; border-radius: inherit; }
+.wb-cap { position: absolute; top: -1px; left: 0; width: 100%; height: 20px; }
+.wb-flake { position: absolute; height: auto; opacity: 0.9; animation: wb-float 7s ease-in-out infinite; }
+@keyframes wb-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(25deg); }
+}
+.wb-snow {
+  position: absolute;
+  top: -8px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--ink);
+  opacity: 0;
+  animation: wb-fall 7s linear infinite;
+}
+.wb-snow:nth-child(3n) { width: 3px; height: 3px; }
+.wb-snow:nth-child(4n) { background: var(--accent); }
+@keyframes wb-fall {
+  0% { transform: translate(0, 0); opacity: 0; }
+  10% { opacity: 0.35; }
+  90% { opacity: 0.35; }
+  100% { transform: translate(18px, 340px); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ws-sleigh, .wb-snow, .wb-flake, .fn.fn-flake, .ws-moon { animation: none; }
+  .ws-sleigh { display: none; }
+}

@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
 import { onLive } from "../utils/live.js";
+import { isWinterTournament } from "../utils/season.js";
+import { WinterBanner } from "../components/Winter.jsx";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Bracket from "../components/Bracket.jsx";
 import VetoModal from "../components/VetoModal.jsx";
@@ -288,6 +290,7 @@ export default function TournamentView() {
           </dl>
         </div>
         <img src={tournamentCover(t.id)} alt="" className="t-hero-art" />
+        {isWinterTournament(t.name) ? <WinterBanner /> : null}
       </section>
 
       <div className="t-actions">
