@@ -1,21 +1,15 @@
 import { useEffect, useState } from "react";
 import api, { apiErrorMessage } from "../api.js";
-import Avatar from "../components/Avatar.jsx";
 import Icon from "../components/Icon.jsx";
 import { EmptyStats, MapsGrid, PlayersTable } from "../components/StatsTables.jsx";
 import PageHead from "../components/PageHead.jsx";
 import { StatsSkeleton } from "../components/Skeleton.jsx";
-import HistoryTimeline from "../components/HistoryTimeline.jsx";
 
 const TABS = [
   { id: "players", label: "Игроки", icon: "medal" },
-  { id: "prizes", label: "Призовые", icon: "trophy" },
   { id: "maps", label: "Карты", icon: "map" },
-  { id: "history", label: "История", icon: "history" },
 ];
 
-const money = (value) =>
-  new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(value || 0);
 
 export default function Stats() {
   const [data, setData] = useState(null);
@@ -46,7 +40,7 @@ export default function Stats() {
     <main className="page">
       <PageHead
         title="Статистика"
-        sub="Игроки, призовые, карты и история всех турниров. Нажмите на показатель, чтобы пересортировать."
+        sub="Показатели игроков и карт по всем турнирам. Нажмите на показатель, чтобы пересортировать, или выберите карту."
         art="/img/stats.webp"
       />
 
@@ -70,8 +64,6 @@ export default function Stats() {
             mapOptions={data.maps.filter((m) => m.played > 0).map((m) => m.map)}
           />)}
 
-      {tab === "prizes" && <Prizes data={data} />}
-
       {tab === "maps" &&
         (data.maps.length === 0 ? (
           <EmptyStats text="Ни одного драфта ещё не было." />
@@ -79,81 +71,6 @@ export default function Stats() {
           <MapsGrid maps={data.maps} />
         ))}
 
-      {tab === "history" &&
-        (data.tournaments.length === 0 ? (
-          <EmptyStats text="Турниров пока не было." />
-        ) : (
-          <HistoryTimeline tournaments={data.tournaments} currency={data.currency} prizeTotal={data.prize_total} />
-        ))}
     </main>
   );
 }
-
-function Prizes({ data }) {
-  // Фонд турнира делится между двумя игроками команды-победителя,
-  // поэтому сумма у человека — это половина каждого выигранного фонда.
-  const earners = data.players.filter((p) => p.prize > 0).sort((a, b) => b.prize - a.prize);
-  const cur = data.currency;
-
-  if (!earners.length) {
-    return <EmptyStats text="Пока никто не выигрывал турниров с призовым фондом." />;
-  }
-
-  const max = earners[0].prize;
-
-  return (
-    <>
-      <div className="prize-summary">
-        <div className="ps-item">
-          <b>
-            {money(data.prize_total)} {cur}
-          </b>
-          <span>разыграно всего</span>
-        </div>
-        <div className="ps-item">
-          <b>{earners.length}</b>
-          <span>получили выплату</span>
-        </div>
-      </div>
-
-      <div className="panel table-wrap">
-        <table className="data-table">
-          <thead>
-            <tr>
-              <th>Игрок</th>
-              <th>Титулы</th>
-              <th>Заработано</th>
-              <th className="bar-col">Доля</th>
-            </tr>
-          </thead>
-          <tbody>
-            {earners.map((p, idx) => (
-              <tr key={p.id}>
-                <td className="dt-player">
-                  <span className="dt-rank">{idx + 1}</span>
-                  <Avatar name={p.display_name} color={p.avatar_color} url={p.avatar_url} size={26} />
-                  <span className="dt-name">{p.display_name}</span>
-                </td>
-                <td>{p.titles}</td>
-                <td className="num strong">
-                  {money(p.prize)} {cur}
-                </td>
-                <td className="bar-col">
-                  <span className="bar">
-                    <span className="bar-fill" style={{ width: `${(p.prize / max) * 100}%` }} />
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="hint" style={{ marginTop: 12 }}>
-        Призовой фонд каждого турнира делится поровну между двумя игроками
-        команды-победителя.
-      </div>
-    </>
-  );
-}
-

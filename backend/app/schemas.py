@@ -300,6 +300,9 @@ class HistoryTournament(BaseModel):
     maps_pool: list[str] = []
     mvp: MvpOut | None = None
     duel_winner: str | None = None
+    # Призовой числом и кому он достался (основной состав чемпионов).
+    prize_amount: float = 0.0
+    champion_ids: list[int] = []
     matches: list[HistoryMatch]
 
 

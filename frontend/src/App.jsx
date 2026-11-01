@@ -11,6 +11,7 @@ import UsersAdmin from "./pages/UsersAdmin.jsx";
 import Cabinet from "./pages/Cabinet.jsx";
 import Stats from "./pages/Stats.jsx";
 import Players from "./pages/Players.jsx";
+import History from "./pages/History.jsx";
 import PlayerProfile from "./pages/PlayerProfile.jsx";
 import NotFound from "./pages/NotFound.jsx";
 
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/stats" element={<Stats />} />
           <Route path="/players" element={<Players />} />
           <Route path="/players/:id" element={<PlayerProfile />} />
+          <Route path="/history" element={<History />} />
           <Route path="/tournaments/:id" element={<TournamentView />} />
 
           <Route element={<ProtectedRoute />}>

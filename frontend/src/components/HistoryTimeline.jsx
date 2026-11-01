@@ -30,7 +30,7 @@ export default function HistoryTimeline({ tournaments, currency, prizeTotal }) {
 
   return (
     <div className="timeline-wrap">
-      <div className="tl-summary">
+      <div className={`tl-summary${prizeTotal == null ? " no-prize" : ""}`}>
         <div>
           <b>{list.length}</b>
           <span>{word(list.length, "турнир", "турнира", "турниров")}</span>
@@ -47,12 +47,14 @@ export default function HistoryTimeline({ tournaments, currency, prizeTotal }) {
           <b>{rounds}</b>
           <span>раундов</span>
         </div>
-        <div className="accent">
-          <b>
-            {Math.round(prizeTotal).toLocaleString("ru-RU")} {currency}
-          </b>
-          <span>разыграно</span>
-        </div>
+        {prizeTotal != null ? (
+          <div className="accent">
+            <b>
+              {Math.round(prizeTotal).toLocaleString("ru-RU")} {currency}
+            </b>
+            <span>разыграно</span>
+          </div>
+        ) : null}
       </div>
 
       <ol className="timeline">

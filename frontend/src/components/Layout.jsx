@@ -43,6 +43,9 @@ export default function Layout() {
             <NavLink to="/players" className={navClass}>
               Игроки
             </NavLink>
+            <NavLink to="/history" className={navClass}>
+              История
+            </NavLink>
             <NavLink to="/stats" className={navClass}>
               Статистика
             </NavLink>

@@ -219,6 +219,8 @@ def stats(
                 maps_pool=t.maps_pool or [],
                 mvp=_mvp(t, db),
                 duel_winner=duel_user.display_name if duel_user else None,
+                prize_amount=amount,
+                champion_ids=[pid for pid in ((champion or {}).get("player_a_id"), (champion or {}).get("player_b_id")) if pid],
                 matches=matches,
             )
         )

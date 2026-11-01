@@ -2027,26 +2027,6 @@ button.ds-toggle:hover { background: var(--paper); }
 .podium-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 4px; }
 .podium-card.first .podium-label { color: #a9a49a; }
 
-.prize-summary { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; }
-.ps-item {
-  flex: 1;
-  min-width: 200px;
-  padding: 20px 22px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--card);
-}
-.ps-item:first-child { background: var(--ink); border-color: var(--ink); color: var(--paper); }
-.ps-item b { display: block; font: 700 30px/1 var(--mono); color: var(--accent); }
-.ps-item span {
-  display: block;
-  font: 600 11px var(--mono);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--muted);
-  margin-top: 8px;
-}
-.ps-item:first-child span { color: #a9a49a; }
 
 .bar-col { width: 34%; min-width: 120px; }
 .bar { display: block; height: 8px; border-radius: 99px; background: var(--paper); border: 1px solid var(--line); overflow: hidden; }
@@ -2214,6 +2194,93 @@ button.ds-toggle:hover { background: var(--paper); }
 /* ───────── адаптив ─────────
    Телефон — полноценный сценарий: турнир смотрят с него прямо во время
    игры, поэтому ничего не прячем, а перекладываем. */
+/* ───────── призовые ───────── */
+.prizes { display: grid; gap: 18px; }
+.pz-top { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 18px; }
+.pz-total {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 26px 28px;
+  border-radius: var(--r-lg);
+  background: var(--ink);
+  color: var(--paper);
+}
+.pz-total > .mono { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #a9a49a; }
+.pz-total > b { font: 500 clamp(40px, 6vw, 64px)/1 var(--display); letter-spacing: -0.05em; color: var(--accent); }
+.pz-sub { font-size: 14px; color: #c9c4b9; }
+.pz-share { display: flex; gap: 3px; height: 14px; margin-top: 14px; border-radius: 6px; overflow: hidden; }
+.pz-share i { display: block; min-width: 6px; transform-origin: left; animation: grow 0.9s var(--ease) backwards 0.15s; }
+.pz-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: #c9c4b9; }
+.pz-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.pz-legend i { width: 10px; height: 10px; border-radius: 3px; }
+
+.pz-next {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  padding: 26px 28px;
+  border-radius: var(--r-lg);
+  border: 1.5px dashed var(--accent);
+  background: var(--card);
+  overflow: hidden;
+  transition: box-shadow 0.3s, transform 0.3s var(--ease);
+}
+.pz-next:hover { box-shadow: 0 0 0 4px var(--accent-soft); transform: translateY(-2px); }
+.pz-next img { position: absolute; right: 18px; bottom: 14px; width: 92px; opacity: 0.95; animation: float 6s ease-in-out infinite; }
+.pz-next > .mono { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); font-weight: 700; }
+.pz-next > b { font: 500 clamp(32px, 4.4vw, 44px)/1.05 var(--display); letter-spacing: -0.04em; }
+.pz-next-name { font-weight: 700; color: var(--ink-2); max-width: 70%; }
+.pz-next-cta { display: inline-flex; align-items: center; gap: 7px; margin-top: 10px; font-weight: 700; font-size: 13.5px; border-bottom: 1.5px solid var(--ink); width: fit-content; }
+
+.pz-earners { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.pz-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px 20px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--card);
+  animation: enter 0.55s var(--ease) backwards;
+}
+.pz-card.first { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.pz-card-head { display: flex; align-items: center; gap: 10px; }
+.pz-rank { font-size: 12px; font-weight: 700; color: var(--muted); }
+.pz-card.first .pz-rank { color: var(--accent); }
+.pz-player { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.pz-player .ava { border-radius: 12px; flex: none; }
+.pz-player b { font: 500 18px/1.2 var(--display); letter-spacing: -0.03em; overflow-wrap: anywhere; }
+.pz-player:hover b { color: var(--accent); }
+.pz-trophies { margin-left: auto; display: flex; gap: 2px; }
+.pz-trophies img { width: 22px; height: 26px; object-fit: contain; }
+.pz-amount { font: 500 34px/1 var(--display); letter-spacing: -0.04em; }
+.pz-amount span { font-size: 20px; color: var(--muted); }
+.pz-card.first .pz-amount { color: var(--accent); }
+.pz-wins { list-style: none; margin: 0; padding: 10px 0 0; border-top: 1px dashed var(--line-2); display: grid; gap: 8px; }
+.pz-wins li { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pz-wins a { display: grid; min-width: 0; }
+.pz-win-name { font-weight: 700; font-size: 14px; }
+.pz-wins a:hover .pz-win-name { color: var(--accent); }
+.pz-win-team { font-size: 12px; color: var(--muted); }
+.pz-wins b { font-size: 13px; color: var(--accent-ink); white-space: nowrap; }
+
+.pz-others { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding: 12px 16px; border: 1px dashed var(--line-2); border-radius: var(--r); }
+.pz-others > .mono { font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.pz-others > div { display: flex; gap: 6px; flex-wrap: wrap; }
+.pz-others .ava { border-radius: 10px; filter: grayscale(0.6); opacity: 0.8; transition: filter 0.2s, opacity 0.2s, transform 0.2s var(--ease); }
+.pz-others a:hover .ava { filter: none; opacity: 1; transform: translateY(-2px); }
+.prizes > .hint { margin: 0; }
+
+.tl-summary.no-prize { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 760px) {
+  .pz-top { grid-template-columns: 1fr; }
+  .pz-total, .pz-next { padding: 22px; }
+  .tl-summary.no-prize { grid-template-columns: repeat(2, 1fr); }
+}
+
 /* ───────── история: лента турниров ───────── */
 .tl-summary {
   display: grid;
@@ -2702,7 +2769,6 @@ button.ds-toggle:hover { background: var(--paper); }
   .row { flex-direction: column; }
   .stat-row { grid-template-columns: repeat(2, 1fr); }
   .creds-grid { grid-template-columns: 1fr; }
-  .prize-summary { flex-direction: column; }
   .map-stat-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
 
   .user-list li { flex-wrap: wrap; gap: 9px; }
