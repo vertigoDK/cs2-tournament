@@ -64,6 +64,18 @@ export default function SkinPicker({ catalog, mode, weapon, current, onSave, onC
   const title =
     mode === "knife" ? "Нож" : mode === "glove" ? "Перчатки" : weapon?.n;
 
+  const saveBtn = pick ? (
+    <button
+      type="button"
+      className="btn primary sp-save"
+      disabled={busy}
+      onClick={() => onSave({ item, paint: pick.p, wear: pick.p ? w : 0.01, seed: pick.p ? seed : 0 })}
+    >
+      <Icon name="check" size={14} />
+      <span>{busy ? "Сохраняем…" : "Надеть"}</span>
+    </button>
+  ) : null;
+
   return (
     <div className="veto-backdrop" onClick={onClose}>
       <div className="veto-modal skin-picker" onClick={(e) => e.stopPropagation()}>
@@ -167,19 +179,12 @@ export default function SkinPicker({ catalog, mode, weapon, current, onSave, onC
                       onChange={(e) => setSeed(Math.max(0, Math.min(1000, Number(e.target.value) || 0)))}
                     />
                   </label>
+                  {saveBtn}
                 </div>
               ) : null}
               {pick.p ? <span className="sp-wear-name">{wearOf(w).name}</span> : null}
             </div>
-            <button
-              type="button"
-              className="btn primary"
-              disabled={busy}
-              onClick={() => onSave({ item, paint: pick.p, wear: pick.p ? w : 0.01, seed: pick.p ? seed : 0 })}
-            >
-              <Icon name="check" size={14} />
-              <span>{busy ? "Сохраняем…" : "Надеть"}</span>
-            </button>
+            {pick.p ? null : saveBtn}
           </div>
         ) : null}
       </div>

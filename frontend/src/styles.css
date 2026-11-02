@@ -2586,7 +2586,8 @@ button.ds-toggle:hover { background: var(--paper); }
 .sp-none { display: grid; place-items: center; height: 84px; color: var(--line-2); }
 
 .sp-foot { display: flex; align-items: center; justify-content: flex-start; gap: 16px; flex-wrap: nowrap; }
-.sp-foot > .btn { flex: none; align-self: center; padding: 12px 22px; }
+.sp-foot > .btn { flex: none; align-self: center; }
+.sp-save { flex: none; height: 41px; padding: 0 22px; }
 .sp-foot > img { width: 120px; height: 80px; object-fit: contain; flex: none; }
 .sp-pick { flex: 1; display: grid; gap: 6px; min-width: 0; }
 .sp-pick > b { font: 500 18px/1.2 var(--display); letter-spacing: -0.02em; }
