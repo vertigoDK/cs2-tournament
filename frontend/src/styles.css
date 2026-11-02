@@ -195,7 +195,7 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
   transition: color 0.2s, background 0.2s;
 }
 .nav-link:hover { color: var(--ink); }
-.nav-ico { flex: none; width: 34px; height: 34px; margin: -5px 0 -5px -2px; opacity: 0.82; transition: transform 0.25s var(--ease), opacity 0.2s; }
+.nav-ico { flex: none; width: 24px; height: 24px; margin: 0; opacity: 0.9; transition: transform 0.25s var(--ease), opacity 0.2s; }
 .nav-link:hover .nav-ico, .nav-link.active .nav-ico { opacity: 1; transform: rotate(-6deg) scale(1.08); }
 .nav-link.active {
   color: var(--ink);
