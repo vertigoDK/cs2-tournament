@@ -24,6 +24,7 @@
   --r-lg: 20px;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --w: 1180px;
+  --side-w: 236px; /* ширина боковой панели; на телефоне её нет */
 
   color-scheme: light;
 }
@@ -134,22 +135,34 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
 .app { flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
 .page-wrap { flex: 1; display: flex; flex-direction: column; }
 
-.header {
+/* Боковая панель на десктопе, выдвижное меню на телефоне. */
+.app { display: grid; grid-template-columns: 236px minmax(0, 1fr); min-height: 100vh; position: relative; }
+.main { position: relative; display: flex; flex-direction: column; min-width: 0; min-height: 100vh; }
+.sidebar {
   position: sticky;
   top: 0;
+  align-self: start;
+  height: 100vh;
   z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding: 20px 14px 16px;
   background: rgb(244 242 238 / 0.82);
   backdrop-filter: blur(14px) saturate(1.4);
-  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  overflow-y: auto;
 }
-.header-inner {
-  max-width: var(--w);
-  margin: 0 auto;
-  padding: 12px 24px;
-  display: flex;
-  align-items: center;
-  gap: 28px;
-}
+.sidebar .brand { padding: 0 6px; }
+.side-nav { display: grid; gap: 20px; }
+.side-group { display: grid; gap: 2px; }
+.side-title { padding: 0 12px 6px; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); opacity: 0.75; }
+.side-foot { margin-top: auto; display: grid; gap: 10px; }
+.side-new, .side-login { width: 100%; justify-content: center; }
+.sidebar .profile-trigger { width: 100%; }
+.sidebar .pt-name { flex: 1; text-align: left; max-width: none; }
+.sidebar .profile-dropdown { top: auto; bottom: calc(100% + 8px); left: 0; right: 0; min-width: 0; transform-origin: bottom left; }
+.topbar, .burger, .side-scrim { display: none; }
 
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-mark {
@@ -169,9 +182,11 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
 .brand-text { display: inline-grid; justify-items: end; gap: 2px; }
 .brand-sub { font-size: 8.5px; line-height: 1; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); opacity: 0.7; margin-right: -0.22em; }
 
-.nav { display: flex; gap: 4px; }
 .nav-link {
-  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 9px 12px;
   border-radius: 10px;
   color: var(--muted);
   font-weight: 600;
@@ -180,6 +195,8 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
   transition: color 0.2s, background 0.2s;
 }
 .nav-link:hover { color: var(--ink); }
+.nav-link svg { flex: none; opacity: 0.75; }
+.nav-link.active svg { opacity: 1; color: var(--accent); }
 .nav-link.active {
   color: var(--ink);
   background: var(--card);
@@ -187,7 +204,6 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
   box-shadow: 0 1px 0 rgb(0 0 0 / 0.03);
 }
 
-.header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .spacer { flex: 1; }
 
 /* Панорама карт над подвалом: её линия земли и есть верхняя граница подвала. */
@@ -206,9 +222,8 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
 
 /* Пометки на полях: только там, где по бокам от контента есть свободное
    место, и бледно — чтобы читались как карандаш на карте, а не как контент. */
-.app { position: relative; }
 .field-notes { display: none; }
-@media (min-width: 1440px) {
+@media (min-width: 1680px) {
   .field-notes {
     display: block;
     position: absolute;
@@ -224,7 +239,7 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
     width: 110px;
     height: auto;
     opacity: 0.16;
-    --side: max(10px, calc((100vw - var(--w)) / 2 - 130px));
+    --side: max(10px, calc((100% - var(--w)) / 2 - 130px));
   }
   .fn-1 { left: var(--side); top: 220px; rotate: -6deg; }
   .fn-2 { right: var(--side); top: 360px; width: 84px; rotate: 4deg; }
@@ -921,10 +936,10 @@ input[type="radio"] { accent-color: var(--accent); }
 /* Сетка шире страницы: прокрутка занимает всё окно, а первая колонка стоит
    ровно по краю контента — так финал и победитель чаще видны целиком. */
 .bracket-scroll {
-  --edge: max(16px, calc((100vw - var(--w)) / 2 + 24px));
+  --edge: max(16px, calc((100vw - var(--side-w) - var(--w)) / 2 + 24px));
   overflow-x: auto;
   overflow-y: hidden;
-  margin: 0 calc(50% - 50vw);
+  margin: 0 calc(50% - (100vw - var(--side-w)) / 2);
   /* Справа небольшой отступ, а не --edge: иначе прокрутка появлялась даже
      тогда, когда вся сетка помещается в окно. */
   padding: 4px 24px 14px var(--edge);
@@ -2896,13 +2911,35 @@ button.ds-toggle:hover { background: var(--paper); }
   .login-art p { display: none; }
 }
 
-@media (max-width: 720px) {
-  .header-inner { gap: 12px; padding: 10px 16px; flex-wrap: wrap; }
-  .nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; }
-  .nav::-webkit-scrollbar { display: none; }
-  .hide-sm,
-  .pt-name { display: none; }
-  .new-tournament { padding: 9px 11px; }
+@media (max-width: 900px) {
+  :root { --side-w: 0px; }
+  .app { display: block; }
+  .main { min-height: 100vh; }
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgb(244 242 238 / 0.88);
+    backdrop-filter: blur(14px) saturate(1.4);
+    border-bottom: 1px solid var(--line);
+  }
+  .burger { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; border: 1px solid var(--line); background: var(--card); cursor: pointer; }
+  .sidebar {
+    position: fixed;
+    inset: 0 auto 0 0;
+    width: min(290px, 86vw);
+    z-index: 70;
+    background: var(--paper);
+    transform: translateX(-102%);
+    transition: transform 0.3s var(--ease);
+    box-shadow: none;
+  }
+  .sidebar.open { transform: none; box-shadow: 0 0 60px rgb(0 0 0 / 0.25); }
+  .side-scrim { display: block; position: fixed; inset: 0; z-index: 60; border: 0; background: rgb(20 20 20 / 0.35); }
 }
 
 @media (max-width: 600px) {
