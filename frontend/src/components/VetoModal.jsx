@@ -4,6 +4,7 @@ import Icon from "./Icon.jsx";
 import MapCard from "./MapCard.jsx";
 import DraftStats from "./DraftStats.jsx";
 import MatchSummary from "./MatchSummary.jsx";
+import RewardsPanel from "./RewardsPanel.jsx";
 import Backdrop from "./Backdrop.jsx";
 
 // Название приходит с сервера готовым: своё имя команды или «ник + ник».
@@ -34,6 +35,10 @@ export default function VetoModal({
   onStart,
   onReady,
   onSkipReady,
+  onReward,
+  rewards,
+  pos,
+  bracket,
   onChoose,
   onMapWinner,
   onEditStats,
@@ -123,6 +128,21 @@ export default function VetoModal({
             />
           )}
 
+          {status === "ready_check" && bracket && pos ? (
+            <RewardsPanel
+              rewards={rewards}
+              match={match}
+              pos={pos}
+              bracket={bracket}
+              mapsPool={mapsPool || []}
+              bo={bo}
+              meId={meId}
+              isAdmin={isAdmin}
+              busy={busy}
+              onReward={onReward}
+            />
+          ) : null}
+
           {status === "in_progress" && (
             <div className={`turn-banner ${nextAction}${myTurn ? " mine" : ""}`}>
               {clock(veto.turn) != null ? (
@@ -200,6 +220,13 @@ export default function VetoModal({
                     {mi === match.maps.length - 1 && match.maps.length > 1 && !veto?.skipped ? (
                       <em className="sr-tag">решающая</em>
                     ) : null}
+                    {[0, 1].map((s) =>
+                      veto?.sides?.[String(s)]?.[String(mi)] ? (
+                        <em className="sr-tag side" key={s} title="Выбор стороны — награда за дуэли">
+                          {teamLabel(s === 0 ? teamA : teamB)}: {veto.sides[String(s)][String(mi)]}
+                        </em>
+                      ) : null
+                    )}
                   </span>
                   {mp.rounds ? (
                     <span className="sr-score">
@@ -368,6 +395,7 @@ function VetoSteps({ veto, bestOf, poolSize, teamA, teamB }) {
             </span>
             <span className="vs-map">{done || (action === "decider" ? "—" : "…")}</span>
             {log[i]?.auto ? <span className="vs-auto mono">авто</span> : null}
+            {log[i]?.perma ? <span className="vs-auto vs-perma mono">постоянный</span> : null}
             {team ? <span className="vs-who">{captainOf(team)}</span> : null}
           </li>
         );

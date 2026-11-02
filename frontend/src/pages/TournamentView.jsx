@@ -103,8 +103,10 @@ export default function TournamentView() {
       const { data } = await fn();
       setT(data);
       if (okMsg) toast(okMsg);
+      return true;
     } catch (err) {
       toast(apiErrorMessage(err));
+      return false;
     } finally {
       setBusy(false);
       busyRef.current = false;
@@ -158,10 +160,17 @@ export default function TournamentView() {
   };
   const onAddPlaces = () =>
     runAction(() => api.post(`/tournaments/${id}/qualifier/places`), "Игры за места добавлены");
-  const onRemovePlaces = () => {
-    if (!confirm("Убрать все игры за места вместе с их результатами? Основная сетка дуэлей останется.")) return;
-    runAction(() => api.delete(`/tournaments/${id}/qualifier/places`), "Игры за места убраны");
+  const onRemovePlaces = (keepThird) => {
+    const msg = keepThird
+      ? "Убрать игры за 5–8 и 7-е места? Матч за 3-е место останется."
+      : "Убрать все игры за места вместе с их результатами? Основная сетка дуэлей останется.";
+    if (!confirm(msg)) return;
+    runAction(
+      () => api.delete(`/tournaments/${id}/qualifier/places${keepThird ? "?keep_third=true" : ""}`),
+      keepThird ? "Остался только матч за 3-е место" : "Игры за места убраны"
+    );
   };
+  const onSaveRewards = (list) => runAction(() => api.put(`/tournaments/${id}/rewards`, list), "Награды сохранены");
   const onDeleteQualifier = () => {
     if (!confirm("Удалить отборочные дуэли вместе с результатами?")) return;
     runAction(() => api.delete(`/tournaments/${id}/qualifier`), "Дуэли удалены");
@@ -203,6 +212,8 @@ export default function TournamentView() {
     if (!confirm("Начать драфт, не дожидаясь капитанов? Часы пойдут сразу.")) return;
     runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/skip-ready`));
   };
+  const onVetoReward = (payload) =>
+    runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/reward`, payload));
   const onVetoChoose = (map) =>
     runAction(() => api.post(`/tournaments/${id}/matches/${vetoTarget.r}/${vetoTarget.i}/veto/choose`, { map }));
   const onMapWinner = (mapIndex, slot) => {
@@ -384,6 +395,8 @@ export default function TournamentView() {
           onSetDuel={onSetDuel}
           onAddPlaces={onAddPlaces}
           onRemovePlaces={onRemovePlaces}
+          onSaveRewards={onSaveRewards}
+          rewards={t.bracket.rewards}
           onRebuild={() => setQualifierSetup(true)}
           onDelete={onDeleteQualifier}
         />
@@ -425,6 +438,10 @@ export default function TournamentView() {
         tournamentStarted={Boolean(t.started_at) || t.status !== "setup"}
         onStart={onVetoStart}
         onReady={onVetoReady}
+        onReward={onVetoReward}
+        rewards={t.rewards}
+        pos={vetoTarget}
+        bracket={t.bracket}
         onSkipReady={onVetoSkipReady}
         onChoose={onVetoChoose}
         onMapWinner={onMapWinner}

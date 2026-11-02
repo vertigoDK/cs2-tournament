@@ -178,6 +178,25 @@ class QualifierCreate(BaseModel):
     places: bool = True
 
 
+class RewardIn(BaseModel):
+    place: int = Field(ge=1, le=64)
+    type: Literal["perma_pickban", "side_choice", "swap_opponent"]
+    count: int = Field(default=1, ge=1, le=20)
+
+
+class RewardUse(BaseModel):
+    """Использование награды в окне «Готов». slot — за какую команду матча
+    (капитану не нужен, админ указывает)."""
+
+    kind: Literal["perma", "sides", "swap"]
+    slot: Literal[0, 1] | None = None
+    pick: str | None = None
+    ban: str | None = None
+    sides: dict[str, str] = {}
+    other: int | None = None
+    other_slot: Literal[0, 1] | None = None
+
+
 class DuelResult(BaseModel):
     """Пустой счёт и победитель — снять результат."""
 
@@ -241,6 +260,8 @@ class TournamentSummary(BaseModel):
 class TournamentOut(TournamentSummary):
     maps_pool: list[str]
     bracket: dict
+    # Награды за места в дуэлях по командам: {team_idx: [...]} (см. rewards.py).
+    rewards: dict[str, list[dict]] = {}
     # Часы сервера (unix, сек): таймер драфта в браузере считается по ним.
     server_time: float = 0
 

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import bracket as B
+from .. import rewards as R
 from .. import schemas
 from ..deps import get_current_user, get_db, require_admin
 from ..models import Role, Tournament, TournamentStatus, User
@@ -92,6 +93,45 @@ def ready(tournament_id: int, r: int, i: int, db: Session = Depends(get_db), use
     if not slots:
         raise HTTPException(status_code=403, detail="«Готов» нажимают капитаны команд этого матча")
     t = _mutate(db, tournament_id, r, i, lambda br: B.veto_ready(br, r, i, slots[0], time.time()))
+    from .tournaments import _to_out
+    return _to_out(t, db)
+
+
+@router.post("/reward", response_model=schemas.TournamentOut)
+def use_reward(
+    tournament_id: int,
+    r: int,
+    i: int,
+    payload: schemas.RewardUse,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Награда за дуэли в окне «Готов»: постоянные пик/бан, выбор стороны,
+    замена соперника. Использует капитан своей команды; админ — за любую."""
+    t = _get_tournament(db, tournament_id)
+    _require_underway(t)
+    bracket = t.bracket or {}
+    _check_bounds(bracket, r, i)
+    match = bracket["rounds"][r][i]
+    if user.role == Role.admin and payload.slot is not None:
+        slot = payload.slot
+    else:
+        slots = [s for s, idx in enumerate(match["p"]) if idx is not None and _team_captain_id(bracket, idx) == user.id]
+        if not slots:
+            raise HTTPException(status_code=403, detail="Награды использует капитан команды")
+        slot = slots[0]
+
+    def act(br: dict) -> None:
+        if payload.kind == "perma":
+            R.set_perma(br, r, i, slot, payload.pick or "", payload.ban or "")
+        elif payload.kind == "sides":
+            R.set_sides(br, r, i, slot, payload.sides)
+        else:
+            if payload.other is None or payload.other_slot is None:
+                raise ValueError("Выберите команду, с которой поменяться")
+            R.swap_opponent(br, r, i, slot, payload.other, payload.other_slot)
+
+    t = _mutate(db, tournament_id, r, i, act)
     from .tournaments import _to_out
     return _to_out(t, db)
 

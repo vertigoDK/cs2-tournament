@@ -18,11 +18,25 @@ function placeStage(group, r) {
   return `Места ${group.place}–${group.place + n - 1} · ${left === 2 ? "полуфинал" : left === 3 ? "1/4" : `раунд ${r + 1}`}`;
 }
 
-// Что даёт место в дуэлях в основном турнире.
-const BUFFS = [
-  { place: 1, text: "Постоянный пик и бан одной карты на весь турнир" },
-  { place: 2, text: "Выбор стороны на трёх картах" },
-  { place: 3, text: "Возможность поменять соперника в первом матче" },
+// Типы наград за места (логика — backend/app/rewards.py). Что даёт какое
+// место, задаётся в турнире: bracket.rewards.
+const REWARD_TYPES = {
+  perma_pickban: "Постоянный пик и бан",
+  side_choice: "Выбор стороны",
+  swap_opponent: "Замена соперника",
+};
+const mapsWord = (n) => (n % 10 === 1 && n % 100 !== 11 ? "карте" : "картах");
+export function rewardText(cfg) {
+  if (cfg.type === "perma_pickban") return "Постоянный пик и бан одной карты на весь турнир";
+  if (cfg.type === "side_choice") return `Выбор стороны на ${cfg.count} ${mapsWord(cfg.count)}`;
+  if (cfg.type === "swap_opponent") return "Возможность поменять соперника в первом матче";
+  return cfg.type;
+}
+// Подсказка для пустой настройки — то, что решили для зимнего турнира.
+const REWARDS_HINT = [
+  { place: 1, type: "perma_pickban", count: 1 },
+  { place: 2, type: "side_choice", count: 3 },
+  { place: 3, type: "swap_opponent", count: 1 },
 ];
 
 // Итоговые места {id: место} — у кого уже определились (как qualifier_places на сервере).
@@ -43,7 +57,19 @@ function finalPlaces(qualifier) {
 // Отборочные дуэли 1×1 перед основной сеткой. Своего титула у них нет —
 // по итогу составляют пары или посев, поэтому показываем их внутри турнира.
 // Админ кликает по дуэли, чтобы внести или исправить результат.
-export default function QualifierBracket({ qualifier, isAdmin, busy, onSetDuel, onRebuild, onDelete, onAddPlaces, onRemovePlaces }) {
+export default function QualifierBracket({
+  qualifier,
+  rewards,
+  isAdmin,
+  busy,
+  onSetDuel,
+  onRebuild,
+  onDelete,
+  onAddPlaces,
+  onRemovePlaces,
+  onSaveRewards,
+}) {
+  const [rewardsOpen, setRewardsOpen] = useState(false);
   const [editing, setEditing] = useState(null); // {g, r, i}; g = -1 — основная сетка
   const rounds = qualifier.rounds || [];
   const people = qualifier.people || {};
@@ -107,8 +133,13 @@ export default function QualifierBracket({ qualifier, isAdmin, busy, onSetDuel, 
                   <Icon name="plus" size={13} /> Добавить игры за места
                 </button>
               ) : null}
+              {qualifier.places?.some((g) => g.place > 3) && onRemovePlaces ? (
+                <button type="button" className="btn sm" onClick={() => onRemovePlaces(true)} disabled={busy}>
+                  Оставить только матч за 3-е место
+                </button>
+              ) : null}
               {qualifier.places && onRemovePlaces ? (
-                <button type="button" className="btn sm danger" onClick={onRemovePlaces} disabled={busy}>
+                <button type="button" className="btn sm danger" onClick={() => onRemovePlaces(false)} disabled={busy}>
                   <Icon name="trash" size={13} /> Убрать игры за места
                 </button>
               ) : null}
@@ -175,30 +206,52 @@ export default function QualifierBracket({ qualifier, isAdmin, busy, onSetDuel, 
         </div>
       ) : null}
 
-      {qualifier.places ? (
+      {rewards?.length || isAdmin ? (
         <div className="q-buffs">
-          <div className="q-places-head mono">награды за места</div>
-          <div className="q-buffs-table">
-            {BUFFS.map((b) => {
-              const s = standings.find((x) => x.place === b.place);
-              const p = s ? person(Number(s.pid)) : null;
-              return (
-                <div className="q-buff" key={b.place}>
-                  <span className="q-buff-place mono">{b.place}</span>
-                  <span className="q-buff-text">{b.text}</span>
-                  <span className="q-buff-who">
-                    {p ? (
-                      <span className="q-buff-person">
-                        <Avatar name={p.name} color={p.color} url={p.avatar} size={20} />
-                        {p.name}
-                      </span>
-                    ) : null}
-                  </span>
-                </div>
-              );
-            })}
+          <div className="q-places-head mono">
+            награды за места
+            {isAdmin && onSaveRewards ? (
+              <button type="button" className="btn sm q-buffs-edit" onClick={() => setRewardsOpen(true)} disabled={busy}>
+                Настроить
+              </button>
+            ) : null}
           </div>
+          {rewards?.length ? (
+            <div className="q-buffs-table">
+              {rewards.map((cfg) => {
+                const s = standings.find((x) => x.place === cfg.place);
+                const p = s ? person(Number(s.pid)) : null;
+                return (
+                  <div className="q-buff" key={`${cfg.place}-${cfg.type}`}>
+                    <span className="q-buff-place mono">{cfg.place}</span>
+                    <span className="q-buff-text">{rewardText(cfg)}</span>
+                    <span className="q-buff-who">
+                      {p ? (
+                        <span className="q-buff-person">
+                          <Avatar name={p.name} color={p.color} url={p.avatar} size={20} />
+                          {p.name}
+                        </span>
+                      ) : null}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="muted q-buffs-empty">Награды за места не заданы.</p>
+          )}
         </div>
+      ) : null}
+
+      {rewardsOpen ? (
+        <RewardsEditor
+          initial={rewards?.length ? rewards : REWARDS_HINT}
+          busy={busy}
+          onClose={() => setRewardsOpen(false)}
+          onSave={async (list) => {
+            if (await onSaveRewards(list)) setRewardsOpen(false);
+          }}
+        />
       ) : null}
 
       {duel ? (
@@ -377,6 +430,102 @@ export function QualifierSetup({ tournament, existing, busy, onClose, onCreate }
             onClick={() => onCreate({ player_ids: picked, mode, map: map.trim() || "aim_map_s2", note: note.trim(), places })}
           >
             {existing ? "Пересобрать" : "Создать сетку дуэлей"}
+          </button>
+        </div>
+      </div>
+    </Backdrop>
+  );
+}
+
+// Настройка наград за места: место → тип награды (и сколько карт для выбора стороны).
+function RewardsEditor({ initial, busy, onClose, onSave }) {
+  const [rows, setRows] = useState(() => initial.map((r) => ({ count: 1, ...r })));
+  const set = (k, patch) => setRows((rs) => rs.map((r, n) => (n === k ? { ...r, ...patch } : r)));
+
+  useEffect(() => {
+    const onKey = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <Backdrop onClose={onClose}>
+      <div className="veto-modal duel-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="veto-modal-head">
+          <h3>Награды за места</h3>
+          <button type="button" className="modal-close" onClick={onClose} aria-label="Закрыть">
+            <Icon name="close" size={18} />
+          </button>
+        </div>
+        <div className="veto-modal-body">
+          <div className="hint">
+            Награду получает игрок за место в дуэлях, а использует капитан его команды — в окне «Готов» перед
+            драфтом.
+          </div>
+          <div className="rw-editor">
+            {rows.map((row, k) => (
+              <div className="rw-editor-row" key={k}>
+                <label className="field">
+                  <span>Место</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="64"
+                    value={row.place}
+                    onChange={(e) => set(k, { place: Number(e.target.value) || 1 })}
+                  />
+                </label>
+                <label className="field">
+                  <span>Награда</span>
+                  <select value={row.type} onChange={(e) => set(k, { type: e.target.value })}>
+                    {Object.entries(REWARD_TYPES).map(([v, l]) => (
+                      <option key={v} value={v}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {row.type === "side_choice" ? (
+                  <label className="field">
+                    <span>Карт</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={row.count}
+                      onChange={(e) => set(k, { count: Number(e.target.value) || 1 })}
+                    />
+                  </label>
+                ) : (
+                  <span />
+                )}
+                <button
+                  type="button"
+                  className="btn sm danger rw-editor-del"
+                  onClick={() => setRows((rs) => rs.filter((_, n) => n !== k))}
+                  aria-label="Убрать"
+                >
+                  <Icon name="trash" size={13} />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="btn sm"
+            onClick={() =>
+              setRows((rs) => [...rs, { place: (rs[rs.length - 1]?.place || 0) + 1, type: "side_choice", count: 1 }])
+            }
+          >
+            <Icon name="plus" size={13} /> Добавить награду
+          </button>
+        </div>
+        <div className="veto-modal-foot">
+          <button className="btn" onClick={onClose}>
+            Отмена
+          </button>
+          <button className="btn primary" disabled={busy} onClick={() => onSave(rows)}>
+            Сохранить
           </button>
         </div>
       </div>

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from .. import bracket as B
+from .. import rewards as R
 from .. import schemas
 from ..deps import get_db, require_admin
 from ..models import Role, Tournament, TournamentStatus, User
@@ -141,6 +142,7 @@ def _to_out(t: Tournament, db: Session | None = None) -> schemas.TournamentOut:
     return schemas.TournamentOut(
         **_summary(t).model_dump(exclude={"mvp", "number"}),
         number=_number(t, db),
+        rewards=R.team_rewards(t.bracket or {}),
         maps_pool=t.maps_pool,
         bracket=hydrate_bracket(db, t.bracket) if db is not None else t.bracket,
         server_time=time.time(),
@@ -299,15 +301,33 @@ def add_qualifier_places(tournament_id: int, db: Session = Depends(get_db), _: U
     return _to_out(t, db)
 
 
+@router.put("/{tournament_id}/rewards", response_model=schemas.TournamentOut)
+def set_rewards(
+    tournament_id: int, payload: list[schemas.RewardIn], db: Session = Depends(get_db), _: User = Depends(require_admin)
+):
+    """Что дают места в дуэлях — задаётся для каждого турнира."""
+    t = _get_or_404(db, tournament_id)
+    bracket = dict(t.bracket)
+    try:
+        bracket["rewards"] = R.validate_config([p.model_dump() for p in payload])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    save_bracket(db, t, bracket)
+    return _to_out(t, db)
+
+
 @router.delete("/{tournament_id}/qualifier/places", response_model=schemas.TournamentOut)
-def remove_qualifier_places(tournament_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
-    """Убрать все игры за места — основная сетка дуэлей остаётся."""
+def remove_qualifier_places(
+    tournament_id: int, keep_third: bool = False, db: Session = Depends(get_db), _: User = Depends(require_admin)
+):
+    """Убрать игры за места — основная сетка дуэлей остаётся. keep_third —
+    оставить только матч за 3-е место."""
     t = _get_or_404(db, tournament_id)
     bracket = dict(t.bracket)
     if not bracket.get("qualifier"):
         raise HTTPException(status_code=404, detail="У турнира нет дуэлей")
     try:
-        B.qualifier_remove_places(bracket["qualifier"])
+        B.qualifier_remove_places(bracket["qualifier"], keep_upto=3 if keep_third else 0)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     save_bracket(db, t, bracket)

@@ -299,6 +299,36 @@ def _veto_begin(v: dict, now: float) -> None:
     v["turn_started_at"] = now
 
 
+def _team_perma(bracket: dict, team_idx: int | None) -> dict | None:
+    """Постоянные пик и бан команды (награда за дуэли), если выбраны."""
+    if team_idx is None:
+        return None
+    return ((bracket.get("reward_state") or {}).get(str(team_idx)) or {}).get("perma")
+
+
+def apply_perma(bracket: dict, r: int, i: int, now: float) -> None:
+    """Если у команды, чей ход, есть постоянный пик или бан и сейчас как раз
+    такой ход — сайт делает его сам, сразу. Каждый — один раз за серию; если
+    соперник уже забрал эту карту, в этой серии он пропадает."""
+    m = bracket["rounds"][r][i]
+    v = m["veto"]
+    done = v.setdefault("perma_done", [])
+    while v.get("status") == "in_progress":
+        turn = v["turn"]
+        perma = _team_perma(bracket, m["p"][turn])
+        if not perma:
+            return
+        action = step_action(match_bo(bracket, m), len(v["log"]), len(bracket["maps_pool"]))
+        key = f"{turn}-{action}"
+        if key in done:
+            return
+        done.append(key)
+        target = perma.get(action)
+        if not target or target not in v["remaining"]:
+            return
+        veto_choose(bracket, r, i, target, now, perma=True)
+
+
 def veto_ready(bracket: dict, r: int, i: int, slot: int, now: float) -> None:
     """Капитан команды slot готов. Оба готовы — драфт пошёл, часы запущены."""
     v = bracket["rounds"][r][i]["veto"]
@@ -308,6 +338,7 @@ def veto_ready(bracket: dict, r: int, i: int, slot: int, now: float) -> None:
     ready[slot] = True
     if all(ready):
         _veto_begin(v, now)
+        apply_perma(bracket, r, i, now)
 
 
 def veto_skip_ready(bracket: dict, r: int, i: int, now: float) -> None:
@@ -317,9 +348,12 @@ def veto_skip_ready(bracket: dict, r: int, i: int, now: float) -> None:
         raise ValueError("Драфт уже идёт или ещё не открыт")
     v["skipped_ready"] = True
     _veto_begin(v, now)
+    apply_perma(bracket, r, i, now)
 
 
-def veto_choose(bracket: dict, r: int, i: int, map_name: str, now: float, auto: bool = False) -> None:
+def veto_choose(
+    bracket: dict, r: int, i: int, map_name: str, now: float, auto: bool = False, perma: bool = False
+) -> None:
     """Advance the veto by one step. Whether this step is a ban or a pick is
     determined by the match's best_of, the pool size and how many steps already
     happened — the caller doesn't choose the action, just the map."""
@@ -342,6 +376,8 @@ def veto_choose(bracket: dict, r: int, i: int, map_name: str, now: float, auto: 
     entry = {"action": action, "team": v["turn"], "map": map_name}
     if auto:
         entry["auto"] = True
+    if perma:
+        entry["perma"] = True
     v["log"].append(entry)
     if action == "pick":
         v["picks"].append(map_name)
@@ -356,6 +392,8 @@ def veto_choose(bracket: dict, r: int, i: int, map_name: str, now: float, auto: 
         ]
     else:
         v["turn"] = 1 - v["turn"]
+        if not perma:
+            apply_perma(bracket, r, i, now)
 
 
 def veto_tick(bracket: dict, now: float) -> bool:
@@ -580,11 +618,27 @@ def qualifier_add_places(q: dict) -> None:
     _qualifier_sync(q)
 
 
-def qualifier_remove_places(q: dict) -> None:
-    """Убирает игры за места; основная сетка и её результаты остаются."""
+def qualifier_remove_places(q: dict, keep_upto: int = 0) -> None:
+    """Убирает игры за места; основная сетка и её результаты остаются.
+    keep_upto=3 — оставить только игры за места до 3-го (матч за 3-е)."""
     if q.get("places") is None:
         raise ValueError("Игр за места нет")
-    q.pop("places")
+    if not keep_upto:
+        q.pop("places")
+        return
+    old = q["places"]
+    keep = [k for k, grp in enumerate(old) if grp["place"] <= keep_upto]
+    remap = {k: n for n, k in enumerate(keep)}
+    new = []
+    for k in keep:
+        grp = dict(old[k])
+        sg, sr = grp["src"]
+        if sg != -1 and sg not in remap:
+            continue  # источник убран — без него эта сетка не наполнится
+        grp["src"] = [remap.get(sg, -1), sr]
+        new.append(grp)
+    q["places"] = new
+    _qualifier_sync(q)
 
 
 def _group_rounds(q: dict, g: int) -> list:
