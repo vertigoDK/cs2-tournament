@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import api, { apiErrorMessage } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Avatar from "../components/Avatar.jsx";
@@ -231,22 +231,28 @@ function CreateLobby({ options, onClose, onCreated }) {
     setTeam({});
   };
 
-  const count = (t) => Object.values(team).filter((v) => v === t).length;
   const per = mode.per_team;
-  const valid =
-    per != null ? count(1) === per && count(2) === per : count(1) >= 1 && count(2) >= 1;
+  const members = (t) => options.players.filter((u) => team[u.id] === t);
+  const pool = options.players.filter((u) => !team[u.id]);
+  const valid = per != null ? members(1).length === per && members(2).length === per : members(1).length >= 1 && members(2).length >= 1;
 
-  const toggle = (id, t) => setTeam((prev) => {
+  // Клик по свободному игроку — в команду, где есть место (при равенстве — в первую).
+  const add = (u) => {
+    const [n1, n2] = [members(1).length, members(2).length];
+    const room = (n) => per == null || n < per;
+    const t = room(n1) && (n1 <= n2 || !room(n2)) ? 1 : room(n2) ? 2 : 0;
+    if (t) setTeam((prev) => ({ ...prev, [u.id]: t }));
+  };
+  const remove = (id) => setTeam((prev) => {
     const next = { ...prev };
-    if (next[id] === t) delete next[id];
-    else next[id] = t;
+    delete next[id];
     return next;
   });
-
-  const sorted = useMemo(
-    () => [...options.players].sort((a, b) => Number(b.steam_linked) - Number(a.steam_linked)),
-    [options.players],
-  );
+  const swap = (id) => setTeam((prev) => {
+    const to = prev[id] === 1 ? 2 : 1;
+    const full = per != null && Object.values(prev).filter((v) => v === to).length >= per;
+    return full ? prev : { ...prev, [id]: to };
+  });
 
   const submit = async () => {
     setBusy(true);
@@ -276,56 +282,63 @@ function CreateLobby({ options, onClose, onCreated }) {
         </div>
 
         <div className="veto-modal-body lm-body">
-          <div className="lm-block">
-            <span className="lm-label mono">Режим</span>
-            <div className="lm-chips">
-              {options.modes.map((m) => (
-                <button key={m.id} type="button" className={`chip${m.id === modeId ? " active" : ""}`} onClick={() => pickMode(m.id)}>
-                  {m.name}
-                </button>
-              ))}
-            </div>
-            <span className="hint">{mode.hint}</span>
+          <div className="lm-modes">
+            {options.modes.map((m) => (
+              <button key={m.id} type="button" className={`lm-mode${m.id === modeId ? " active" : ""}`} onClick={() => pickMode(m.id)}>
+                <b>{m.name}</b>
+                <span>{m.hint}</span>
+              </button>
+            ))}
           </div>
 
           {mode.maps.length > 1 ? (
             <div className="lm-block">
               <span className="lm-label mono">Карта</span>
-              <div className="lm-chips">
-                {mode.maps.map((m) => (
-                  <button key={m} type="button" className={`chip${m === map ? " active" : ""}`} onClick={() => setMap(m)}>
-                    {m}
-                  </button>
-                ))}
+              <div className="lm-maps">
+                {mode.maps.map((m) => {
+                  const img = mapImage(m);
+                  return (
+                    <button key={m} type="button" className={`lm-map${m === map ? " active" : ""}`} onClick={() => setMap(m)}>
+                      {img ? <img src={img} alt="" loading="lazy" /> : null}
+                      <span>{m}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           ) : null}
 
           <div className="lm-block">
-            <span className="lm-label mono">
-              Игроки · команда 1: {count(1)}{per != null ? `/${per}` : ""} · команда 2: {count(2)}{per != null ? `/${per}` : ""}
-            </span>
-            {(
-              <ul className="lm-players">
-                {sorted.map((u) => (
-                  <li key={u.id} className={u.steam_linked ? "" : "off"}>
-                    <Avatar name={u.name} color={u.avatar_color} url={u.avatar_url} size={28} />
-                    <b>{u.name}</b>
-                    {u.steam_linked ? (
-                      <span className="lm-teams">
-                        {[1, 2].map((t) => (
-                          <button key={t} type="button" className={`chip${team[u.id] === t ? " active" : ""}`} onClick={() => toggle(u.id, t)}>
-                            К{t}
-                          </button>
-                        ))}
-                      </span>
-                    ) : (
-                      <span className="hint">нет Steam ID</span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
+            <span className="lm-label mono">Составы{per != null ? ` · по ${per} в команде` : ""}</span>
+            <div className="lm-teams2">
+              {[1, 2].map((t) => (
+                <div key={t} className="lm-team">
+                  <b>Команда {t}</b>
+                  {members(t).map((u) => (
+                    <span key={u.id} className="lm-chip placed">
+                      <Avatar name={u.name} color={u.avatar_color} url={u.avatar_url} size={22} />
+                      {u.name}
+                      <button type="button" title="В другую команду" onClick={() => swap(u.id)}>⇄</button>
+                      <button type="button" title="Убрать" onClick={() => remove(u.id)}>×</button>
+                    </span>
+                  ))}
+                  {per != null && members(t).length < per ? <span className="lm-empty">выбери игрока ниже</span> : null}
+                  {per == null && !members(t).length ? <span className="lm-empty">пока пусто</span> : null}
+                </div>
+              ))}
+            </div>
+
+            <span className="lm-label mono">Игроки — нажми, чтобы добавить</span>
+            <div className="lm-pool">
+              {pool.map((u) => (
+                <button key={u.id} type="button" className="lm-chip" disabled={!u.steam_linked} title={u.steam_linked ? "" : "К аккаунту не привязан Steam"} onClick={() => add(u)}>
+                  <Avatar name={u.name} color={u.avatar_color} url={u.avatar_url} size={22} />
+                  {u.name}
+                  {!u.steam_linked ? <small>нет Steam</small> : null}
+                </button>
+              ))}
+              {!pool.length ? <span className="lm-empty">все выбраны</span> : null}
+            </div>
           </div>
 
           <label className="lm-block">
