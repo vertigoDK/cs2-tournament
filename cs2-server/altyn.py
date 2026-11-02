@@ -274,8 +274,13 @@ def cmd_deploy(a) -> None:
     p = make_panel(a.server)
     db = database(p, env)
     have = {i["name"] for i in p.ls(f"{CSS}/plugins")}
-    p.put_tree(CSS, our_plugins(env, db))
-    for plugin in ("NineCupSkins", "NineCupLobby"):
+    files = our_plugins(env, db)
+    # --only: заливаем один плагин — остальные не перезапускаются (перезапуск скинов
+    # заново выдаёт всем оружие с анимацией).
+    names = [a.only] if a.only else ["NineCupSkins", "NineCupLobby"]
+    files = {k: v for k, v in files.items() if any(f"/{n}/" in k for n in names)}
+    p.put_tree(CSS, files)
+    for plugin in names:
         # Уже загруженный плагин перезагружается сам (hot reload), новый — только по команде.
         if plugin not in have:
             p.command(f"css_plugins load {plugin}")
@@ -309,6 +314,8 @@ def main() -> None:
         s.add_argument("--server", required=True, help="идентификатор сервера (8 символов из ссылки панели)")
         if name == "setup":
             s.add_argument("--no-restart", action="store_true")
+        if name == "deploy":
+            s.add_argument("--only", choices=["NineCupSkins", "NineCupLobby"])
         if name == "command":
             s.add_argument("text")
         s.set_defaults(fn=fn)

@@ -4,6 +4,7 @@ import api, { apiErrorMessage } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Avatar from "../components/Avatar.jsx";
 import Icon from "../components/Icon.jsx";
+import LobbyStage from "../components/LobbyStage.jsx";
 import PageHead, { EmptyState } from "../components/PageHead.jsx";
 import { ListBones } from "../components/Skeleton.jsx";
 import { useToast } from "../components/Toast.jsx";
@@ -85,8 +86,8 @@ export default function Lobbies() {
             <h2 className="section-title">Сейчас</h2>
             {active.length ? (
               <div className="lobby-list">
-                {active.map((l, i) => (
-                  <LobbyCard key={l.id} lobby={l} first={i === 0} isAdmin={isAdmin} onCancel={cancel} toast={toast} />
+                {active.map((l) => (
+                  <LobbyStage key={l.id} lobby={l} isAdmin={isAdmin} onCancel={cancel} toast={toast} />
                 ))}
               </div>
             ) : (
