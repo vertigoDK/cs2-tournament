@@ -132,7 +132,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     {
         if (_lobby is null || _live || _starting || _loadedLobby == _lobby.Id) return;
         _loadedLobby = _lobby.Id;
-        if (Server.MapName.Equals(_lobby.MapId, StringComparison.OrdinalIgnoreCase) && _lobby.WorkshopId is null)
+        if (Server.MapName.Equals(_lobby.MapId, StringComparison.OrdinalIgnoreCase))
         {
             Warmup();
             return;
@@ -146,7 +146,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         // Режимы: дуэль — соревновательный, wingman — 2×2, свободная — казуал.
         var (type, mode) = l.Mode switch { "wingman" => (0, 2), "free" => (0, 0), _ => (0, 1) };
         Server.ExecuteCommand($"game_type {type}; game_mode {mode}");
-        Server.ExecuteCommand(l.WorkshopId is not null ? $"host_workshop_map {l.WorkshopId}" : $"changelevel {l.MapId}");
+        Server.ExecuteCommand(l.WorkshopId is not null ? $"host_workshop_map {l.WorkshopId}" : $"map {l.MapId}");
     }
 
     private void Warmup()

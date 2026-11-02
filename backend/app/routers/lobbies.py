@@ -111,6 +111,12 @@ def create_lobby(payload: schemas.LobbyCreate, db: Session = Depends(get_db), ad
     if per is None and (len(ids) < 2 or not teams[1] or not teams[2]):
         raise HTTPException(status_code=400, detail="Нужны игроки в обеих командах")
 
+    # Новое лобби заменяет прежние, которые ещё ждут игроков: сервер один, и очередь
+    # из забытых лобби только путает (он играл бы самое старое). Идущую игру не трогаем.
+    for old in db.query(Lobby).filter(Lobby.status == "waiting").all():
+        old.status = "cancelled"
+        old.finished_at = dt.datetime.utcnow()
+
     lobby = Lobby(
         mode=payload.mode, map=payload.map, server_address=payload.server_address.strip(),
         players=[{"user_id": p.user_id, "team": p.team} for p in payload.players],
