@@ -3883,3 +3883,10 @@ a.lobby-mode:hover { color: var(--accent-ink); }
 
 /* В карточке матча — полоса сверху, над строкой с номером и картами. */
 .srv-tag.band { display: flex; justify-content: center; margin: 0; border-radius: 0; padding: 5px 10px; }
+
+.srv-tag { cursor: pointer; transition: background 0.15s; gap: 10px; }
+.srv-tag:hover { background: var(--accent-ink); }
+.srv-state { display: inline-flex; align-items: center; gap: 6px; }
+.srv-open { padding: 2px 8px; border-radius: 999px; background: rgb(0 0 0 / 0.22); }
+.srv-tag.band { justify-content: space-between; padding: 6px 12px; }
+.srv-tag.band .srv-open { background: var(--ink); color: var(--paper); padding: 3px 10px; }

@@ -284,8 +284,15 @@ export default function QualifierBracket({
 export function ServerTag({ lobby, band }) {
   const text = { waiting: "грузим карту", ready: "ждём игроков", live: "идёт игра" }[lobby.status] || lobby.status;
   return (
-    <Link to={`/lobbies/${lobby.id}`} className={`srv-tag${band ? " band" : ""}${lobby.status === "live" ? " live" : ""}`}>
-      <i className="live-dot" /> на сервере · {text}
+    <Link
+      to={`/lobbies/${lobby.id}`}
+      className={`srv-tag${band ? " band" : ""}${lobby.status === "live" ? " live" : ""}`}
+      title="Открыть лобби на сервере"
+    >
+      <span className="srv-state">
+        <i className="live-dot" /> на сервере · {text}
+      </span>
+      <span className="srv-open">{band ? "Открыть лобби →" : "лобби →"}</span>
     </Link>
   );
 }
