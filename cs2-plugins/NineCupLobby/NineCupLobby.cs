@@ -63,8 +63,22 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         _api = string.IsNullOrWhiteSpace(config.ServerKey) ? null : new SiteApi(config.SiteUrl, config.ServerKey);
     }
 
+    private Watchdog? _watch;
+
     public override void Load(bool hotReload)
     {
+        _watch = new Watchdog(Logger);
+        RegisterListener<Listeners.OnTick>(() => _watch.OnTick());
+        // Отметки событий для сторожа: что было перед зависанием.
+        RegisterEventHandler<EventRoundStart>((_, _) => { _watch.Mark("round_start"); return HookResult.Continue; }, HookMode.Pre);
+        RegisterEventHandler<EventRoundFreezeEnd>((_, _) => { _watch.Mark("freeze_end"); return HookResult.Continue; }, HookMode.Pre);
+        RegisterEventHandler<EventRoundEnd>((_, _) => { _watch.Mark("round_end"); return HookResult.Continue; }, HookMode.Pre);
+        RegisterEventHandler<EventPlayerSpawn>((_, _) => { _watch.Mark("player_spawn"); return HookResult.Continue; }, HookMode.Pre);
+        RegisterEventHandler<EventPlayerDeath>((_, _) => { _watch.Mark("player_death"); return HookResult.Continue; }, HookMode.Pre);
+        RegisterEventHandler<EventItemPurchase>((_, _) => { _watch.Mark("item_purchase"); return HookResult.Continue; }, HookMode.Pre);
+        RegisterEventHandler<EventWeaponFire>((_, _) => { _watch.Mark("weapon_fire"); return HookResult.Continue; }, HookMode.Pre);
+        RegisterEventHandler<EventPlayerConnectFull>((_, _) => { _watch.Mark("player_connect_full"); return HookResult.Continue; }, HookMode.Pre);
+        RegisterListener<Listeners.OnMapStart>(_ => _watch.Mark("map_start"));
         if (_api is null)
             Logger.LogWarning("ServerKey не задан в configs/plugins/NineCupLobby/NineCupLobby.json — плагин ничего не делает");
         RegisterListener<Listeners.OnMapStart>(_ => AddTimer(3f, () =>

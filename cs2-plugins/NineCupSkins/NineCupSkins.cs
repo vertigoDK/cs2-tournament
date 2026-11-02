@@ -4,6 +4,10 @@ using System.Text.Json.Serialization;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Core.Attributes.Registration;
+using CounterStrikeSharp.API.Modules.Commands;
+using System.Diagnostics;
+using System.Net;
+using System.Net.Sockets;
 using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
@@ -125,6 +129,50 @@ public class NineCupSkins : BasePlugin, IPluginConfig<NineCupSkinsConfig>
             {
                 _busy = false;
             }
+        });
+    }
+
+    // Диагностика из консоли сервера: сколько занимают DNS, TCP, MySQL и запрос к сайту.
+    [ConsoleCommand("css_ncdiag", "nine cup: замер связи с базой и сайтом")]
+    public void OnDiag(CCSPlayerController? player, CommandInfo cmd)
+    {
+        var host = Config.DatabaseHost;
+        var port = Config.DatabasePort;
+        var db = _db;
+        var http = _http;
+        Task.Run(async () =>
+        {
+            var sw = Stopwatch.StartNew();
+            string Step(string name) { var r = $"{name} {sw.ElapsedMilliseconds} ms"; sw.Restart(); return r; }
+            var parts = new List<string>();
+            try
+            {
+                var ips = await Dns.GetHostAddressesAsync(host);
+                parts.Add(Step($"dns({string.Join(",", ips.Select(i => i.ToString()))})"));
+                using (var tcp = new TcpClient())
+                {
+                    await tcp.ConnectAsync(host, port);
+                    parts.Add(Step("tcp"));
+                }
+                await using (var conn = new MySqlConnection(db))
+                {
+                    await conn.OpenAsync();
+                    parts.Add(Step("mysql-open"));
+                    await using var c = new MySqlCommand("SELECT COUNT(*) FROM wp_player_skins", conn);
+                    var n = await c.ExecuteScalarAsync();
+                    parts.Add(Step($"mysql-query({n})"));
+                }
+                if (http is not null)
+                {
+                    using var r = await http.GetAsync("api/server/skins");
+                    parts.Add(Step($"site({(int)r.StatusCode})"));
+                }
+            }
+            catch (Exception e)
+            {
+                parts.Add(Step($"ОШИБКА {e.GetType().Name}: {e.Message}"));
+            }
+            Logger.LogInformation("ncdiag: {Parts}", string.Join(" | ", parts));
         });
     }
 
