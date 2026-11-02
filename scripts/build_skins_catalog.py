@@ -68,6 +68,12 @@ def main() -> None:
         if paint == 0 or not weapons[d]["i"]:
             weapons[d]["i"] = row["i"]  # обложка оружия — стандартный вид, если есть
 
+    # Стандартный вид оружия (без скина) — из base_weapons.
+    with urllib.request.urlopen(SRC.rsplit("/", 1)[0] + "/base_weapons.json", timeout=120) as r:
+        base = {int(b["def_index"]): short(b.get("image")) for b in json.load(r) if b.get("def_index") is not None}
+    for d, w in weapons.items():
+        w["b"] = base.get(d) or (base.get(42, "") if w["g"] == "Knives" else "")
+
     order = {c: k for k, (c, *_) in enumerate(GROUPS)}
     (OUT / "w").mkdir(parents=True, exist_ok=True)
     for d, rows in skins.items():
@@ -77,6 +83,7 @@ def main() -> None:
         (OUT / "w" / f"{d}.json").write_text(json.dumps(rows, ensure_ascii=False, separators=(",", ":")))
 
     catalog = {
+        "knife_default": base.get(42, ""),
         "img": IMG_PREFIX,
         "groups": [
             {

@@ -138,17 +138,17 @@ export default function Skins() {
             <SlotCard
               big
               label="Нож"
-              title={knife ? knife.n : "Обычный нож"}
-              sub={knife ? skinOf(knife.d)?.n || (chosen[knife.d] ? "…" : "Выбрать скин") : "Выбрать нож"}
-              img={knife && skinOf(knife.d) ? skinImage(catalog, skinOf(knife.d).i) : ""}
+              title={knife ? knife.n : "Нож"}
+              sub={knife ? skinOf(knife.d)?.n || "Стандартный" : "Стандартный"}
+              img={skinImage(catalog, (knife && skinOf(knife.d) ? skinOf(knife.d).i : knife?.b) || catalog.knife_default)}
               color={knife ? skinOf(knife.d)?.r : null}
               onClick={() => setTarget({ mode: "knife" })}
             />
             <SlotCard
               big
               label="Перчатки"
-              title={glove ? glove.n : "Обычные перчатки"}
-              sub={glove ? skinOf(glove.d)?.n || "…" : "Выбрать перчатки"}
+              title={glove ? glove.n : "Перчатки"}
+              sub={glove ? skinOf(glove.d)?.n || "…" : "Стандартные"}
               img={glove && skinOf(glove.d) ? skinImage(catalog, skinOf(glove.d).i) : ""}
               color={glove ? skinOf(glove.d)?.r : null}
               onClick={() => setTarget({ mode: "glove" })}
@@ -166,8 +166,8 @@ export default function Skins() {
                     <SlotCard
                       key={w.d}
                               title={w.n}
-                      sub={c ? `${s?.n || "…"} · ${wearOf(c.wear).short}` : "Выбрать скин"}
-                      img={c && s ? skinImage(catalog, s.i) : ""}
+                      sub={c ? `${s?.n || "…"} · ${wearOf(c.wear).short}` : "Стандартный"}
+                      img={skinImage(catalog, c && s ? s.i : w.b)}
                       color={s?.r}
                       onClick={() => setTarget({ mode: "weapon", weapon: w })}
                     />

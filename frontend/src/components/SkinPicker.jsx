@@ -39,7 +39,7 @@ export default function SkinPicker({ catalog, mode, weapon, current, onSave, onC
       // скин можно было снять.
       let list = mode === "glove" ? rows.filter((r) => r.p) : rows;
       if (mode === "weapon" && !list.some((r) => r.p === 0)) {
-        list = [{ p: 0, n: "Стандартный", r: "", i: item.i, min: 0, max: 1 }, ...list];
+        list = [{ p: 0, n: "Стандартный", r: "", i: item.b || item.i, min: 0, max: 1 }, ...list];
       }
       setSkins(list);
       const cur = initial.current;
