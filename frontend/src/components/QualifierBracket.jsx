@@ -281,10 +281,10 @@ export default function QualifierBracket({
 }
 
 // Подпись над матчем, который сейчас на нашем сервере; ведёт в его лобби.
-export function ServerTag({ lobby }) {
+export function ServerTag({ lobby, band }) {
   const text = { waiting: "грузим карту", ready: "ждём игроков", live: "идёт игра" }[lobby.status] || lobby.status;
   return (
-    <Link to={`/lobbies/${lobby.id}`} className={`srv-tag${lobby.status === "live" ? " live" : ""}`}>
+    <Link to={`/lobbies/${lobby.id}`} className={`srv-tag${band ? " band" : ""}${lobby.status === "live" ? " live" : ""}`}>
       <i className="live-dot" /> на сервере · {text}
     </Link>
   );

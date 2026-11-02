@@ -3873,10 +3873,13 @@ a.lobby-mode:hover { color: var(--accent-ink); }
   border-radius: 999px; background: var(--accent); color: #fff; font: 700 10.5px/1.4 var(--mono);
   letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
 }
-.match .srv-tag { position: absolute; top: -12px; right: 10px; margin: 0; z-index: 2; }
+
 .match.on-server { position: relative; }
 .srv-tag .live-dot { background: #fff; }
 /* Точка «внимание» у пункта меню. */
 .nav-badge { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); animation: navPulse 1.6s ease-in-out infinite; }
 @keyframes navPulse { 50% { box-shadow: 0 0 0 6px transparent; } }
 .q-wrap .srv-tag { position: absolute; top: -11px; left: 10px; margin: 0; z-index: 2; }
+
+/* В карточке матча — полоса сверху, над строкой с номером и картами. */
+.srv-tag.band { display: flex; justify-content: center; margin: 0; border-radius: 0; padding: 5px 10px; }

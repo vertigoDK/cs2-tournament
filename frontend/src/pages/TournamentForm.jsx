@@ -38,7 +38,6 @@ export default function TournamentForm() {
   const [finalBo, setFinalBo] = useState(5);
   // Время на весь драфт, у каждой команды половина; 0 — без таймера.
   const [vetoMinutes, setVetoMinutes] = useState(7);
-  const [server, setServer] = useState(true); // где играем: наш сервер или вручную
   const [startsAtLocal, setStartsAtLocal] = useState(""); // "YYYY-MM-DDTHH:mm" по времени UTC+5
 
   const [players, setPlayers] = useState(null);
@@ -66,7 +65,6 @@ export default function TournamentForm() {
           setBestOf(t.bracket.best_of || 1);
           setFinalBo(t.bracket.final_best_of || t.bracket.best_of || 1);
           setVetoMinutes(Math.round((t.bracket.veto_time || 0) / 60));
-          setServer(Boolean(t.bracket.server));
           setStartsAtLocal(utcIsoToAlmatyLocal(t.starts_at));
           setTeams(
             t.bracket.teams.map((tm) => ({
@@ -228,7 +226,6 @@ export default function TournamentForm() {
           starts_at: startsAtIso,
           clear_starts_at: !startsAtIso,
           veto_time: vetoMinutes * 60,
-          server,
         });
         navigate(`/tournaments/${id}`);
       } else {
@@ -242,7 +239,6 @@ export default function TournamentForm() {
           final_best_of: finalBo,
           veto_time: vetoMinutes * 60,
           starts_at: startsAtIso,
-          server,
         });
         navigate(`/tournaments/${data.id}`);
       }
@@ -440,21 +436,6 @@ export default function TournamentForm() {
             <div className="field">
               <label>Финал</label>
               <Segmented options={BEST_OF} value={finalBo} onChange={setFinalBo} format={(v) => `BO${v}`} />
-            </div>
-          </div>
-
-          <div className="field">
-            <label>Где играем</label>
-            <Segmented
-              options={[true, false]}
-              value={server}
-              onChange={setServer}
-              format={(v) => (v ? "Наш сервер" : "Вручную")}
-            />
-            <div className="hint">
-              {server
-                ? "После «Начать турнир» всё идёт само: лобби на дуэли по очереди и на каждую карту сразу после драфта. Игра начинается, когда все зашли и написали !ready; счёт и K/D/A попадают в сетку."
-                : "Матчи играете где угодно (например, на Cybershoke), результаты вносите вручную."}
             </div>
           </div>
 

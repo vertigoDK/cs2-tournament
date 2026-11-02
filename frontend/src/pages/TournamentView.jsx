@@ -347,7 +347,7 @@ export default function TournamentView() {
                 <span>Начать турнир</span>
               </button>
             ) : null}
-            {t.bracket.server && t.started_at && t.status !== "finished" ? (
+            {t.started_at && t.status !== "finished" ? (
               <button
                 className={`btn${t.bracket.server_paused ? " server-on" : ""}`}
                 onClick={() => onServerPause(!t.bracket.server_paused)}

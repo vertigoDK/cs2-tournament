@@ -152,7 +152,7 @@ def _to_out(t: Tournament, db: Session | None = None) -> schemas.TournamentOut:
 
 
 def _server_lobbies(t: Tournament, db: Session | None) -> list[dict]:
-    if db is None or not (t.bracket or {}).get("server"):
+    if db is None:
         return []
     from ..models import Lobby
 

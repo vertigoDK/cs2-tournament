@@ -246,7 +246,7 @@ export default function Bracket({ bracket, serverLobbies = [], isAdmin, started,
                     if (el) nodeRefs.current[`${r}-${i}`] = el;
                   }}
                 >
-                  {lobby ? <ServerTag lobby={lobby} /> : null}
+                  {lobby ? <ServerTag lobby={lobby} band /> : null}
                   <div className="match-head">
                     <span className="match-no">
                       R{r + 1}·M{i + 1}
