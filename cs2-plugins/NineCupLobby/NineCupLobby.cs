@@ -235,7 +235,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         foreach (var h in Humans())
         {
             if (inLobby.TryGetValue(h.SteamID.ToString(), out var lp))
-                h.ChangeTeam(lp.Team == 1 ? CsTeam.Terrorist : CsTeam.CounterTerrorist);
+                h.ChangeTeam(SideOf(lp.Team));
             else
                 h.ChangeTeam(CsTeam.Spectator);
         }
@@ -252,7 +252,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
             _botsTeam2 = missing.Count(p => p.Team == 2);
             if (missing.Count > 0)
             {
-                foreach (var p in missing) Server.ExecuteCommand(p.Team == 1 ? "bot_add_t" : "bot_add_ct");
+                foreach (var p in missing) Server.ExecuteCommand(SideOf(p.Team) == CsTeam.Terrorist ? "bot_add_t" : "bot_add_ct");
                 // Менеджер ботов игры любит докинуть своего — через секунду-другую выравниваем сами.
                 AddTimer(1.5f, FixBots);
                 Server.PrintToChatAll($"{Tag} вместо {string.Join(", ", missing.Select(p => p.Name))} — боты");
@@ -260,10 +260,17 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         }
 
         _score[0] = _score[1] = 0;
-        if (_lobby.Mode == "wingman")
+        if (_lobby.Mode == "wingman" && _lobby.Side1 is null)
         {
             StartKnife();
             return;
+        }
+        if (_lobby.Mode == "wingman")
+        {
+            // Стороны выбраны наградой на сайте — без ножа, сразу матч по правилам wingman.
+            Server.PrintToChatAll($"{Tag} стороны выбраны наградой: команда 1 — {_lobby.Side1}, ножевого раунда нет");
+            Server.ExecuteCommand(
+                "mp_maxrounds 16; mp_overtime_enable 1; mp_overtime_maxrounds 6; mp_match_can_clinch 1; mp_halftime 1");
         }
         _starting = true;
         // Допы без конца: при ничьей играем овертаймы, пока кто-то не выиграет.
@@ -279,6 +286,13 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     }
 
     // ---------------- ножевой раунд (wingman) ----------------
+
+    // На какой стороне начинает команда лобби: обычно команда 1 — T, если наградой не выбрано иное.
+    private CsTeam SideOf(int team)
+    {
+        var t1 = _lobby?.Side1 == "CT" ? CsTeam.CounterTerrorist : CsTeam.Terrorist;
+        return team == 1 ? t1 : (t1 == CsTeam.Terrorist ? CsTeam.CounterTerrorist : CsTeam.Terrorist);
+    }
 
     private void StartKnife()
     {

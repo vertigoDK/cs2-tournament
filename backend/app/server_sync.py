@@ -40,9 +40,21 @@ def _match_lobby(t: Tournament, b: dict, r: int, i: int, idx: int, m: dict) -> L
     players = []
     for team_no, team_idx in ((1, m["p"][0]), (2, m["p"][1])):
         players += [{"user_id": pid, "team": team_no} for pid in B.team_member_ids(b["teams"][team_idx])]
+    # Награда «выбор стороны»: капитан заранее выбрал CT/T на этой карте (окно «Готов»).
+    # Тогда ножевого раунда нет — команды сразу на своих сторонах.
+    sides = (m.get("veto") or {}).get("sides") or {}
+    side1 = None
+    if (s0 := (sides.get("0") or {}).get(str(idx))) in ("CT", "T"):
+        side1 = s0
+    elif (s1 := (sides.get("1") or {}).get(str(idx))) in ("CT", "T"):
+        side1 = "T" if s1 == "CT" else "CT"
+    ref = {"r": r, "i": i, "map": idx}
+    if side1:
+        ref["side1"] = side1
+        label += f" · стороны выбраны"
     return Lobby(
         mode="wingman", map=maps[idx]["map"], status="waiting", tournament_id=t.id, kind="match",
-        ref={"r": r, "i": i, "map": idx}, label=label, players=players,
+        ref=ref, label=label, players=players,
     )
 
 
@@ -53,7 +65,7 @@ def sync_lobbies(db: Session, t: Tournament) -> None:
     from .routers.game_server import _playable
 
     lobbies = db.query(Lobby).filter(Lobby.tournament_id == t.id).all()
-    taken = [lo.ref for lo in lobbies if lo.status in (*ACTIVE, "finished")]
+    taken = [{k: v for k, v in (lo.ref or {}).items() if k != "side1"} for lo in lobbies if lo.status in (*ACTIVE, "finished")]
     added = []
 
     q = b.get("qualifier")

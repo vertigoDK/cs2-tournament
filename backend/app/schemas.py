@@ -636,6 +636,8 @@ class ServerLobby(BaseModel):
     workshop_id: str | None = None
     status: str
     players: list[ServerLobbyPlayer]
+    # Сторона команды 1 (CT/T), если её выбрали наградой, — тогда без ножевого раунда.
+    side1: str | None = None
 
 
 class ServerLobbyOut(BaseModel):

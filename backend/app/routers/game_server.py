@@ -245,6 +245,7 @@ def current_lobby(db: Session = Depends(get_db)):
     return schemas.ServerLobbyOut(
         lobby=schemas.ServerLobby(
             id=lobby.id, mode=lobby.mode, map=lobby.map, map_id=map_id, workshop_id=workshop, status=lobby.status,
+            side1=(lobby.ref or {}).get("side1"),
             players=[
                 schemas.ServerLobbyPlayer(steam_id=users[p["user_id"]].steam_id, name=users[p["user_id"]].display_name, team=p["team"])
                 for p in lobby.players

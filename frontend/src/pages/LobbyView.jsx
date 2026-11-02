@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import api, { apiErrorMessage } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Icon from "../components/Icon.jsx";
@@ -12,6 +12,7 @@ export default function LobbyView() {
   const { id } = useParams();
   const { isAdmin } = useAuth();
   const { toast, toastNode } = useToast();
+  const navigate = useNavigate();
   const [lobby, setLobby] = useState(null);
   const [error, setError] = useState("");
 
@@ -38,8 +39,23 @@ export default function LobbyView() {
     }
   };
 
+  const remove = async () => {
+    if (!confirm("Удалить это лобби совсем? Это необратимо.")) return;
+    try {
+      await api.delete(`/lobbies/${id}`);
+      navigate("/lobbies");
+    } catch (err) {
+      toast(apiErrorMessage(err));
+    }
+  };
+
   return (
     <main className="page">
+      {isAdmin && lobby ? (
+        <button type="button" className="btn sm danger lv-delete" onClick={remove}>
+          <Icon name="trash" size={13} /> Удалить лобби
+        </button>
+      ) : null}
       <Link to="/lobbies" className="back">
         <Icon name="arrowLeft" size={16} /> Все лобби
       </Link>

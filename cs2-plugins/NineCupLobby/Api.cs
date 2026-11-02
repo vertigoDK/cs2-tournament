@@ -7,7 +7,7 @@ namespace NineCupLobby;
 // Ответы сайта (backend/app/routers/game_server.py). Поля — snake_case.
 public record LobbyPlayer(string SteamId, string Name, int Team);
 
-public record Lobby(int Id, string Mode, string Map, string MapId, string? WorkshopId, string Status, List<LobbyPlayer> Players);
+public record Lobby(int Id, string Mode, string Map, string MapId, string? WorkshopId, string Status, List<LobbyPlayer> Players, string? Side1 = null);
 
 public record LobbyState(Lobby? Lobby, List<string> Admins, List<string> Known);
 

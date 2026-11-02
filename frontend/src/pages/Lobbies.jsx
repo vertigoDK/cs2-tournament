@@ -58,6 +58,17 @@ export default function Lobbies() {
   };
 
   const ACTIVE = ["waiting", "ready", "live"];
+  const remove = async (lobby) => {
+    if (!confirm(`Удалить лобби «${modeName(lobby.mode)} · ${lobby.map}» совсем? Это необратимо.`)) return;
+    try {
+      await api.delete(`/lobbies/${lobby.id}`);
+      toast("Лобби удалено");
+      load();
+    } catch (err) {
+      toast(apiErrorMessage(err));
+    }
+  };
+
   const active = (lobbies || []).filter((l) => ACTIVE.includes(l.status));
   const done = (lobbies || []).filter((l) => !ACTIVE.includes(l.status));
 
@@ -86,7 +97,7 @@ export default function Lobbies() {
             {active.length ? (
               <div className="lobby-list compact">
                 {active.map((l) => (
-                  <LobbyCard key={l.id} lobby={l} compact />
+                  <LobbyCard key={l.id} lobby={l} compact isAdmin={isAdmin} onDelete={remove} />
                 ))}
               </div>
             ) : (
@@ -103,7 +114,7 @@ export default function Lobbies() {
               <h2 className="section-title">Прошедшие</h2>
               <div className="lobby-list compact">
                 {done.map((l) => (
-                  <LobbyCard key={l.id} lobby={l} compact />
+                  <LobbyCard key={l.id} lobby={l} compact isAdmin={isAdmin} onDelete={remove} />
                 ))}
               </div>
             </section>
@@ -145,7 +156,7 @@ function Team({ players, team, score, win }) {
   );
 }
 
-function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast }) {
+function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast, onDelete }) {
   const st = STATUS[lobby.status];
   const cover = mapImage(lobby.map);
   const isActive = ["waiting", "ready", "live"].includes(lobby.status);
@@ -189,7 +200,22 @@ function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast }) {
         </div>
       </div>
 
-      <span className="lobby-open mono">Открыть →</span>
+      <span className="lobby-foot-row">
+        {isAdmin && onDelete ? (
+          <button
+            type="button"
+            className="btn sm danger lobby-del"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onDelete(lobby);
+            }}
+          >
+            <Icon name="trash" size={13} /> Удалить
+          </button>
+        ) : null}
+        <span className="lobby-open mono">Открыть →</span>
+      </span>
     </Link>
   );
 }

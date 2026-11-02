@@ -3856,3 +3856,8 @@ a.lobby-mode:hover { color: var(--accent-ink); }
   background: var(--ink); color: var(--paper); font-size: 12px;
 }
 .lv.tourney .lv-banner { border-color: var(--ink); border-width: 2px; }
+
+.lobby-foot-row { display: flex; align-items: center; gap: 10px; justify-self: stretch; }
+.lobby-foot-row .lobby-open { margin-left: auto; }
+.lobby-del { padding: 5px 10px; }
+.lv-delete { float: right; }
