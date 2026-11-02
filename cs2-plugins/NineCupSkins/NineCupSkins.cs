@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
+using CounterStrikeSharp.API.Core.Attributes.Registration;
 using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.Logging;
 using MySqlConnector;
@@ -38,7 +39,7 @@ public record SkinsOut(List<SkinsPlayer> Players);
 public class NineCupSkins : BasePlugin, IPluginConfig<NineCupSkinsConfig>
 {
     public override string ModuleName => "nine cup skins";
-    public override string ModuleVersion => "0.1.0";
+    public override string ModuleVersion => "0.1.1";
     public override string ModuleAuthor => "nine cup";
 
     public NineCupSkinsConfig Config { get; set; } = new();
@@ -82,6 +83,14 @@ public class NineCupSkins : BasePlugin, IPluginConfig<NineCupSkinsConfig>
         // Первый раз — чуть позже: WeaponPaints должен успеть создать таблицы.
         AddTimer(10f, Sync);
         AddTimer(Config.RefreshSeconds, Sync, TimerFlags.REPEAT);
+    }
+
+    // Пустой сервер «спит», и таймеры стоят — поэтому сверяемся ещё и при входе.
+    [GameEventHandler]
+    public HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
+    {
+        if (@event.Userid is { IsValid: true, IsBot: false }) Sync();
+        return HookResult.Continue;
     }
 
     private void Sync()
