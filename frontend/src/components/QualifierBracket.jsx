@@ -18,6 +18,13 @@ function placeStage(group, r) {
   return `Места ${group.place}–${group.place + n - 1} · ${left === 2 ? "полуфинал" : left === 3 ? "1/4" : `раунд ${r + 1}`}`;
 }
 
+// Что даёт место в дуэлях в основном турнире.
+const BUFFS = [
+  { place: 1, text: "Постоянный пик и бан одной карты на весь турнир" },
+  { place: 2, text: "Выбор стороны на трёх картах" },
+  { place: 3, text: "Право выбрать место в сетке" },
+];
+
 // Итоговые места {id: место} — у кого уже определились (как qualifier_places на сервере).
 function finalPlaces(qualifier) {
   const out = {};
@@ -165,6 +172,32 @@ export default function QualifierBracket({ qualifier, isAdmin, busy, onSetDuel, 
               );
             })}
           </ol>
+        </div>
+      ) : null}
+
+      {qualifier.places ? (
+        <div className="q-buffs">
+          <div className="q-places-head mono">награды за места</div>
+          <div className="q-buffs-table">
+            {BUFFS.map((b) => {
+              const s = standings.find((x) => x.place === b.place);
+              const p = s ? person(Number(s.pid)) : null;
+              return (
+                <div className="q-buff" key={b.place}>
+                  <span className="q-buff-place mono">{b.place}</span>
+                  <span className="q-buff-text">{b.text}</span>
+                  <span className="q-buff-who">
+                    {p ? (
+                      <span className="q-buff-person">
+                        <Avatar name={p.name} color={p.color} url={p.avatar} size={20} />
+                        {p.name}
+                      </span>
+                    ) : null}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : null}
 
