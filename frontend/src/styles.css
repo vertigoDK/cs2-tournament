@@ -3828,3 +3828,8 @@ a.lobby-mode:hover { color: var(--accent-ink); }
 @media (max-width: 1100px) { .lv-grid { grid-template-columns: 1fr 1fr; } .lv-info { grid-column: 1 / -1; order: 3; } }
 @media (max-width: 600px) { .lv-grid { grid-template-columns: 1fr; } .lv-score { font-size: 48px; } }
 .lv-join .lb-connect code { white-space: nowrap; font-size: 12px; overflow: hidden; text-overflow: ellipsis; }
+
+.lobby-link { color: inherit; transition: border-color 0.2s, transform 0.2s var(--ease); }
+.lobby-link:hover { border-color: var(--ink); transform: translateY(-2px); }
+.lobby-open { justify-self: end; font-size: 12px; color: var(--muted); }
+.lobby-link:hover .lobby-open { color: var(--ink); }

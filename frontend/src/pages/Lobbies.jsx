@@ -4,7 +4,6 @@ import api, { apiErrorMessage } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Avatar from "../components/Avatar.jsx";
 import Icon from "../components/Icon.jsx";
-import LobbyStage from "../components/LobbyStage.jsx";
 import PageHead, { EmptyState } from "../components/PageHead.jsx";
 import { ListBones } from "../components/Skeleton.jsx";
 import { useToast } from "../components/Toast.jsx";
@@ -85,9 +84,9 @@ export default function Lobbies() {
           <section className="section">
             <h2 className="section-title">Сейчас</h2>
             {active.length ? (
-              <div className="lobby-list">
+              <div className="lobby-list compact">
                 {active.map((l) => (
-                  <LobbyStage key={l.id} lobby={l} isAdmin={isAdmin} onCancel={cancel} toast={toast} />
+                  <LobbyCard key={l.id} lobby={l} compact />
                 ))}
               </div>
             ) : (
@@ -163,14 +162,14 @@ function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast }) {
   };
 
   return (
-    <article className={`lobby${compact ? " compact" : ""}${lobby.status === "live" ? " live" : ""}`}>
+    <Link to={`/lobbies/${lobby.id}`} className={`lobby lobby-link${compact ? " compact" : ""}${lobby.status === "live" ? " live" : ""}`}>
       <div className="lobby-main">
         <div className="lobby-head">
           <span className={`pill ${st.cls}`}>
             {lobby.status === "live" ? <i className="live-dot" /> : null}
             {st.label}
           </span>
-          <Link to={`/lobbies/${lobby.id}`} className="lobby-mode">{modeName(lobby.mode)}</Link>
+          <b className="lobby-mode">{modeName(lobby.mode)}</b>
           <span className="lobby-map mono">
             {cover ? <img src={cover} alt="" onError={(e) => (e.currentTarget.style.display = "none")} /> : null}
             {lobby.map}
@@ -185,29 +184,8 @@ function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast }) {
         </div>
       </div>
 
-      {isActive && !compact ? (
-        <div className="lobby-foot">
-          {first && connect && lobby.status !== "waiting" ? (
-            <button type="button" className="lb-connect" onClick={copy} title="Скопировать">
-              <code>{connect}</code>
-              <Icon name="download" size={14} />
-            </button>
-          ) : null}
-          <span className="hint">
-            {first
-              ? lobby.status === "waiting"
-                ? "Сервер грузит карту — адрес появится, когда всё будет готово (не заходи раньше, выкинет)."
-                : "Заходи на сервер."
-              : "В очереди: сервер сыграет это лобби после предыдущего."}
-          </span>
-          {isAdmin ? (
-            <button type="button" className="btn sm danger lb-cancel" onClick={() => onCancel(lobby)}>
-              Отменить
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-    </article>
+      <span className="lobby-open mono">Открыть →</span>
+    </Link>
   );
 }
 
