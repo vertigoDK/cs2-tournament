@@ -102,8 +102,10 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     private bool IsAllowed(string steam)
     {
         if (_state is null) return true; // сайт не ответил — не выгоняем никого
-        if (_state.Admins.Contains(steam)) return true;
-        return _lobby is not null ? _lobby.Players.Any(p => p.SteamId == steam) : _state.Known.Contains(steam);
+        // Заходить можно всем участникам сайта: те, кто не в лобби, смотрят.
+        // Посторонних (нет в базе сайта) не пускаем.
+        return _state.Admins.Contains(steam) || _state.Known.Contains(steam) ||
+               (_lobby?.Players.Any(p => p.SteamId == steam) ?? false);
     }
 
     private bool IsAdmin(CCSPlayerController? p) => p is null || (_state?.Admins.Contains(p.SteamID.ToString()) ?? false);
@@ -117,8 +119,8 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         foreach (var p in Humans().ToList())
         {
             if (IsAllowed(p.SteamID.ToString())) continue;
-            Logger.LogInformation("Кик {Name} ({Steam}) — нет в лобби", p.PlayerName, p.SteamID);
-            Server.ExecuteCommand($"kickid {p.UserId} \"Тебя нет в этом лобби\"");
+            Logger.LogInformation("Кик {Name} ({Steam}) — нет на сайте", p.PlayerName, p.SteamID);
+            Server.ExecuteCommand($"kickid {p.UserId} \"Тебя нет в списке участников nine cup\"");
         }
     }
 
