@@ -204,12 +204,19 @@ public class NineCupSkins : BasePlugin, IPluginConfig<NineCupSkinsConfig>
                     "INSERT INTO `wp_player_skins` (`steamid`, `weapon_team`, `weapon_defindex`, `weapon_paint_id`, `weapon_wear`, `weapon_seed`) " +
                     "VALUES (@s, 0, @d, @p, @w, @seed)",
                     ("@s", steam), ("@d", s.Defindex), ("@p", s.Paint), ("@w", s.Wear), ("@seed", s.Seed));
+            // WeaponPaints не сбрасывает нож и перчатки, если записи нет, — держит прежние
+            // в памяти. Поэтому «стандартные» пишем явно: обычный нож за каждую сторону и
+            // перчатки с номером 0 (их он не выдаёт, остаются стандартные).
             if (!string.IsNullOrEmpty(p.Knife))
                 await Exec(conn, tx, "INSERT INTO `wp_player_knife` (`steamid`, `weapon_team`, `knife`) VALUES (@s, 0, @k)",
                     ("@s", steam), ("@k", p.Knife));
-            if (p.GloveDefindex is int g)
-                await Exec(conn, tx, "INSERT INTO `wp_player_gloves` (`steamid`, `weapon_team`, `weapon_defindex`) VALUES (@s, 0, @g)",
-                    ("@s", steam), ("@g", g));
+            else
+            {
+                await Exec(conn, tx, "INSERT INTO `wp_player_knife` (`steamid`, `weapon_team`, `knife`) VALUES (@s, 2, 'weapon_knife_t')", ("@s", steam));
+                await Exec(conn, tx, "INSERT INTO `wp_player_knife` (`steamid`, `weapon_team`, `knife`) VALUES (@s, 3, 'weapon_knife')", ("@s", steam));
+            }
+            await Exec(conn, tx, "INSERT INTO `wp_player_gloves` (`steamid`, `weapon_team`, `weapon_defindex`) VALUES (@s, 0, @g)",
+                ("@s", steam), ("@g", p.GloveDefindex ?? 0));
         }
         await tx.CommitAsync();
 
