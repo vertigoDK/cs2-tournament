@@ -98,7 +98,7 @@ export default function QualifierBracket({
     const editable = isAdmin && ready;
     return (
       <div className={`q-wrap${lobby ? " on-server" : ""}`} key={i}>
-      {lobby ? <ServerTag lobby={lobby} /> : null}
+      {lobby ? <ServerTag lobby={lobby} band compact /> : null}
       <button
         type="button"
         className={`q-match${editable ? " editable" : ""}${lobby ? " on-server" : ""}`}
@@ -281,7 +281,7 @@ export default function QualifierBracket({
 }
 
 // Подпись над матчем, который сейчас на нашем сервере; ведёт в его лобби.
-export function ServerTag({ lobby, band }) {
+export function ServerTag({ lobby, band, compact }) {
   const text = { waiting: "грузим карту", ready: "ждём игроков", live: "идёт игра" }[lobby.status] || lobby.status;
   return (
     <Link
@@ -290,9 +290,9 @@ export function ServerTag({ lobby, band }) {
       title="Открыть лобби на сервере"
     >
       <span className="srv-state">
-        <i className="live-dot" /> на сервере · {text}
+        <i className="live-dot" /> {compact ? text : `на сервере · ${text}`}
       </span>
-      <span className="srv-open">{band ? "Открыть лобби →" : "лобби →"}</span>
+      <span className="srv-open">{compact ? "Лобби →" : "Открыть лобби →"}</span>
     </Link>
   );
 }

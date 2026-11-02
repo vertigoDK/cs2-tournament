@@ -152,7 +152,7 @@ def _to_out(t: Tournament, db: Session | None = None) -> schemas.TournamentOut:
 
 
 def _server_lobbies(t: Tournament, db: Session | None) -> list[dict]:
-    if db is None:
+    if db is None or t.started_at is None:
         return []
     from ..models import Lobby
 
@@ -374,6 +374,10 @@ def reset_tournament(tournament_id: int, db: Session = Depends(get_db), _: User 
     B.reset_results(bracket)
     t.started_at = None
     save_bracket(db, t, bracket)
+    # Сброс — и все лобби турнира на нашем сервере отменяем, в том числе идущую игру.
+    from ..server_sync import stop_lobbies
+
+    stop_lobbies(db, t, include_live=True)
     return _to_out(t, db)
 
 
@@ -408,7 +412,7 @@ def unstart_tournament(tournament_id: int, db: Session = Depends(get_db), _: Use
     sync_status(t)
     db.commit()
     db.refresh(t)
-    stop_lobbies(db, t)
+    stop_lobbies(db, t, include_live=True)
     return _to_out(t, db)
 
 

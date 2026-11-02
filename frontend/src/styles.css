@@ -3879,7 +3879,6 @@ a.lobby-mode:hover { color: var(--accent-ink); }
 /* Точка «внимание» у пункта меню. */
 .nav-badge { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); animation: navPulse 1.6s ease-in-out infinite; }
 @keyframes navPulse { 50% { box-shadow: 0 0 0 6px transparent; } }
-.q-wrap .srv-tag { position: absolute; top: -11px; left: 10px; margin: 0; z-index: 2; }
 
 /* В карточке матча — полоса сверху, над строкой с номером и картами. */
 .srv-tag.band { display: flex; justify-content: center; margin: 0; border-radius: 0; padding: 5px 10px; }
@@ -3890,3 +3889,11 @@ a.lobby-mode:hover { color: var(--accent-ink); }
 .srv-open { padding: 2px 8px; border-radius: 999px; background: rgb(0 0 0 / 0.22); }
 .srv-tag.band { justify-content: space-between; padding: 6px 12px; }
 .srv-tag.band .srv-open { background: var(--ink); color: var(--paper); padding: 3px 10px; }
+
+/* Дуэль на сервере: рамка у обёртки, полоса сверху внутри, сама карточка без своей рамки. */
+.q-wrap.on-server { width: 230px; border: 1px solid var(--accent); border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 3px var(--accent-soft); }
+.q-wrap.on-server .q-match { border: 0 !important; border-radius: 0; box-shadow: none !important; width: 100%; }
+
+/* Дуэль на сервере: рамка у обёртки, полоса сверху внутри, сама карточка без своей рамки. */
+.q-wrap.on-server { width: 230px; border: 1px solid var(--accent); border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 3px var(--accent-soft); }
+.q-wrap.on-server .q-match { border: 0 !important; border-radius: 0; box-shadow: none !important; width: 100%; }

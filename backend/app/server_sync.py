@@ -90,11 +90,13 @@ def sync_lobbies(db: Session, t: Tournament) -> None:
         db.commit()
 
 
-def stop_lobbies(db: Session, t: Tournament) -> None:
-    """Выключили сервер у турнира — ждущие лобби убираем, идущую игру не трогаем."""
+def stop_lobbies(db: Session, t: Tournament, include_live: bool = False) -> None:
+    """Пауза — ждущие лобби турнира убираем, идущую игру не трогаем. Сброс результатов
+    и отмена старта (include_live) — отменяем все, в том числе идущую."""
     import datetime as dt
 
-    for lo in db.query(Lobby).filter(Lobby.tournament_id == t.id, Lobby.status.in_(("waiting", "ready"))).all():
+    statuses = ("waiting", "ready", "live") if include_live else ("waiting", "ready")
+    for lo in db.query(Lobby).filter(Lobby.tournament_id == t.id, Lobby.status.in_(statuses)).all():
         lo.status = "cancelled"
         lo.finished_at = dt.datetime.utcnow()
     db.commit()
