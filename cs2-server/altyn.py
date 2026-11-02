@@ -131,7 +131,9 @@ class Panel:
         for rel, data in files.items():
             d, _, name = rel.rpartition("/")
             by_dir.setdefault(f"{remote_dir}/{d}".rstrip("/"), {})[name] = data
-        for d in sorted(by_dir, key=len):
+        # Сначала конфиги: плагин перезапускается, как только меняется его dll, и должен
+        # прочитать уже новый конфиг.
+        for d in sorted(by_dir, key=lambda d: (f"{CSS}/configs" not in d, len(d))):
             parts = d[len(CSS):].strip("/").split("/") if d.startswith(CSS) else []
             cur = CSS
             for p in parts:

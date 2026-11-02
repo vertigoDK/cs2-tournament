@@ -497,7 +497,9 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     [ConsoleCommand("css_start", "Админ: начать без !ready")]
     public void OnStart(CCSPlayerController? player, CommandInfo cmd)
     {
-        if (!IsAdmin(player) || InGame) return;
+        if (!IsAdmin(player)) { player?.PrintToChat($"{Tag} !start — только для админа сервера"); return; }
+        if (_lobby is null) { player?.PrintToChat($"{Tag} лобби нет — создай на сайте"); return; }
+        if (InGame) { player?.PrintToChat($"{Tag} игра уже идёт (!stop — остановить)"); return; }
         StartMatch(withBots: true);
     }
 
