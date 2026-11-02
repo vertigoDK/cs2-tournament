@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
+import api from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Icon from "./Icon.jsx";
 import ProfileMenu from "./ProfileMenu.jsx";
@@ -33,6 +34,19 @@ export default function Layout() {
   const { pathname } = location;
 
   const [menuOpen, setMenuOpen] = useState(false);
+  // Есть ли сейчас активное лобби — точка у «Лобби» в меню.
+  const [liveLobbies, setLiveLobbies] = useState(0);
+  useEffect(() => {
+    const check = () =>
+      !document.hidden &&
+      api
+        .get("/lobbies")
+        .then((res) => setLiveLobbies(res.data.filter((l) => ["waiting", "ready", "live"].includes(l.status)).length))
+        .catch(() => {});
+    check();
+    const t = setInterval(check, 20000);
+    return () => clearInterval(t);
+  }, [pathname]);
   const groups = isAdmin ? [...NAV, ADMIN_NAV] : NAV;
 
   useEffect(() => {
@@ -64,6 +78,7 @@ export default function Layout() {
                 <NavLink key={it.to} to={it.to} end={it.end} className={navClass}>
                   <img src={`/img/nav/${it.icon}.webp`} alt="" className="nav-ico" />
                   <span>{it.label}</span>
+                  {it.to === "/lobbies" && liveLobbies ? <i className="nav-badge" title={`Активных лобби: ${liveLobbies}`} /> : null}
                 </NavLink>
               ))}
             </div>

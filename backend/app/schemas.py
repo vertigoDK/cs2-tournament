@@ -263,6 +263,8 @@ class TournamentOut(TournamentSummary):
     # Награды за места в дуэлях по командам: {team_idx: [...]} (см. rewards.py).
     rewards: dict[str, list[dict]] = {}
     # Часы сервера (unix, сек): таймер драфта в браузере считается по ним.
+    # Активные лобби турнира на нашем сервере — чтобы подсветить их матчи в сетке.
+    server_lobbies: list[dict] = []
     server_time: float = 0
 
 

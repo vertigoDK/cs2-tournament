@@ -3864,3 +3864,19 @@ a.lobby-mode:hover { color: var(--accent-ink); }
 
 .reward-beta { grid-template-columns: auto 1fr; }
 .reward-beta .rw-art img { max-height: 120px; object-fit: contain; }
+
+/* Матч, который сейчас на нашем сервере: оранжевая рамка и подпись со статусом. */
+.q-wrap { position: relative; }
+.q-match.on-server, .match.on-server { border-color: var(--accent) !important; box-shadow: 0 0 0 3px var(--accent-soft); }
+.srv-tag {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 6px; padding: 3px 10px;
+  border-radius: 999px; background: var(--accent); color: #fff; font: 700 10.5px/1.4 var(--mono);
+  letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+}
+.match .srv-tag { position: absolute; top: -12px; right: 10px; margin: 0; z-index: 2; }
+.match.on-server { position: relative; }
+.srv-tag .live-dot { background: #fff; }
+/* Точка «внимание» у пункта меню. */
+.nav-badge { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); animation: navPulse 1.6s ease-in-out infinite; }
+@keyframes navPulse { 50% { box-shadow: 0 0 0 6px transparent; } }
+.q-wrap .srv-tag { position: absolute; top: -11px; left: 10px; margin: 0; z-index: 2; }

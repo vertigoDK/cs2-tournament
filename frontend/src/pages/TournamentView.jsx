@@ -382,16 +382,6 @@ export default function TournamentView() {
         ) : null}
       </div>
 
-      {t.bracket.server && t.status !== "finished" ? (
-        <Link to="/lobbies" className="server-strip">
-          <span className="live-dot" />
-          <span>
-            Турнир играется на нашем сервере: лобби на дуэли и карты матчей создаются сами, счёт попадает в сетку.
-          </span>
-          <b className="mono">Лобби →</b>
-        </Link>
-      ) : null}
-
       <StartAnnounce
         startsAt={t.starts_at}
         startedAt={t.started_at}
@@ -417,6 +407,7 @@ export default function TournamentView() {
 
       {t.bracket.qualifier?.rounds?.length ? (
         <QualifierBracket
+          serverLobbies={t.server_lobbies}
           qualifier={t.bracket.qualifier}
           isAdmin={isAdmin}
           busy={busy}
@@ -445,6 +436,7 @@ export default function TournamentView() {
         <Bracket
           key={id}
           bracket={t.bracket}
+          serverLobbies={t.server_lobbies}
           isAdmin={isAdmin}
           started={Boolean(t.started_at) || t.status !== "setup"}
           onPick={onPick}

@@ -1,3 +1,4 @@
+import { ServerTag } from "./QualifierBracket.jsx";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import Avatar from "./Avatar.jsx";
 import { computeMatchWidth } from "../utils/measure.js";
@@ -115,7 +116,11 @@ function score(maps) {
   return s;
 }
 
-export default function Bracket({ bracket, isAdmin, started, onPick, onOpenVeto }) {
+export default function Bracket({ bracket, serverLobbies = [], isAdmin, started, onPick, onOpenVeto }) {
+  // Матчи, у которых сейчас карта на нашем сервере: «r:i» → лобби.
+  const onServer = Object.fromEntries(
+    serverLobbies.filter((l) => l.kind === "match").map((l) => [`${l.ref.r}:${l.ref.i}`, l]),
+  );
   const scrollRef = useRef(null);
   const nodeRefs = useRef({});
   const championRef = useRef(null);
@@ -232,14 +237,16 @@ export default function Bracket({ bracket, isAdmin, started, onPick, onOpenVeto 
               const ready = started && teamA && teamB && m.win === null && !m.bye;
               const bothKnown = Boolean(teamA && teamB) && !m.bye;
               const vetoDone = m.veto?.status === "done";
+              const lobby = onServer[`${r}:${i}`];
               return (
                 <div
-                  className={`match${ready ? " live" : ""}`}
+                  className={`match${ready ? " live" : ""}${lobby ? " on-server" : ""}`}
                   key={i}
                   ref={(el) => {
                     if (el) nodeRefs.current[`${r}-${i}`] = el;
                   }}
                 >
+                  {lobby ? <ServerTag lobby={lobby} /> : null}
                   <div className="match-head">
                     <span className="match-no">
                       R{r + 1}·M{i + 1}

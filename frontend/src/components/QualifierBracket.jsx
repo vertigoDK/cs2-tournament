@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import api from "../api.js";
 import Avatar from "./Avatar.jsx";
@@ -58,6 +59,7 @@ function finalPlaces(qualifier) {
 // по итогу составляют пары или посев, поэтому показываем их внутри турнира.
 // Админ кликает по дуэли, чтобы внести или исправить результат.
 export default function QualifierBracket({
+  serverLobbies = [],
   qualifier,
   rewards,
   isAdmin,
@@ -83,16 +85,23 @@ export default function QualifierBracket({
     .map(([pid, place]) => ({ pid, place }))
     .sort((a, b) => a.place - b.place);
 
+  // Дуэли, которые сейчас на нашем сервере: «g:r:i» → лобби.
+  const onServer = Object.fromEntries(
+    serverLobbies.filter((l) => l.kind === "duel").map((l) => [`${l.ref.g}:${l.ref.r}:${l.ref.i}`, l]),
+  );
+
   // Одна дуэль-карточка; g — сетка, где она лежит.
   const renderDuel = (g, r, m, i) => {
+    const lobby = onServer[`${g}:${r}:${i}`];
     const ready = m.p[0] && m.p[1];
     const bye = (m.p[0] == null) !== (m.p[1] == null) && m.win != null;
     const editable = isAdmin && ready;
     return (
+      <div className={`q-wrap${lobby ? " on-server" : ""}`} key={i}>
+      {lobby ? <ServerTag lobby={lobby} /> : null}
       <button
         type="button"
-        className={`q-match${editable ? " editable" : ""}`}
-        key={i}
+        className={`q-match${editable ? " editable" : ""}${lobby ? " on-server" : ""}`}
         disabled={!editable}
         onClick={() => editable && setEditing({ g, r, i })}
         title={editable ? "Внести результат" : undefined}
@@ -109,6 +118,7 @@ export default function QualifierBracket({
           );
         })}
       </button>
+      </div>
     );
   };
 
@@ -267,6 +277,16 @@ export default function QualifierBracket({
         />
       ) : null}
     </section>
+  );
+}
+
+// Подпись над матчем, который сейчас на нашем сервере; ведёт в его лобби.
+export function ServerTag({ lobby }) {
+  const text = { waiting: "грузим карту", ready: "ждём игроков", live: "идёт игра" }[lobby.status] || lobby.status;
+  return (
+    <Link to={`/lobbies/${lobby.id}`} className={`srv-tag${lobby.status === "live" ? " live" : ""}`}>
+      <i className="live-dot" /> на сервере · {text}
+    </Link>
   );
 }
 

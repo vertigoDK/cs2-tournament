@@ -147,7 +147,22 @@ def _to_out(t: Tournament, db: Session | None = None) -> schemas.TournamentOut:
         bracket=hydrate_bracket(db, t.bracket) if db is not None else t.bracket,
         server_time=time.time(),
         mvp=_mvp(t, db),
+        server_lobbies=_server_lobbies(t, db),
     )
+
+
+def _server_lobbies(t: Tournament, db: Session | None) -> list[dict]:
+    if db is None or not (t.bracket or {}).get("server"):
+        return []
+    from ..models import Lobby
+
+    rows = (
+        db.query(Lobby)
+        .filter(Lobby.tournament_id == t.id, Lobby.status.in_(("waiting", "ready", "live")))
+        .order_by(Lobby.id)
+        .all()
+    )
+    return [{"id": lo.id, "kind": lo.kind, "ref": lo.ref, "status": lo.status, "label": lo.label} for lo in rows]
 
 
 def _mvp(t: Tournament, db: Session | None) -> schemas.MvpOut | None:
