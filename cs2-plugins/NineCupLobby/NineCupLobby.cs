@@ -200,12 +200,18 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
 
         _score[0] = _score[1] = 0;
         _starting = true;
+        // Допы без конца: при ничьей играем овертаймы, пока кто-то не выиграет.
         if (_lobby.Mode == "duel")
         {
-            // Как дуэли на Cybershoke: до 13, овертаймы, без заморозки, 2 минуты на раунд.
+            // Как дуэли на Cybershoke: до 13, без заморозки, 2 минуты на раунд.
             Server.ExecuteCommand(
                 "mp_maxrounds 24; mp_overtime_enable 1; mp_overtime_maxrounds 6; mp_match_can_clinch 1; " +
                 "mp_freezetime 0; mp_roundtime 2; mp_roundtime_defuse 2; mp_halftime 1");
+        }
+        else if (_lobby.Mode == "wingman")
+        {
+            Server.ExecuteCommand(
+                "mp_maxrounds 16; mp_overtime_enable 1; mp_overtime_maxrounds 6; mp_match_can_clinch 1; mp_halftime 1");
         }
         Server.ExecuteCommand("mp_warmup_pausetimer 0; mp_warmuptime 10; mp_warmup_end");
         Server.PrintToChatAll($"{Tag} поехали!");

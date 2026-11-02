@@ -16,11 +16,15 @@ from ..models import Lobby, Role, User
 
 router = APIRouter(prefix="/api/lobbies", tags=["lobbies"])
 
+# Этих карт нет на нашем сервере (папка game/csgo/maps) — в лобби не предлагаем.
+NOT_ON_SERVER = {"Lake", "Rialto"}
+POOL = [m for m in MAP_NAMES if m not in NOT_ON_SERVER]
+
 # per_team — сколько игроков должно быть в каждой команде (None — любое число).
 MODES = {
     "duel": {"name": "Дуэль 1×1", "hint": "Aim Map, до 13 раундов", "per_team": 1, "maps": [AIM_MAP]},
-    "wingman": {"name": "Wingman 2×2", "hint": "Два на два на карте из пула", "per_team": 2, "maps": MAP_NAMES},
-    "free": {"name": "Свободная игра", "hint": "Любые игроки и карта, без счёта в матче", "per_team": None, "maps": [AIM_MAP, *MAP_NAMES]},
+    "wingman": {"name": "Wingman 2×2", "hint": "Два на два на карте из пула", "per_team": 2, "maps": POOL},
+    "free": {"name": "Свободная игра", "hint": "Любые игроки и карта, без счёта в матче", "per_team": None, "maps": [AIM_MAP, *POOL]},
 }
 ACTIVE = ("waiting", "live")
 
