@@ -464,3 +464,55 @@ class PlayerProfile(PlayerProfileSummary):
     mvps: list[PlayerMvpRow] = []
     players_rated: int = 0
     axes_info: list[AxisInfo] = []
+
+
+# ---------------- наш CS2-сервер ----------------
+
+class ServerKeyOut(BaseModel):
+    key: str
+
+
+class ServerPlayer(BaseModel):
+    id: int
+    name: str
+    steam_id: str | None = None
+
+
+class ServerDuel(BaseModel):
+    # Где дуэль в сетке: g — группа (-1 основная), r — раунд, i — номер.
+    g: int
+    r: int
+    i: int
+    label: str
+    players: list[ServerPlayer]
+
+
+class ServerPlace(BaseModel):
+    place: int
+    name: str
+
+
+class ServerState(BaseModel):
+    tournament_id: int
+    tournament: str
+    # Кого пускать на сервер: участники турнира и админы с привязанным Steam ID.
+    allowed: list[ServerPlayer]
+    # Участники без Steam ID — сервер их не узнает, о них надо предупредить.
+    missing_steam: list[str] = []
+    duel_map: str | None = None
+    duel: ServerDuel | None = None
+    duels_left: int = 0
+    duel_places: list[ServerPlace] = []
+
+
+class ServerDuelResultIn(BaseModel):
+    tournament_id: int | None = None
+    steam_ids: list[str]
+    # Счёт в том же порядке, что steam_ids.
+    score: list[int]
+
+
+class ServerDuelResultOut(BaseModel):
+    # Готовые строки для чата сервера.
+    chat: list[str]
+    state: ServerState
