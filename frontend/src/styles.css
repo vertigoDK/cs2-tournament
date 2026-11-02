@@ -2509,7 +2509,7 @@ button.ds-toggle:hover { background: var(--paper); }
 }
 
 .skin-main { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.skin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.skin-grid { align-items: start; display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
 .skin-card {
   position: relative;
   display: grid;
@@ -2542,7 +2542,11 @@ button.ds-toggle:hover { background: var(--paper); }
 .skin-card b { font-weight: 700; font-size: 14px; line-height: 1.25; }
 .skin-card.has-skin b { color: var(--ink); }
 .sc-sub { font-size: 11px; color: var(--muted); }
+.skin-card.empty { border-style: dashed; background: transparent; min-height: 64px; align-content: center; }
+.skin-card.empty .sc-sub { color: var(--accent-ink); font-weight: 600; }
+.skin-card.empty:hover { background: var(--card); }
 .skin-card.big { padding: 18px 20px 20px; }
+.skin-card.big.empty { min-height: 110px; }
 .skin-card.big .sc-art { height: 170px; }
 .skin-card.big b { font: 500 22px/1.2 var(--display); letter-spacing: -0.03em; }
 .skin-card.big .sc-label { font-size: 12px; }

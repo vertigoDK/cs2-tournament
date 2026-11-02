@@ -138,18 +138,18 @@ export default function Skins() {
             <SlotCard
               big
               label="Нож"
-              title={knife ? knife.n : "Стандартный"}
-              sub={knife ? skinOf(knife.d)?.n || (chosen[knife.d] ? "…" : "Стандартный") : "как у всех"}
-              img={knife ? skinImage(catalog, (skinOf(knife.d) || knife).i) : ""}
+              title={knife ? knife.n : "Обычный нож"}
+              sub={knife ? skinOf(knife.d)?.n || (chosen[knife.d] ? "…" : "Выбрать скин") : "Выбрать нож"}
+              img={knife && skinOf(knife.d) ? skinImage(catalog, skinOf(knife.d).i) : ""}
               color={knife ? skinOf(knife.d)?.r : null}
               onClick={() => setTarget({ mode: "knife" })}
             />
             <SlotCard
               big
               label="Перчатки"
-              title={glove ? glove.n : "Стандартные"}
-              sub={glove ? skinOf(glove.d)?.n || "…" : "как у всех"}
-              img={glove ? skinImage(catalog, (skinOf(glove.d) || glove).i) : ""}
+              title={glove ? glove.n : "Обычные перчатки"}
+              sub={glove ? skinOf(glove.d)?.n || "…" : "Выбрать перчатки"}
+              img={glove && skinOf(glove.d) ? skinImage(catalog, skinOf(glove.d).i) : ""}
               color={glove ? skinOf(glove.d)?.r : null}
               onClick={() => setTarget({ mode: "glove" })}
             />
@@ -165,10 +165,9 @@ export default function Skins() {
                   return (
                     <SlotCard
                       key={w.d}
-                      label={w.n}
-                      title={c ? s?.n || "…" : "Стандартный"}
-                      sub={c ? wearOf(c.wear).short : `${w.c} скинов`}
-                      img={skinImage(catalog, (s || w).i)}
+                              title={w.n}
+                      sub={c ? `${s?.n || "…"} · ${wearOf(c.wear).short}` : "Выбрать скин"}
+                      img={c && s ? skinImage(catalog, s.i) : ""}
                       color={s?.r}
                       onClick={() => setTarget({ mode: "weapon", weapon: w })}
                     />
@@ -203,15 +202,16 @@ export default function Skins() {
 }
 
 function SlotCard({ label, title, sub, img, color, onClick, big }) {
+  const empty = !img;
   return (
     <button
       type="button"
-      className={`skin-card${big ? " big" : ""}${color ? " has-skin" : ""}`}
+      className={`skin-card${big ? " big" : ""}${color ? " has-skin" : ""}${empty ? " empty" : ""}`}
       style={color ? { "--rarity": color } : undefined}
       onClick={onClick}
     >
-      <span className="sc-label mono">{label}</span>
-      <span className="sc-art">{img ? <img src={img} alt="" loading="lazy" /> : <Icon name="plus" size={22} />}</span>
+      {label ? <span className="sc-label mono">{label}</span> : null}
+      {empty ? null : <span className="sc-art"><img src={img} alt="" loading="lazy" /></span>}
       <b>{title}</b>
       <span className="sc-sub mono">{sub}</span>
     </button>
