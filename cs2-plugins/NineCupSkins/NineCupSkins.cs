@@ -54,6 +54,9 @@ public class NineCupSkins : BasePlugin, IPluginConfig<NineCupSkinsConfig>
     // Что уже записано: steamid → снимок выбора. Сравниваем, чтобы не трогать базу зря.
     private readonly Dictionary<string, string> _synced = [];
     private bool _busy;
+    // WeaponPaints обновляет скины только внутри раунда (между раундами команда молчит).
+    private bool _betweenRounds;
+    private readonly HashSet<ulong> _refreshAtRoundStart = [];
 
     public void OnConfigParsed(NineCupSkinsConfig config)
     {
@@ -93,7 +96,37 @@ public class NineCupSkins : BasePlugin, IPluginConfig<NineCupSkinsConfig>
     [GameEventHandler]
     public HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
     {
-        if (@event.Userid is { IsValid: true, IsBot: false }) Sync();
+        if (@event.Userid is not { IsValid: true, IsBot: false } p) return HookResult.Continue;
+        Sync();
+        // WeaponPaints надевает скины при выдаче оружия; если оружие выдали раньше, чем он
+        // дочитал базу, скинов нет до следующего спавна. Через 5 с (данные уже загружены)
+        // один раз обновляем — только этому игроку.
+        var steam = p.SteamID;
+        AddTimer(5f, () =>
+        {
+            if (_betweenRounds) _refreshAtRoundStart.Add(steam);
+            else Server.ExecuteCommand($"wp_refresh {steam}");
+        });
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
+    public HookResult OnRoundEnd(EventRoundEnd @event, GameEventInfo info)
+    {
+        _betweenRounds = true;
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
+    public HookResult OnRoundStart(EventRoundStart @event, GameEventInfo info)
+    {
+        _betweenRounds = false;
+        if (_refreshAtRoundStart.Count == 0) return HookResult.Continue;
+        var online = Utilities.GetPlayers().Where(x => x is { IsValid: true, IsBot: false }).Select(x => x.SteamID).ToHashSet();
+        var due = _refreshAtRoundStart.Where(online.Contains).ToList();
+        _refreshAtRoundStart.Clear();
+        // Чуть позже начала раунда — когда игроки уже заспавнились.
+        AddTimer(1f, () => { foreach (var st in due) Server.ExecuteCommand($"wp_refresh {st}"); });
         return HookResult.Continue;
     }
 
@@ -173,6 +206,38 @@ public class NineCupSkins : BasePlugin, IPluginConfig<NineCupSkinsConfig>
                 parts.Add(Step($"ОШИБКА {e.GetType().Name}: {e.Message}"));
             }
             Logger.LogInformation("ncdiag: {Parts}", string.Join(" | ", parts));
+        });
+    }
+
+    // Что лежит в базе WeaponPaints у игрока: css_ncrows <steamid>
+    [ConsoleCommand("css_ncrows", "nine cup: записи ножа/перчаток/скинов игрока в базе WeaponPaints")]
+    public void OnRows(CCSPlayerController? player, CommandInfo cmd)
+    {
+        var steam = cmd.ArgByIndex(1);
+        var db = _db;
+        Task.Run(async () =>
+        {
+            try
+            {
+                await using var conn = new MySqlConnection(db);
+                await conn.OpenAsync();
+                var lines = new List<string>();
+                foreach (var (table, cols) in new[] {
+                    ("wp_player_knife", "weapon_team, knife"),
+                    ("wp_player_gloves", "weapon_team, weapon_defindex"),
+                    ("wp_player_skins", "weapon_team, weapon_defindex, weapon_paint_id") })
+                {
+                    await using var c = new MySqlCommand($"SELECT {cols} FROM `{table}` WHERE steamid = @s", conn);
+                    c.Parameters.AddWithValue("@s", steam);
+                    await using var r = await c.ExecuteReaderAsync();
+                    var rows = new List<string>();
+                    while (await r.ReadAsync())
+                        rows.Add(string.Join("/", Enumerable.Range(0, r.FieldCount).Select(i => r.GetValue(i)?.ToString())));
+                    lines.Add($"{table}: [{string.Join(", ", rows)}]");
+                }
+                Logger.LogInformation("ncrows {Steam}: {Rows}", steam, string.Join(" | ", lines));
+            }
+            catch (Exception e) { Logger.LogWarning("ncrows: {M}", e.Message); }
         });
     }
 
