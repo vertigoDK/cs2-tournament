@@ -14,14 +14,14 @@ const NAV = [
   {
     title: "Люди и цифры",
     items: [
-      { to: "/players", label: "Игроки", icon: "users" },
+      { to: "/players", label: "Игроки", icon: "players" },
       { to: "/history", label: "История", icon: "history" },
-      { to: "/stats", label: "Статистика", icon: "chart" },
+      { to: "/stats", label: "Статистика", icon: "stats" },
     ],
   },
-  { title: "Для меня", items: [{ to: "/skins", label: "Выбрать скины", icon: "image" }] },
+  { title: "Для меня", items: [{ to: "/skins", label: "Выбрать скины", icon: "skins" }] },
 ];
-const ADMIN_NAV = { title: "Админ", items: [{ to: "/users", label: "Участники", icon: "lock" }] };
+const ADMIN_NAV = { title: "Админ", items: [{ to: "/users", label: "Участники", icon: "admin" }] };
 
 export default function Layout() {
   const { auth, isAdmin } = useAuth();
@@ -58,7 +58,7 @@ export default function Layout() {
               <span className="side-title mono">{g.title}</span>
               {g.items.map((it) => (
                 <NavLink key={it.to} to={it.to} end={it.end} className={navClass}>
-                  <Icon name={it.icon} size={17} />
+                  <img src={`/img/nav/${it.icon}.webp`} alt="" className="nav-ico" />
                   <span>{it.label}</span>
                 </NavLink>
               ))}

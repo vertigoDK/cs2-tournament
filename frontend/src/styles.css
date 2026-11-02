@@ -186,7 +186,7 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
   display: flex;
   align-items: center;
   gap: 11px;
-  padding: 9px 12px;
+  padding: 8px 12px;
   border-radius: 10px;
   color: var(--muted);
   font-weight: 600;
@@ -195,8 +195,8 @@ html.has-cursor.cursor-text textarea { cursor: text !important; }
   transition: color 0.2s, background 0.2s;
 }
 .nav-link:hover { color: var(--ink); }
-.nav-link svg { flex: none; opacity: 0.75; }
-.nav-link.active svg { opacity: 1; color: var(--accent); }
+.nav-ico { flex: none; width: 34px; height: 34px; margin: -5px 0 -5px -2px; opacity: 0.82; transition: transform 0.25s var(--ease), opacity 0.2s; }
+.nav-link:hover .nav-ico, .nav-link.active .nav-ico { opacity: 1; transform: rotate(-6deg) scale(1.08); }
 .nav-link.active {
   color: var(--ink);
   background: var(--card);
