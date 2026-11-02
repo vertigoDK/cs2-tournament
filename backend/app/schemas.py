@@ -516,3 +516,41 @@ class ServerDuelResultOut(BaseModel):
     # Готовые строки для чата сервера.
     chat: list[str]
     state: ServerState
+
+
+# ---------------- скины ----------------
+
+class SkinIn(BaseModel):
+    paint: int = Field(ge=0, le=100000)
+    wear: float = Field(default=0.01, ge=0, le=1)
+    seed: int = Field(default=0, ge=0, le=1000)
+
+
+class SkinOut(SkinIn):
+    defindex: int
+
+
+class LoadoutIn(BaseModel):
+    knife: str | None = Field(default=None, max_length=64)
+    knife_defindex: int | None = None
+    glove_defindex: int | None = None
+
+
+class LoadoutOut(BaseModel):
+    # Без Steam ID сервер не узнает игрока — выбор не применится.
+    steam_linked: bool
+    knife: str | None = None
+    knife_defindex: int | None = None
+    glove_defindex: int | None = None
+    skins: list[SkinOut] = []
+
+
+class ServerSkinsPlayer(BaseModel):
+    steam_id: str
+    knife: str | None = None
+    glove_defindex: int | None = None
+    skins: list[SkinOut] = []
+
+
+class ServerSkinsOut(BaseModel):
+    players: list[ServerSkinsPlayer]

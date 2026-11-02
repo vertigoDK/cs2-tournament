@@ -1,73 +1,219 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import api, { apiErrorMessage } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
 import Icon from "../components/Icon.jsx";
 import PageHead from "../components/PageHead.jsx";
+import SkinPicker from "../components/SkinPicker.jsx";
+import { useToast } from "../components/Toast.jsx";
+import { loadCatalog, loadWeaponSkins, skinImage, wearOf } from "../utils/skins.js";
 
-// Заглушка «Скины». Идея: игрок выбирает скины на сайте, а плагин на нашем
-// CS2-сервере выдаёт их ему в игре. Пока только раскладка, без данных.
-
-const SLOTS = [
-  { group: "Главное", items: ["Нож", "Перчатки"] },
-  { group: "Винтовки", items: ["AK-47", "M4A4", "M4A1-S", "AWP"] },
-  { group: "Пистолеты", items: ["Desert Eagle", "USP-S", "Glock-18"] },
-];
+// Скины: игрок собирает набор на сайте, наш CS2-сервер забирает его
+// (плагин nine cup → WeaponPaints) и выдаёт в игре по Steam ID.
 
 const STEPS = [
   { title: "Выбираешь здесь", text: "Нож, перчатки и скины на любое оружие — прямо на сайте." },
   { title: "Заходишь на наш сервер", text: "Сервер узнаёт тебя по Steam ID, ничего вводить не нужно." },
-  { title: "Играешь со своими", text: "Плагин выдаёт выбранные скины в каждом матче турнира." },
+  { title: "Играешь со своими", text: "Выбор доходит до сервера за полминуты, скины меняются сразу." },
 ];
 
 export default function Skins() {
   const { auth } = useAuth();
+  const { toast, toastNode } = useToast();
+  const [catalog, setCatalog] = useState(null);
+  const [mine, setMine] = useState(null);
+  const [names, setNames] = useState({}); // defindex → [скины] для выбранных
+  const [target, setTarget] = useState(null); // { mode, weapon }
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    loadCatalog().then(setCatalog).catch((e) => setError(e.message));
+  }, []);
+
+  useEffect(() => {
+    if (!auth) return;
+    api
+      .get("/me/skins")
+      .then((res) => setMine(res.data))
+      .catch((err) => setError(apiErrorMessage(err)));
+  }, [auth]);
+
+  // Чтобы показать на карточке выбранный скин, нужен файл его оружия.
+  useEffect(() => {
+    if (!mine) return;
+    mine.skins.forEach((s) => {
+      if (names[s.defindex]) return;
+      loadWeaponSkins(s.defindex).then((rows) => setNames((prev) => ({ ...prev, [s.defindex]: rows })));
+    });
+  }, [mine, names]);
+
+  const chosen = useMemo(() => Object.fromEntries((mine?.skins || []).map((s) => [s.defindex, s])), [mine]);
+
+  const skinOf = (defindex) => {
+    const c = chosen[defindex];
+    return c ? (names[defindex] || []).find((r) => r.p === c.paint) : null;
+  };
+
+  const save = async ({ item, paint, wear, seed }) => {
+    const { mode, weapon } = target;
+    setBusy(true);
+    try {
+      let data;
+      if (mode === "weapon") {
+        ({ data } = await api.put(`/me/skins/${weapon.d}`, { paint, wear, seed }));
+      } else if (mode === "knife") {
+        ({ data } = await api.put("/me/loadout", {
+          knife: item ? item.id : null,
+          knife_defindex: item ? item.d : null,
+          glove_defindex: mine.glove_defindex,
+        }));
+        if (item) ({ data } = await api.put(`/me/skins/${item.d}`, { paint, wear, seed }));
+      } else {
+        ({ data } = await api.put("/me/loadout", {
+          knife: mine.knife,
+          knife_defindex: mine.knife_defindex,
+          glove_defindex: item ? item.d : null,
+        }));
+        if (item) ({ data } = await api.put(`/me/skins/${item.d}`, { paint, wear, seed }));
+      }
+      setMine(data);
+      setTarget(null);
+      toast("Сохранено — на сервере обновится в течение полминуты");
+    } catch (err) {
+      toast(apiErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const groups = catalog?.groups.filter((g) => g.id !== "knives" && g.id !== "gloves") || [];
+  const knives = catalog?.groups.find((g) => g.id === "knives")?.weapons || [];
+  const gloves = catalog?.groups.find((g) => g.id === "gloves")?.weapons || [];
+  const knife = knives.find((k) => k.d === mine?.knife_defindex);
+  const glove = gloves.find((g) => g.d === mine?.glove_defindex);
 
   return (
     <main className="page">
       <PageHead
         title={auth ? "Мои скины" : "Скины"}
-        sub="Скоро: собираешь свой набор на сайте — и на нашем сервере он у тебя в игре."
+        sub="Собираешь набор на сайте — на нашем сервере он у тебя в игре."
         art="/img/skins.webp"
-      >
-        <span className="soon-badge mono">
-          <i className="live-dot" /> в разработке
-        </span>
-      </PageHead>
+      />
 
-      <ol className="skin-steps">
-        {STEPS.map((s, i) => (
-          <li key={s.title} style={{ animationDelay: `${i * 70}ms` }}>
-            <span className="mono">0{i + 1}</span>
-            <b>{s.title}</b>
-            <p>{s.text}</p>
-          </li>
-        ))}
-      </ol>
-
-      {SLOTS.map((g) => (
-        <section key={g.group} className="section">
-          <h2 className="section-title">{g.group}</h2>
-          <div className="skin-grid">
-            {g.items.map((name, i) => (
-              <div key={name} className="skin-slot" style={{ animationDelay: `${i * 50}ms` }}>
-                <div className="ss-art">
-                  <Icon name="plus" size={20} />
-                </div>
-                <div className="ss-body">
-                  <b>{name}</b>
-                  <span className="mono">не выбран</span>
-                </div>
-                <span className="ss-tag mono">скоро</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
+      {error ? <div className="error-box">{error}</div> : null}
 
       {!auth ? (
-        <p className="hint skin-hint">
-          Выбирать скины можно будет после <Link to="/login">входа</Link> — набор привяжется к твоему аккаунту.
-        </p>
+        <>
+          <ol className="skin-steps">
+            {STEPS.map((s, i) => (
+              <li key={s.title} style={{ animationDelay: `${i * 70}ms` }}>
+                <span className="mono">0{i + 1}</span>
+                <b>{s.title}</b>
+                <p>{s.text}</p>
+              </li>
+            ))}
+          </ol>
+          <p className="hint skin-hint">
+            Чтобы собрать свой набор, <Link to="/login">войди</Link> — он привяжется к твоему аккаунту.
+          </p>
+        </>
+      ) : !catalog || !mine ? (
+        <div className="skin-grid">
+          {Array.from({ length: 8 }, (_, i) => (
+            <span key={i} className="bone" style={{ height: 150, borderRadius: 16 }} />
+          ))}
+        </div>
+      ) : (
+        <>
+          {!mine.steam_linked ? (
+            <div className="skin-warn">
+              <Icon name="warning" size={16} />
+              К аккаунту не привязан Steam — сервер тебя не узнает, и скины не применятся. Скинь админу ссылку на свой
+              профиль Steam.
+            </div>
+          ) : null}
+
+          <section className="skin-main">
+            <SlotCard
+              big
+              label="Нож"
+              title={knife ? knife.n : "Стандартный"}
+              sub={knife ? skinOf(knife.d)?.n || (chosen[knife.d] ? "…" : "Стандартный") : "как у всех"}
+              img={knife ? skinImage(catalog, (skinOf(knife.d) || knife).i) : ""}
+              color={knife ? skinOf(knife.d)?.r : null}
+              onClick={() => setTarget({ mode: "knife" })}
+            />
+            <SlotCard
+              big
+              label="Перчатки"
+              title={glove ? glove.n : "Стандартные"}
+              sub={glove ? skinOf(glove.d)?.n || "…" : "как у всех"}
+              img={glove ? skinImage(catalog, (skinOf(glove.d) || glove).i) : ""}
+              color={glove ? skinOf(glove.d)?.r : null}
+              onClick={() => setTarget({ mode: "glove" })}
+            />
+          </section>
+
+          {groups.map((g) => (
+            <section key={g.id} className="section">
+              <h2 className="section-title">{g.name}</h2>
+              <div className="skin-grid">
+                {g.weapons.map((w) => {
+                  const s = skinOf(w.d);
+                  const c = chosen[w.d];
+                  return (
+                    <SlotCard
+                      key={w.d}
+                      label={w.n}
+                      title={c ? s?.n || "…" : "Стандартный"}
+                      sub={c ? wearOf(c.wear).short : `${w.c} скинов`}
+                      img={skinImage(catalog, (s || w).i)}
+                      color={s?.r}
+                      onClick={() => setTarget({ mode: "weapon", weapon: w })}
+                    />
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </>
+      )}
+
+      {target ? (
+        <SkinPicker
+          catalog={catalog}
+          mode={target.mode}
+          weapon={target.weapon}
+          busy={busy}
+          current={
+            target.mode === "weapon"
+              ? chosen[target.weapon.d] && { ...chosen[target.weapon.d], defindex: target.weapon.d }
+              : target.mode === "knife"
+              ? knife && { defindex: knife.d, ...(chosen[knife.d] || { paint: 0 }) }
+              : glove && { defindex: glove.d, ...(chosen[glove.d] || {}) }
+          }
+          onSave={save}
+          onClose={() => setTarget(null)}
+        />
       ) : null}
+      {toastNode}
     </main>
+  );
+}
+
+function SlotCard({ label, title, sub, img, color, onClick, big }) {
+  return (
+    <button
+      type="button"
+      className={`skin-card${big ? " big" : ""}${color ? " has-skin" : ""}`}
+      style={color ? { "--rarity": color } : undefined}
+      onClick={onClick}
+    >
+      <span className="sc-label mono">{label}</span>
+      <span className="sc-art">{img ? <img src={img} alt="" loading="lazy" /> : <Icon name="plus" size={22} />}</span>
+      <b>{title}</b>
+      <span className="sc-sub mono">{sub}</span>
+    </button>
   );
 }

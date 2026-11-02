@@ -1,7 +1,7 @@
 import datetime as dt
 import enum
 
-from sqlalchemy import JSON, Boolean, DateTime, Enum, ForeignKey, Integer, LargeBinary, String
+from sqlalchemy import JSON, Boolean, DateTime, Enum, Float, ForeignKey, Integer, LargeBinary, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .database import Base
@@ -95,3 +95,33 @@ class Image(Base):
 
     id: Mapped[str] = mapped_column(String(32), primary_key=True)
     data: Mapped[bytes] = mapped_column(LargeBinary)
+
+
+class SkinChoice(Base):
+    """Скин, выбранный игроком на сайте, для одного предмета: оружия, ножа
+    или перчаток (defindex предмета). Сервер забирает выбор через
+    /api/server/skins и раздаёт в игре плагином WeaponPaints."""
+
+    __tablename__ = "skin_choices"
+    __table_args__ = (UniqueConstraint("user_id", "defindex"),)
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    defindex: Mapped[int] = mapped_column(Integer)
+    paint: Mapped[int] = mapped_column(Integer)
+    wear: Mapped[float] = mapped_column(Float, default=0.01)
+    seed: Mapped[int] = mapped_column(Integer, default=0)
+    updated_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow)
+
+
+class Loadout(Base):
+    """Какой нож и какие перчатки носит игрок (сам скин — в SkinChoice)."""
+
+    __tablename__ = "loadouts"
+
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    # Название ножа для WeaponPaints, например weapon_knife_karambit.
+    knife: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    knife_defindex: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    glove_defindex: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    updated_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow)

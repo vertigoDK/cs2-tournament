@@ -19,7 +19,7 @@ from .. import bracket as B
 from .. import schemas
 from ..config import get_settings
 from ..deps import get_db, require_admin
-from ..models import Role, Tournament, TournamentStatus, User
+from ..models import Loadout, Role, SkinChoice, Tournament, TournamentStatus, User
 from ..store import save_bracket
 
 router = APIRouter(prefix="/api/server", tags=["game-server"])
@@ -198,3 +198,30 @@ def duel_result(payload: schemas.ServerDuelResultIn, db: Session = Depends(get_d
     else:
         chat.append("Все дуэли сыграны. Итог: " + ", ".join(f"{p.place}. {p.name}" for p in after.duel_places))
     return schemas.ServerDuelResultOut(chat=chat, state=after)
+
+
+@router.get("/skins", response_model=schemas.ServerSkinsOut, dependencies=[Depends(require_server)])
+def skins(db: Session = Depends(get_db)):
+    """Выбор скинов всех игроков с привязанным Steam ID. Игроков десяток —
+    отдаём всё целиком, плагин сам сравнивает с прошлым разом."""
+    users = {u.id: u for u in db.query(User).filter(User.steam_id.isnot(None)).all()}
+    loadouts = {lo.user_id: lo for lo in db.query(Loadout).filter(Loadout.user_id.in_(users)).all()} if users else {}
+    by_user: dict[int, list] = {}
+    for s in db.query(SkinChoice).filter(SkinChoice.user_id.in_(users)).all() if users else []:
+        by_user.setdefault(s.user_id, []).append(
+            schemas.SkinOut(defindex=s.defindex, paint=s.paint, wear=s.wear, seed=s.seed)
+        )
+    players = []
+    for uid, u in users.items():
+        lo = loadouts.get(uid)
+        if not lo and uid not in by_user:
+            continue
+        players.append(
+            schemas.ServerSkinsPlayer(
+                steam_id=u.steam_id,
+                knife=lo.knife if lo else None,
+                glove_defindex=lo.glove_defindex if lo else None,
+                skins=sorted(by_user.get(uid, []), key=lambda s: s.defindex),
+            )
+        )
+    return schemas.ServerSkinsOut(players=sorted(players, key=lambda p: p.steam_id))
