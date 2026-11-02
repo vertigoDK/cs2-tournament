@@ -3861,3 +3861,6 @@ a.lobby-mode:hover { color: var(--accent-ink); }
 .lobby-foot-row .lobby-open { margin-left: auto; }
 .lobby-del { padding: 5px 10px; }
 .lv-delete { float: right; }
+
+.reward-beta { grid-template-columns: auto 1fr; }
+.reward-beta .rw-art img { max-height: 120px; object-fit: contain; }

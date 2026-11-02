@@ -10,6 +10,21 @@ export default function WinnerReward({ name, prizePool, number }) {
   const currency = String(prizePool || "").replace(/[\d\s., ]/g, "").trim();
   const each = amount ? `${Math.round(amount / 2).toLocaleString("ru-RU")}${currency ? ` ${currency}` : ""}` : "";
 
+  if (cup.beta) {
+    return (
+      <section className="reward reward-beta">
+        <div className="rw-art">
+          <img src={cup.img} alt="" />
+        </div>
+        <div className="rw-head">
+          <span className="rw-kicker mono">за участие</span>
+          <b className="rw-cup">{cup.name}</b>
+          <span className="rw-note">{cup.note}</span>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="reward">
       <div className="rw-art">
