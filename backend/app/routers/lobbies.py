@@ -16,9 +16,7 @@ from ..models import Lobby, Role, User
 
 router = APIRouter(prefix="/api/lobbies", tags=["lobbies"])
 
-# Этих карт нет на нашем сервере (папка game/csgo/maps) — в лобби не предлагаем.
-NOT_ON_SERVER = {"Lake", "Rialto"}
-POOL = [m for m in MAP_NAMES if m not in NOT_ON_SERVER]
+POOL = MAP_NAMES
 
 # per_team — сколько игроков должно быть в каждой команде (None — любое число).
 MODES = {

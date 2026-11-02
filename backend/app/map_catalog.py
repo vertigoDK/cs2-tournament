@@ -32,19 +32,21 @@ MAP_NAMES: list[str] = [m.name for m in MAPS]
 
 
 # Для своего сервера: имя карты на сайте → (карта для changelevel, id мастерской или None).
+# Номера Мастерской взяты из списка карт самого Cybershoke (maps_list.id_workshop): wingman-версии
+# и Lake/Rialto — воркшоп-карты, остальные встроены в игру.
 # «Aim Map» — карта для дуэлей 1×1 из мастерской.
 AIM_MAP = "Aim Map"
 SERVER_MAPS: dict[str, tuple[str, str | None]] = {
     "Nuke": ("de_nuke", None),
     "Inferno": ("de_inferno", None),
-    "Dust2": ("de_dust2", None),
-    "Mirage": ("de_mirage", None),
-    "Train": ("de_train", None),
-    "Anubis": ("de_anubis", None),
-    "Rialto": ("gd_rialto", None),
+    "Dust2": ("de_dust2_wingman", "3607203422"),
+    "Mirage": ("de_mirage_wingman", "3607111961"),
+    "Train": ("de_train_wingman", "3608859758"),
+    "Anubis": ("de_anubis_wingman", "3608867276"),
+    "Rialto": ("gd_rialto", "3358474789"),
     "Overpass": ("de_overpass", None),
     "Vertigo": ("de_vertigo", None),
-    "Lake": ("de_lake", None),
+    "Lake": ("de_lake", "3219506727"),
     "Eldorado": ("de_eldorado", None),
     "Debris": ("de_debris", None),
     AIM_MAP: ("aim_map_s2", "3074525246"),
