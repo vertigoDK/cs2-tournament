@@ -2476,6 +2476,80 @@ button.ds-toggle:hover { background: var(--paper); }
   .tl-facts { gap: 4px 12px; }
 }
 
+/* ───────── скины (заглушка) ───────── */
+.soon-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.skin-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.skin-steps li {
+  display: grid;
+  gap: 6px;
+  padding: 20px 22px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background: var(--card);
+  animation: enter 0.55s var(--ease) backwards;
+}
+.skin-steps li:first-child { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.skin-steps span { font-size: 12px; font-weight: 700; color: var(--accent); }
+.skin-steps b { font: 500 19px/1.2 var(--display); letter-spacing: -0.03em; }
+.skin-steps p { margin: 0; font-size: 14px; color: var(--muted); }
+.skin-steps li:first-child p { color: #c9c4b9; }
+
+.skin-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.skin-slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px 12px 12px;
+  border-radius: var(--r);
+  border: 1.5px dashed var(--line-2);
+  background: var(--card);
+  animation: enter 0.5s var(--ease) backwards;
+}
+.ss-art {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 48px;
+  flex: none;
+  border-radius: 10px;
+  background: repeating-linear-gradient(135deg, var(--paper) 0 6px, var(--line) 6px 7px);
+  color: var(--muted);
+}
+.ss-body { display: grid; min-width: 0; }
+.ss-body b { font-weight: 700; font-size: 15px; }
+.ss-body span { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.ss-tag {
+  margin-left: auto;
+  align-self: start;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
+.skin-hint { margin-top: 26px; }
+.skin-hint a { color: var(--accent-ink); font-weight: 700; border-bottom: 1px solid currentColor; }
+@media (max-width: 760px) {
+  .skin-steps { grid-template-columns: 1fr; }
+}
+
 /* ───────── игроки ───────── */
 .radar { display: block; max-width: 100%; height: auto; overflow: visible; }
 .radar-ring { fill: var(--card); stroke: var(--line-2); stroke-width: 1; }
