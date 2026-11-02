@@ -215,6 +215,7 @@ function CreateLobby({ options, onClose, onCreated }) {
   const [map, setMap] = useState(mode.maps[0]);
   const [address, setAddress] = useState(options.server_address || "");
   const [team, setTeam] = useState({}); // user_id → 1 | 2
+  const [adding, setAdding] = useState(0); // в какой команде открыт список игроков
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -236,22 +237,14 @@ function CreateLobby({ options, onClose, onCreated }) {
   const pool = options.players.filter((u) => !team[u.id]);
   const valid = per != null ? members(1).length === per && members(2).length === per : members(1).length >= 1 && members(2).length >= 1;
 
-  // Клик по свободному игроку — в команду, где есть место (при равенстве — в первую).
-  const add = (u) => {
-    const [n1, n2] = [members(1).length, members(2).length];
-    const room = (n) => per == null || n < per;
-    const t = room(n1) && (n1 <= n2 || !room(n2)) ? 1 : room(n2) ? 2 : 0;
-    if (t) setTeam((prev) => ({ ...prev, [u.id]: t }));
+  const add = (u, t) => {
+    setTeam((prev) => ({ ...prev, [u.id]: t }));
+    setAdding(0);
   };
   const remove = (id) => setTeam((prev) => {
     const next = { ...prev };
     delete next[id];
     return next;
-  });
-  const swap = (id) => setTeam((prev) => {
-    const to = prev[id] === 1 ? 2 : 1;
-    const full = per != null && Object.values(prev).filter((v) => v === to).length >= per;
-    return full ? prev : { ...prev, [id]: to };
   });
 
   const submit = async () => {
@@ -311,33 +304,38 @@ function CreateLobby({ options, onClose, onCreated }) {
           <div className="lm-block">
             <span className="lm-label mono">Составы{per != null ? ` · по ${per} в команде` : ""}</span>
             <div className="lm-teams2">
-              {[1, 2].map((t) => (
-                <div key={t} className="lm-team">
-                  <b>Команда {t}</b>
-                  {members(t).map((u) => (
-                    <span key={u.id} className="lm-chip placed">
-                      <Avatar name={u.name} color={u.avatar_color} url={u.avatar_url} size={22} />
-                      {u.name}
-                      <button type="button" title="В другую команду" onClick={() => swap(u.id)}>⇄</button>
-                      <button type="button" title="Убрать" onClick={() => remove(u.id)}>×</button>
-                    </span>
-                  ))}
-                  {per != null && members(t).length < per ? <span className="lm-empty">выбери игрока ниже</span> : null}
-                  {per == null && !members(t).length ? <span className="lm-empty">пока пусто</span> : null}
-                </div>
-              ))}
-            </div>
-
-            <span className="lm-label mono">Игроки — нажми, чтобы добавить</span>
-            <div className="lm-pool">
-              {pool.map((u) => (
-                <button key={u.id} type="button" className="lm-chip" disabled={!u.steam_linked} title={u.steam_linked ? "" : "К аккаунту не привязан Steam"} onClick={() => add(u)}>
-                  <Avatar name={u.name} color={u.avatar_color} url={u.avatar_url} size={22} />
-                  {u.name}
-                  {!u.steam_linked ? <small>нет Steam</small> : null}
-                </button>
-              ))}
-              {!pool.length ? <span className="lm-empty">все выбраны</span> : null}
+              {[1, 2].map((t) => {
+                const room = per == null || members(t).length < per;
+                return (
+                  <div key={t} className="lm-team">
+                    <b>Команда {t}</b>
+                    {members(t).map((u) => (
+                      <span key={u.id} className="lm-chip placed">
+                        <Avatar name={u.name} color={u.avatar_color} url={u.avatar_url} size={22} />
+                        {u.name}
+                        <button type="button" title="Убрать" onClick={() => remove(u.id)}>×</button>
+                      </span>
+                    ))}
+                    {room ? (
+                      <button type="button" className={`lm-add${adding === t ? " open" : ""}`} onClick={() => setAdding(adding === t ? 0 : t)}>
+                        <Icon name="plus" size={14} /> Добавить игрока
+                      </button>
+                    ) : null}
+                    {adding === t ? (
+                      <div className="lm-pool">
+                        {pool.map((u) => (
+                          <button key={u.id} type="button" className="lm-chip" disabled={!u.steam_linked} title={u.steam_linked ? "" : "К аккаунту не привязан Steam"} onClick={() => add(u, t)}>
+                            <Avatar name={u.name} color={u.avatar_color} url={u.avatar_url} size={22} />
+                            {u.name}
+                            {!u.steam_linked ? <small>нет Steam</small> : null}
+                          </button>
+                        ))}
+                        {!pool.length ? <span className="lm-empty">все выбраны</span> : null}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
