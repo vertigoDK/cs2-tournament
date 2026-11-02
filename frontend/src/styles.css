@@ -3897,3 +3897,7 @@ a.lobby-mode:hover { color: var(--accent-ink); }
 /* Дуэль на сервере: рамка у обёртки, полоса сверху внутри, сама карточка без своей рамки. */
 .q-wrap.on-server { width: 230px; border: 1px solid var(--accent); border-radius: 12px; overflow: hidden; box-shadow: 0 0 0 3px var(--accent-soft); }
 .q-wrap.on-server .q-match { border: 0 !important; border-radius: 0; box-shadow: none !important; width: 100%; }
+
+.srv-address { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 18px; }
+.srv-address input { width: 260px; padding: 8px 12px; }
+.srv-address .hint { font-size: 12.5px; }

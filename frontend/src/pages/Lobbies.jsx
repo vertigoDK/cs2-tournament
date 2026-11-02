@@ -88,6 +88,8 @@ export default function Lobbies() {
 
       {error ? <div className="error-box">{error}</div> : null}
 
+      {isAdmin && options ? <ServerAddress options={options} onSaved={(o) => { setOptions(o); load(); toast("Адрес сервера сохранён"); }} /> : null}
+
       {!lobbies ? (
         <ListBones rows={3} />
       ) : (
@@ -370,6 +372,32 @@ function CreateLobby({ options, onClose, onCreated }) {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Адрес нашего сервера — один на все лобби (и турнирные): после смены сервера меняем здесь.
+function ServerAddress({ options, onSaved }) {
+  const [value, setValue] = useState(options.server_address || "");
+  const [busy, setBusy] = useState(false);
+  const changed = value.trim() !== (options.server_address || "");
+  const save = async () => {
+    setBusy(true);
+    try {
+      const { data } = await api.put("/lobbies/server-address", { address: value.trim() });
+      onSaved(data);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <div className="srv-address">
+      <span className="lm-label mono">Адрес сервера</span>
+      <input type="text" value={value} placeholder="ast.altyn.games:55226" onChange={(e) => setValue(e.target.value)} />
+      <button type="button" className="btn sm" disabled={!changed || busy} onClick={save}>
+        {busy ? "Сохраняем…" : "Сохранить"}
+      </button>
+      <span className="hint">подставляется во все лобби, в том числе турнирные</span>
     </div>
   );
 }

@@ -669,3 +669,7 @@ class ServerLobbyStatusIn(BaseModel):
 
 class TournamentServerPause(BaseModel):
     paused: bool
+
+
+class ServerAddressIn(BaseModel):
+    address: str = Field(max_length=80)

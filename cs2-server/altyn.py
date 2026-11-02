@@ -35,6 +35,10 @@ VENDOR_DIRS = [
     "shared/AnyBaseLib", "shared/MenuManagerApi", "shared/PlayerSettingsApi",
     "configs/plugins/WeaponPaints", "configs/plugins/MenuManagerCore", "configs/plugins/PlayerSettings",
 ]
+# Отдельные файлы: без своей gamedata WeaponPaints падает при загрузке.
+VENDOR_FILES = ["gamedata/weaponpaints.json"]
+# Хостинг может сам ставить чужие плагины матчей — они мешают нашему NineCupLobby.
+FOREIGN_PLUGINS = ["MatchZy"]
 SKIP = (".pdb", ".sqlite")
 
 
@@ -167,6 +171,11 @@ def cmd_snapshot(a) -> None:
             dest.parent.mkdir(parents=True, exist_ok=True)
             dest.write_bytes(data)
             n += 1
+    for rel in VENDOR_FILES:
+        dest = VENDOR / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(p.read(f"{CSS}/{rel}"))
+        n += 1
     core = json.loads(p.read(f"{CSS}/configs/core.json"))
     (VENDOR / "core.json").write_text(json.dumps(core, indent=4))
     print(f"Снято файлов: {n} → {VENDOR}")
@@ -258,6 +267,13 @@ def cmd_setup(a) -> None:
     files["configs/plugins/WeaponPaints/WeaponPaints.json"] = json.dumps(wp, indent=2).encode()
     files.update(our_plugins(env, db))
     p.put_tree(CSS, files)
+
+    have = {i["name"] for i in p.ls(f"{CSS}/plugins")}
+    foreign = [x for x in FOREIGN_PLUGINS if x in have]
+    if foreign:
+        p.mkdir(f"{CSS}/plugins/disabled")
+        p.call("PUT", "/files/rename", json={"root": f"{CSS}/plugins", "files": [{"from": x, "to": f"disabled/{x}"} for x in foreign]})
+        print("   отключены чужие плагины:", ", ".join(foreign))
 
     print("5/6 core.json (FollowCS2ServerGuidelines=false — нужно WeaponPaints)")
     core = json.loads((VENDOR / "core.json").read_text())

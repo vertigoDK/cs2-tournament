@@ -21,6 +21,14 @@ from .models import Lobby, Tournament
 ACTIVE = ("waiting", "ready", "live")
 
 
+def server_address(db: Session) -> str:
+    """Адрес нашего CS2-сервера: задаёт админ на странице «Лобби»."""
+    from .models import Setting
+
+    row = db.get(Setting, "server_address")
+    return row.value if row else ""
+
+
 def _duel_lobby(t: Tournament, q: dict, g: int, r: int, i: int, m: dict) -> Lobby:
     from .routers.game_server import _duel_label
 
@@ -86,6 +94,9 @@ def sync_lobbies(db: Session, t: Tournament) -> None:
             added.append(_match_lobby(t, b, r, i, idx, m))
 
     if added:
+        addr = server_address(db)
+        for lo in added:
+            lo.server_address = addr
         db.add_all(added)
         db.commit()
 

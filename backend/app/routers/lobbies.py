@@ -60,8 +60,26 @@ def render(db: Session, lobbies: list[Lobby]) -> list[schemas.LobbyOut]:
     return [_out(lo, users, creators, tnames) for lo in lobbies]
 
 
+@router.put("/server-address", response_model=schemas.LobbyOptionsOut)
+def set_server_address(payload: schemas.ServerAddressIn, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    """Адрес нашего сервера — для всех лобби: сохраняем и сразу ставим ждущим/идущим."""
+    from ..models import Setting
+
+    addr = payload.address.strip()
+    row = db.get(Setting, "server_address") or Setting(key="server_address")
+    row.value = addr
+    db.add(row)
+    for lo in db.query(Lobby).filter(Lobby.status.in_(ACTIVE)).all():
+        lo.server_address = addr
+    db.commit()
+    return options(db)
+
+
 @router.get("/options", response_model=schemas.LobbyOptionsOut)
 def options(db: Session = Depends(get_db)):
+    from ..server_sync import server_address
+
+    saved = server_address(db)
     last = db.query(Lobby).order_by(Lobby.id.desc()).first()
     return schemas.LobbyOptionsOut(
         modes=[schemas.LobbyModeOut(id=k, **v) for k, v in MODES.items()],
@@ -72,7 +90,7 @@ def options(db: Session = Depends(get_db)):
             )
             for u in db.query(User).filter(User.role == Role.player).order_by(User.display_name).all()
         ],
-        server_address=last.server_address if last else "",
+        server_address=saved or (last.server_address if last else ""),
     )
 
 

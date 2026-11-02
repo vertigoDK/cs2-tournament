@@ -162,3 +162,13 @@ class Lobby(Base):
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
     started_at: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)
     finished_at: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)
+
+
+class Setting(Base):
+    """Настройки сайта ключ → значение. Пока одна: адрес нашего CS2-сервера
+    (server_address) — подставляется во все лобби, в том числе турнирные."""
+
+    __tablename__ = "settings"
+
+    key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    value: Mapped[str] = mapped_column(String(255), default="")
