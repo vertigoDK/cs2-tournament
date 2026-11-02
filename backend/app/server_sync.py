@@ -1,7 +1,8 @@
 """Турнир на нашем сервере: лобби под матчи сетки создаются сами.
 
-Админ включает у турнира «Играем на нашем сервере» (bracket["server"]). После
-каждого изменения сетки (save_bracket) смотрим, чего не хватает:
+Где играем — настройка турнира (bracket["server"], при создании и в «Редактировать»).
+После «Начать турнир» и каждого изменения сетки (save_bracket) смотрим, чего не хватает
+(пока админ не поставил паузу — bracket["server_paused"]):
 
 - дуэли отбора — всегда есть лобби на следующую несыгранную дуэль (по одной за раз,
   в порядке игры: 1/4 → полуфиналы и игры за места → финал);
@@ -60,7 +61,8 @@ def _match_lobby(t: Tournament, b: dict, r: int, i: int, idx: int, m: dict) -> L
 
 def sync_lobbies(db: Session, t: Tournament) -> None:
     b = t.bracket or {}
-    if not b.get("server"):
+    # Лобби появляются только у начатого турнира на нашем сервере и не на паузе.
+    if not b.get("server") or b.get("server_paused") or t.started_at is None:
         return
     from .routers.game_server import _playable
 

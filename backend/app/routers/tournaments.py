@@ -205,6 +205,7 @@ def create_tournament(payload: schemas.TournamentCreate, db: Session = Depends(g
     final_bo = payload.final_best_of or payload.best_of
     maps_pool = _clean_pool(maps_pool or DEFAULT_MAPS, max(payload.best_of, final_bo))
     bracket = B.build_bracket(teams, payload.mode, maps_pool, payload.best_of, final_bo, payload.veto_time)
+    bracket["server"] = payload.server
     t = Tournament(
         name=payload.name,
         prize_pool=payload.prize_pool,
@@ -238,6 +239,14 @@ def patch_tournament(tournament_id: int, payload: schemas.TournamentPatch, db: S
         bracket = dict(t.bracket)
         bracket["veto_time"] = payload.veto_time
         save_bracket(db, t, bracket)
+    if payload.server is not None and bool((t.bracket or {}).get("server")) != payload.server:
+        from ..server_sync import stop_lobbies
+
+        bracket = dict(t.bracket)
+        bracket["server"] = payload.server
+        save_bracket(db, t, bracket)
+        if not payload.server:
+            stop_lobbies(db, t)
     db.commit()
     db.refresh(t)
     return _to_out(t, db)
@@ -382,17 +391,24 @@ def start_tournament(tournament_id: int, db: Session = Depends(get_db), _: User 
     sync_status(t)
     db.commit()
     db.refresh(t)
+    # На нашем сервере старт сразу заводит лобби: дуэли по очереди, матчи после драфта.
+    from ..server_sync import sync_lobbies
+
+    sync_lobbies(db, t)
     return _to_out(t, db)
 
 
 @router.post("/{tournament_id}/unstart", response_model=schemas.TournamentOut)
 def unstart_tournament(tournament_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
     """Отменить преждевременный старт — вернуть обратный отсчёт."""
+    from ..server_sync import stop_lobbies
+
     t = _get_or_404(db, tournament_id)
     t.started_at = None
     sync_status(t)
     db.commit()
     db.refresh(t)
+    stop_lobbies(db, t)
     return _to_out(t, db)
 
 
@@ -403,18 +419,18 @@ def delete_tournament(tournament_id: int, db: Session = Depends(get_db), _: User
     db.commit()
 
 
-@router.post("/{tournament_id}/server", response_model=schemas.TournamentOut)
-def set_server(
-    tournament_id: int, payload: schemas.TournamentServerIn, db: Session = Depends(get_db), _: User = Depends(require_admin)
+@router.post("/{tournament_id}/server-pause", response_model=schemas.TournamentOut)
+def pause_server(
+    tournament_id: int, payload: schemas.TournamentServerPause, db: Session = Depends(get_db), _: User = Depends(require_admin)
 ):
-    """«Играем на нашем сервере»: включили — лобби под дуэли и матчи после драфта
-    создаются сами (server_sync); выключили — ждущие лобби турнира убираем."""
+    """Пауза очереди лобби на нашем сервере: ждущие лобби убираем, идущая игра доиграется;
+    «Продолжить» — лобби на следующие матчи создаются снова."""
     from ..server_sync import stop_lobbies
 
     t = _get_or_404(db, tournament_id)
     bracket = dict(t.bracket or {})
-    bracket["server"] = payload.on
+    bracket["server_paused"] = payload.paused
     t = save_bracket(db, t, bracket)
-    if not payload.on:
+    if payload.paused:
         stop_lobbies(db, t)
     return _to_out(t, db)

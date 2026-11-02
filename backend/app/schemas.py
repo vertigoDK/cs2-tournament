@@ -167,6 +167,8 @@ class TournamentCreate(BaseModel):
     final_best_of: BestOf | None = None
     veto_time: int = VetoTime
     starts_at: dt.datetime | None = None
+    # Где играем: на нашем сервере (лобби создаются сами после старта) или вручную.
+    server: bool = True
 
 
 class QualifierCreate(BaseModel):
@@ -213,6 +215,7 @@ class TournamentPatch(BaseModel):
     # Время на драфт можно поменять в любой момент: идущие драфты доигрывают
     # со своим запасом, новое время действует со следующего.
     veto_time: int | None = Field(default=None, ge=0, le=3600)
+    server: bool | None = None
 
 
 class TournamentRegenerate(BaseModel):
@@ -664,5 +667,5 @@ class ServerLobbyStatusIn(BaseModel):
     stats: list[ServerPlayerStat] | None = None
 
 
-class TournamentServerIn(BaseModel):
-    on: bool
+class TournamentServerPause(BaseModel):
+    paused: bool

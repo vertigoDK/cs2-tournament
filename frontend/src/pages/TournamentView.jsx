@@ -178,16 +178,12 @@ export default function TournamentView() {
 
   const onStart = () => runAction(() => api.post(`/tournaments/${id}/start`), "Турнир начался");
 
-  const onServer = (on) => {
-    if (
-      on &&
-      !confirm(
-        "Играем на нашем сервере? Дальше всё само: лобби на дуэли по очереди и на каждую карту матча сразу после драфта. Счёт и K/D/A попадут в сетку.",
-      )
-    )
-      return;
-    if (!on && !confirm("Выключить наш сервер для турнира? Ждущие лобби уберутся, идущая игра доиграется.")) return;
-    runAction(() => api.post(`/tournaments/${id}/server`, { on }), on ? "Играем на нашем сервере" : "Наш сервер выключен");
+  const onServerPause = (paused) => {
+    if (paused && !confirm("Поставить сервер на паузу? Ждущие лобби уберутся, идущая игра доиграется.")) return;
+    runAction(
+      () => api.post(`/tournaments/${id}/server-pause`, { paused }),
+      paused ? "Сервер на паузе" : "Продолжаем: лобби на следующие матчи создаются",
+    );
   };
 
   const onUnstart = () =>
@@ -351,10 +347,15 @@ export default function TournamentView() {
                 <span>Начать турнир</span>
               </button>
             ) : null}
-            {t.status !== "finished" ? (
-              <button className={`btn${t.bracket.server ? " server-on" : ""}`} onClick={() => onServer(!t.bracket.server)} disabled={busy}>
-                <img src="/img/nav/lobby.webp" alt="" className="btn-ico" />
-                <span>{t.bracket.server ? "Наш сервер: вкл" : "Играть на нашем сервере"}</span>
+            {t.bracket.server && t.started_at && t.status !== "finished" ? (
+              <button
+                className={`btn${t.bracket.server_paused ? " server-on" : ""}`}
+                onClick={() => onServerPause(!t.bracket.server_paused)}
+                disabled={busy}
+                title="Очередь лобби на нашем сервере"
+              >
+                <Icon name={t.bracket.server_paused ? "play" : "pause"} size={14} />
+                <span>{t.bracket.server_paused ? "Продолжить сервер" : "Пауза сервера"}</span>
               </button>
             ) : null}
             <Link to={`/tournaments/${id}/edit`} className="btn">
