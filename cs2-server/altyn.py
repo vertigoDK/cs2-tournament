@@ -209,6 +209,8 @@ def our_plugins(env: dict[str, str], db: dict) -> dict[str, bytes]:
     }, indent=2).encode()
     files["configs/plugins/NineCupLobby/NineCupLobby.json"] = json.dumps({
         "SiteUrl": SITE, "ServerKey": env["NINECUP_SERVER_KEY"], "RefreshSeconds": 15, "KickStrangers": True,
+        # Админы сервера по Steam ID (через запятую в .env): !start с ботами, !stop.
+        "Admins": [x.strip() for x in env.get("NINECUP_ADMINS", "").split(",") if x.strip()],
     }, indent=2).encode()
     return files
 

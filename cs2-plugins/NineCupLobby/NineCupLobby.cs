@@ -18,6 +18,8 @@ public class NineCupLobbyConfig : BasePluginConfig
     [JsonPropertyName("RefreshSeconds")] public float RefreshSeconds { get; set; } = 15;
     // Кикать тех, кому сюда нельзя (не в лобби / не участник сайта).
     [JsonPropertyName("KickStrangers")] public bool KickStrangers { get; set; } = true;
+    // Steam ID админов сервера: !start без всех игроков (пустые места — боты), !stop.
+    [JsonPropertyName("Admins")] public List<string> Admins { get; set; } = [];
 }
 
 // Лобби nine cup на нашем сервере. Всё решает сайт: какое лобби играем, кто в
@@ -121,11 +123,12 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         if (_state is null) return true; // сайт не ответил — не выгоняем никого
         // Заходить можно всем участникам сайта: те, кто не в лобби, смотрят.
         // Посторонних (нет в базе сайта) не пускаем.
-        return _state.Admins.Contains(steam) || _state.Known.Contains(steam) ||
+        return Config.Admins.Contains(steam) || _state.Admins.Contains(steam) || _state.Known.Contains(steam) ||
                (_lobby?.Players.Any(p => p.SteamId == steam) ?? false);
     }
 
-    private bool IsAdmin(CCSPlayerController? p) => p is null || (_state?.Admins.Contains(p.SteamID.ToString()) ?? false);
+    private bool IsAdmin(CCSPlayerController? p) =>
+        p is null || Config.Admins.Contains(p.SteamID.ToString()) || (_state?.Admins.Contains(p.SteamID.ToString()) ?? false);
 
     private static IEnumerable<CCSPlayerController> Humans() =>
         Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false, IsHLTV: false });
@@ -207,10 +210,10 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
 
     // ---------------- старт, счёт, конец ----------------
 
-    private void StartMatch()
+    private void StartMatch(bool withBots = false)
     {
         if (_lobby is null) return;
-        if (_lobby.Players.Any(p => Find(p) is null)) { Announce(); return; }
+        if (!withBots && _lobby.Players.Any(p => Find(p) is null)) { Announce(); return; }
 
         var inLobby = _lobby.Players.ToDictionary(p => p.SteamId);
         foreach (var h in Humans())
@@ -219,6 +222,18 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
                 h.ChangeTeam(lp.Team == 1 ? CsTeam.Terrorist : CsTeam.CounterTerrorist);
             else
                 h.ChangeTeam(CsTeam.Spectator);
+        }
+
+        if (withBots)
+        {
+            // Кого нет — того заменяет бот на его стороне (для проверки в одиночку).
+            var missing = _lobby.Players.Where(p => Find(p) is null).ToList();
+            if (missing.Count > 0)
+            {
+                Server.ExecuteCommand("bot_quota_mode normal; bot_join_after_player 0");
+                foreach (var p in missing) Server.ExecuteCommand(p.Team == 1 ? "bot_add_t" : "bot_add_ct");
+                Server.PrintToChatAll($"{Tag} вместо {string.Join(", ", missing.Select(p => p.Name))} — боты");
+            }
         }
 
         _score[0] = _score[1] = 0;
@@ -256,9 +271,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
 
     private void StripToKnife()
     {
-        if (_lobby is null) return;
-        var ids = _lobby.Players.Select(p => p.SteamId).ToHashSet();
-        foreach (var h in Humans().Where(h => ids.Contains(h.SteamID.ToString()) && h.PawnIsAlive))
+        foreach (var h in Utilities.GetPlayers().Where(p => p is { IsValid: true, IsHLTV: false, PawnIsAlive: true } && p.TeamNum is 2 or 3))
         {
             h.RemoveWeapons();
             h.GiveNamedItem("weapon_knife");
@@ -375,6 +388,13 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         var teams = _lobby.Players.ToDictionary(p => p.SteamId, p => p.Team);
         var any = Humans().FirstOrDefault(p => p.TeamNum == @event.Winner && teams.ContainsKey(p.SteamID.ToString()));
         if (any is not null) _score[teams[any.SteamID.ToString()] - 1]++;
+        else
+        {
+            // На стороне победителя одни боты — значит, выиграла команда, противоположная
+            // игрокам лобби на проигравшей стороне.
+            var loser = Humans().FirstOrDefault(p => p.TeamNum is 2 or 3 && p.TeamNum != @event.Winner && teams.ContainsKey(p.SteamID.ToString()));
+            if (loser is not null) _score[2 - teams[loser.SteamID.ToString()]]++;
+        }
         return HookResult.Continue;
     }
 
@@ -477,8 +497,8 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     [ConsoleCommand("css_start", "Админ: начать без !ready")]
     public void OnStart(CCSPlayerController? player, CommandInfo cmd)
     {
-        if (!IsAdmin(player) || _live || _starting || _knife || _choosing) return;
-        StartMatch();
+        if (!IsAdmin(player) || InGame) return;
+        StartMatch(withBots: true);
     }
 
     [ConsoleCommand("css_stop", "Админ: остановить игру, счёт не отправляется")]
