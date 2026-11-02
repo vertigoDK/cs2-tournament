@@ -3,6 +3,7 @@
 
     .venv/bin/python cs2-server/altyn.py snapshot --server 6a18910c
     .venv/bin/python cs2-server/altyn.py setup    --server NEWID [--no-restart]
+    .venv/bin/python cs2-server/altyn.py deploy   --server ID      # только наши плагины (быстро)
     .venv/bin/python cs2-server/altyn.py status   --server NEWID
     .venv/bin/python cs2-server/altyn.py command  --server NEWID "css_plugins list"
 
@@ -184,8 +185,8 @@ def database(p: Panel, env: dict[str, str]) -> dict:
     return {"host": host["address"], "port": host["port"], "user": a["username"], "password": pw, "name": a["name"]}
 
 
-def build_skins_plugin() -> dict[str, bytes]:
-    proj = ROOT / "cs2-plugins" / "NineCupSkins"
+def build_plugin(name: str) -> dict[str, bytes]:
+    proj = ROOT / "cs2-plugins" / name
     subprocess.run(["dotnet", "build", "-c", "Release", str(proj)], check=True, stdout=subprocess.DEVNULL)
     out = proj / "bin" / "Release" / "net10.0"
     return {
@@ -193,6 +194,23 @@ def build_skins_plugin() -> dict[str, bytes]:
         for f in out.iterdir()
         if f.is_file() and not f.name.endswith(".pdb") and not f.name.startswith("CounterStrikeSharp")
     }
+
+
+def our_plugins(env: dict[str, str], db: dict) -> dict[str, bytes]:
+    """Наши плагины (NineCupSkins, NineCupLobby) и их конфиги — относительные пути внутри counterstrikesharp/."""
+    files: dict[str, bytes] = {}
+    for plugin in ("NineCupSkins", "NineCupLobby"):
+        for name, data in build_plugin(plugin).items():
+            files[f"plugins/{plugin}/{name}"] = data
+    files["configs/plugins/NineCupSkins/NineCupSkins.json"] = json.dumps({
+        "SiteUrl": SITE, "ServerKey": env["NINECUP_SERVER_KEY"],
+        "DatabaseHost": db["host"], "DatabasePort": db["port"], "DatabaseUser": db["user"],
+        "DatabasePassword": db["password"], "DatabaseName": db["name"], "RefreshSeconds": 30,
+    }, indent=2).encode()
+    files["configs/plugins/NineCupLobby/NineCupLobby.json"] = json.dumps({
+        "SiteUrl": SITE, "ServerKey": env["NINECUP_SERVER_KEY"], "RefreshSeconds": 15, "KickStrangers": True,
+    }, indent=2).encode()
+    return files
 
 
 def cmd_setup(a) -> None:
@@ -229,13 +247,7 @@ def cmd_setup(a) -> None:
     wp.update(DatabaseHost=db["host"], DatabasePort=db["port"], DatabaseUser=db["user"],
               DatabasePassword=db["password"], DatabaseName=db["name"])
     files["configs/plugins/WeaponPaints/WeaponPaints.json"] = json.dumps(wp, indent=2).encode()
-    for name, data in build_skins_plugin().items():
-        files[f"plugins/NineCupSkins/{name}"] = data
-    files["configs/plugins/NineCupSkins/NineCupSkins.json"] = json.dumps({
-        "SiteUrl": SITE, "ServerKey": env["NINECUP_SERVER_KEY"],
-        "DatabaseHost": db["host"], "DatabasePort": db["port"], "DatabaseUser": db["user"],
-        "DatabasePassword": db["password"], "DatabaseName": db["name"], "RefreshSeconds": 30,
-    }, indent=2).encode()
+    files.update(our_plugins(env, db))
     p.put_tree(CSS, files)
 
     print("5/6 core.json (FollowCS2ServerGuidelines=false — нужно WeaponPaints)")
@@ -254,6 +266,20 @@ def cmd_setup(a) -> None:
     p.command("css_plugins list")
     print("Готово. Проверь в консоли панели: должны быть NineCupSkins, WeaponPaints, MenuManager, PlayerSettings.")
     print("Заходи по адресу из панели; выбор скинов подтянется с сайта сам (≤30 с).")
+
+
+def cmd_deploy(a) -> None:
+    """Пересобрать и залить только наши плагины; новые папки подхватываем командой load."""
+    env = env_read()
+    p = make_panel(a.server)
+    db = database(p, env)
+    have = {i["name"] for i in p.ls(f"{CSS}/plugins")}
+    p.put_tree(CSS, our_plugins(env, db))
+    for plugin in ("NineCupSkins", "NineCupLobby"):
+        # Уже загруженный плагин перезагружается сам (hot reload), новый — только по команде.
+        if plugin not in have:
+            p.command(f"css_plugins load {plugin}")
+    print("Готово. Логи: status --server", a.server)
 
 
 def cmd_status(a) -> None:
@@ -278,7 +304,7 @@ def cmd_command(a) -> None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    for name, fn in (("snapshot", cmd_snapshot), ("setup", cmd_setup), ("status", cmd_status), ("command", cmd_command)):
+    for name, fn in (("snapshot", cmd_snapshot), ("setup", cmd_setup), ("deploy", cmd_deploy), ("status", cmd_status), ("command", cmd_command)):
         s = sub.add_parser(name)
         s.add_argument("--server", required=True, help="идентификатор сервера (8 символов из ссылки панели)")
         if name == "setup":

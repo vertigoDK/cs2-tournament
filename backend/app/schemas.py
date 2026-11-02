@@ -633,8 +633,10 @@ class ServerLobby(BaseModel):
 
 class ServerLobbyOut(BaseModel):
     lobby: ServerLobby | None = None
-    # Кого пускать, когда лобби нет: админы с привязанным Steam.
+    # Админы с привязанным Steam — им можно всегда.
     admins: list[str] = []
+    # Все участники сайта с привязанным Steam — их пускаем, пока лобби нет.
+    known: list[str] = []
 
 
 class ServerLobbyStatusIn(BaseModel):

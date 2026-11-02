@@ -234,10 +234,12 @@ def skins(db: Session = Depends(get_db)):
 @router.get("/lobby", response_model=schemas.ServerLobbyOut, dependencies=[Depends(require_server)])
 def current_lobby(db: Session = Depends(get_db)):
     """Лобби, которое сервер играет сейчас: самое раннее неоконченное."""
-    admins = [u.steam_id for u in db.query(User).filter(User.role == Role.admin, User.steam_id.isnot(None)).all()]
+    linked = db.query(User).filter(User.steam_id.isnot(None)).all()
+    admins = [u.steam_id for u in linked if u.role == Role.admin]
+    known = [u.steam_id for u in linked]
     lobby = db.query(Lobby).filter(Lobby.status.in_(("waiting", "live"))).order_by(Lobby.id).first()
     if not lobby:
-        return schemas.ServerLobbyOut(lobby=None, admins=admins)
+        return schemas.ServerLobbyOut(lobby=None, admins=admins, known=known)
     users = _users(db, {p["user_id"] for p in lobby.players})
     map_id, workshop = SERVER_MAPS.get(lobby.map, (lobby.map, None))
     return schemas.ServerLobbyOut(
@@ -250,6 +252,7 @@ def current_lobby(db: Session = Depends(get_db)):
             ],
         ),
         admins=admins,
+        known=known,
     )
 
 
