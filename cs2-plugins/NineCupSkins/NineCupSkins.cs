@@ -39,7 +39,7 @@ public record SkinsOut(List<SkinsPlayer> Players);
 public class NineCupSkins : BasePlugin, IPluginConfig<NineCupSkinsConfig>
 {
     public override string ModuleName => "nine cup skins";
-    public override string ModuleVersion => "0.1.1";
+    public override string ModuleVersion => "0.2.0";
     public override string ModuleAuthor => "nine cup";
 
     public NineCupSkinsConfig Config { get; set; } = new();
@@ -83,13 +83,31 @@ public class NineCupSkins : BasePlugin, IPluginConfig<NineCupSkinsConfig>
         // Первый раз — чуть позже: WeaponPaints должен успеть создать таблицы.
         AddTimer(10f, Sync);
         AddTimer(Config.RefreshSeconds, Sync, TimerFlags.REPEAT);
+        // После смены карты WeaponPaints сам раздаёт скины не сразу (иногда через пару
+        // минут) — подталкиваем всем, кто на сервере: на 10-й и 30-й секундах.
+        RegisterListener<Listeners.OnMapStart>(_ =>
+        {
+            AddTimer(10f, RefreshOnline);
+            AddTimer(30f, RefreshOnline);
+        });
+    }
+
+    private void RefreshOnline()
+    {
+        foreach (var p in Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: false }))
+            Server.ExecuteCommand($"wp_refresh {p.SteamID}");
     }
 
     // Пустой сервер «спит», и таймеры стоят — поэтому сверяемся ещё и при входе.
     [GameEventHandler]
     public HookResult OnPlayerConnectFull(EventPlayerConnectFull @event, GameEventInfo info)
     {
-        if (@event.Userid is { IsValid: true, IsBot: false }) Sync();
+        if (@event.Userid is not { IsValid: true, IsBot: false } p) return HookResult.Continue;
+        Sync();
+        // Зашедшему обновляем скины после того, как он прогрузился, и ещё раз для надёжности.
+        var steam = p.SteamID;
+        AddTimer(8f, () => Server.ExecuteCommand($"wp_refresh {steam}"));
+        AddTimer(25f, () => Server.ExecuteCommand($"wp_refresh {steam}"));
         return HookResult.Continue;
     }
 
