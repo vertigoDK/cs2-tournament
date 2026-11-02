@@ -44,8 +44,8 @@ async def main(server: str, seconds: int, grep: str | None) -> None:
             elif msg["event"] == "console output":
                 for line in msg["args"]:
                     line = ANSI.sub("", line)
-                    if not grep or grep.lower() in line.lower():
-                        print(line)
+                    if not grep or any(g in line.lower() for g in grep.lower().split("|")):
+                        print(time.strftime("%H:%M:%S"), line, flush=True)
 
 
 if __name__ == "__main__":

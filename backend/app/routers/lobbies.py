@@ -140,3 +140,13 @@ def cancel_lobby(lobby_id: int, db: Session = Depends(get_db), _: User = Depends
     lobby.finished_at = dt.datetime.utcnow()
     db.commit()
     return render(db, [lobby])[0]
+
+
+@router.delete("/{lobby_id}", status_code=204)
+def delete_lobby(lobby_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    """Удалить лобби совсем (например, тестовые). В статистику лобби и так не идут."""
+    lobby = db.get(Lobby, lobby_id)
+    if not lobby:
+        raise HTTPException(status_code=404, detail="Лобби не найдено")
+    db.delete(lobby)
+    db.commit()
