@@ -96,8 +96,8 @@ export default function Skins() {
   return (
     <main className="page">
       <PageHead
-        title={auth ? "Мои скины" : "Скины"}
-        sub="Собираешь набор на сайте — на нашем сервере он у тебя в игре."
+        title={auth ? "Выбрать скины" : "Выбрать скины"}
+        sub="Нож, перчатки и оружие — выбираешь здесь, а в игре на нашем сервере всё уже на тебе."
         art="/img/skins.webp"
       />
 

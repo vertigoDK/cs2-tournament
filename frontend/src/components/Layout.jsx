@@ -62,7 +62,7 @@ export default function Layout() {
               Статистика
             </NavLink>
             <NavLink to="/skins" className={navClass}>
-              Скины
+              Выбрать скины
             </NavLink>
             {isAdmin ? (
               <NavLink to="/users" className={navClass}>
