@@ -583,6 +583,10 @@ class LobbyPlayerOut(BaseModel):
 
 class LobbyOut(BaseModel):
     id: int
+    tournament_id: int | None = None
+    tournament: str | None = None
+    kind: str | None = None
+    label: str = ""
     mode: str
     map: str
     server_address: str
@@ -654,3 +658,7 @@ class ServerLobbyStatusIn(BaseModel):
     status: str  # ready | live | finished
     score: list[int] | None = None
     stats: list[ServerPlayerStat] | None = None
+
+
+class TournamentServerIn(BaseModel):
+    on: bool

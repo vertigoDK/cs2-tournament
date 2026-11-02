@@ -288,6 +288,12 @@ def lobby_status(payload: schemas.ServerLobbyStatusIn, db: Session = Depends(get
         lobby.status = "finished"
         lobby.started_at = lobby.started_at or now
         lobby.finished_at = now
+        db.commit()
+        if lobby.tournament_id:
+            # Турнирное лобби: счёт и K/D/A — в сетку; там же заведётся следующее лобби.
+            from ..server_sync import apply_result
+
+            apply_result(db, lobby)
     else:
         raise HTTPException(status_code=400, detail="Статус: ready, live или finished")
     db.commit()

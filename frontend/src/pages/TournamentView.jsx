@@ -178,6 +178,18 @@ export default function TournamentView() {
 
   const onStart = () => runAction(() => api.post(`/tournaments/${id}/start`), "Турнир начался");
 
+  const onServer = (on) => {
+    if (
+      on &&
+      !confirm(
+        "Играем на нашем сервере? Дальше всё само: лобби на дуэли по очереди и на каждую карту матча сразу после драфта. Счёт и K/D/A попадут в сетку.",
+      )
+    )
+      return;
+    if (!on && !confirm("Выключить наш сервер для турнира? Ждущие лобби уберутся, идущая игра доиграется.")) return;
+    runAction(() => api.post(`/tournaments/${id}/server`, { on }), on ? "Играем на нашем сервере" : "Наш сервер выключен");
+  };
+
   const onUnstart = () =>
     runAction(() => api.post(`/tournaments/${id}/unstart`), "Старт отменён, отсчёт вернулся");
 
@@ -339,6 +351,12 @@ export default function TournamentView() {
                 <span>Начать турнир</span>
               </button>
             ) : null}
+            {t.status !== "finished" ? (
+              <button className={`btn${t.bracket.server ? " server-on" : ""}`} onClick={() => onServer(!t.bracket.server)} disabled={busy}>
+                <img src="/img/nav/lobby.webp" alt="" className="btn-ico" />
+                <span>{t.bracket.server ? "Наш сервер: вкл" : "Играть на нашем сервере"}</span>
+              </button>
+            ) : null}
             <Link to={`/tournaments/${id}/edit`} className="btn">
               Редактировать
             </Link>
@@ -363,6 +381,16 @@ export default function TournamentView() {
           </>
         ) : null}
       </div>
+
+      {t.bracket.server && t.status !== "finished" ? (
+        <Link to="/lobbies" className="server-strip">
+          <span className="live-dot" />
+          <span>
+            Турнир играется на нашем сервере: лобби на дуэли и карты матчей создаются сами, счёт попадает в сетку.
+          </span>
+          <b className="mono">Лобби →</b>
+        </Link>
+      ) : null}
 
       <StartAnnounce
         startsAt={t.starts_at}

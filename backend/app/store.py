@@ -36,6 +36,10 @@ def save_bracket(db: Session, t: Tournament, bracket: dict) -> Tournament:
     sync_status(t)
     db.commit()
     db.refresh(t)
+    # Турнир на нашем сервере: заводим лобби под матчи, которым пора играть.
+    from .server_sync import sync_lobbies
+
+    sync_lobbies(db, t)
     return t
 
 

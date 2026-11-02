@@ -162,7 +162,12 @@ function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast }) {
   };
 
   return (
-    <Link to={`/lobbies/${lobby.id}`} className={`lobby lobby-link${compact ? " compact" : ""}${lobby.status === "live" ? " live" : ""}`}>
+    <Link to={`/lobbies/${lobby.id}`} className={`lobby lobby-link${compact ? " compact" : ""}${lobby.status === "live" ? " live" : ""}${lobby.tournament_id ? " tourney" : ""}`}>
+      {lobby.tournament_id ? (
+        <span className="lobby-tourney mono">
+          <img src="/img/nav/trophy.webp" alt="" /> {lobby.tournament} · {lobby.label}
+        </span>
+      ) : null}
       <div className="lobby-main">
         <div className="lobby-head">
           <span className={`pill ${st.cls}`}>

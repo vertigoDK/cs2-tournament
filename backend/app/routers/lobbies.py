@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from .. import schemas
 from ..deps import get_db, require_admin
 from ..map_catalog import AIM_MAP, MAP_NAMES, SERVER_MAPS
-from ..models import Lobby, Role, User
+from ..models import Lobby, Role, Tournament, User
 
 router = APIRouter(prefix="/api/lobbies", tags=["lobbies"])
 
@@ -28,7 +28,7 @@ MODES = {
 ACTIVE = ("waiting", "ready", "live")
 
 
-def _out(lobby: Lobby, users: dict[int, User], creators: dict[int, str]) -> schemas.LobbyOut:
+def _out(lobby: Lobby, users: dict[int, User], creators: dict[int, str], tnames: dict[int, str]) -> schemas.LobbyOut:
     players = []
     for p in lobby.players or []:
         u = users.get(p["user_id"])
@@ -43,7 +43,8 @@ def _out(lobby: Lobby, users: dict[int, User], creators: dict[int, str]) -> sche
             )
         )
     return schemas.LobbyOut(
-        id=lobby.id, mode=lobby.mode, map=lobby.map, server_address=lobby.server_address,
+        id=lobby.id, tournament_id=lobby.tournament_id, tournament=tnames.get(lobby.tournament_id),
+        kind=lobby.kind, label=lobby.label or "", mode=lobby.mode, map=lobby.map, server_address=lobby.server_address,
         status=lobby.status, players=players, score=lobby.score, winner=lobby.winner,
         created_by=creators.get(lobby.created_by), created_at=lobby.created_at,
         started_at=lobby.started_at, finished_at=lobby.finished_at,
@@ -54,7 +55,9 @@ def render(db: Session, lobbies: list[Lobby]) -> list[schemas.LobbyOut]:
     ids = {p["user_id"] for lo in lobbies for p in lo.players or []} | {lo.created_by for lo in lobbies if lo.created_by}
     users = {u.id: u for u in db.query(User).filter(User.id.in_(ids)).all()} if ids else {}
     creators = {uid: u.display_name for uid, u in users.items()}
-    return [_out(lo, users, creators) for lo in lobbies]
+    tids = {lo.tournament_id for lo in lobbies if lo.tournament_id}
+    tnames = {t.id: t.name for t in db.query(Tournament).filter(Tournament.id.in_(tids)).all()} if tids else {}
+    return [_out(lo, users, creators, tnames) for lo in lobbies]
 
 
 @router.get("/options", response_model=schemas.LobbyOptionsOut)
@@ -114,7 +117,7 @@ def create_lobby(payload: schemas.LobbyCreate, db: Session = Depends(get_db), ad
 
     # Новое лобби заменяет прежние, которые ещё ждут игроков: сервер один, и очередь
     # из забытых лобби только путает (он играл бы самое старое). Идущую игру не трогаем.
-    for old in db.query(Lobby).filter(Lobby.status.in_(("waiting", "ready"))).all():
+    for old in db.query(Lobby).filter(Lobby.status.in_(("waiting", "ready")), Lobby.tournament_id.is_(None)).all():
         old.status = "cancelled"
         old.finished_at = dt.datetime.utcnow()
 

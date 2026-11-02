@@ -386,3 +386,20 @@ def delete_tournament(tournament_id: int, db: Session = Depends(get_db), _: User
     t = _get_or_404(db, tournament_id)
     db.delete(t)
     db.commit()
+
+
+@router.post("/{tournament_id}/server", response_model=schemas.TournamentOut)
+def set_server(
+    tournament_id: int, payload: schemas.TournamentServerIn, db: Session = Depends(get_db), _: User = Depends(require_admin)
+):
+    """«Играем на нашем сервере»: включили — лобби под дуэли и матчи после драфта
+    создаются сами (server_sync); выключили — ждущие лобби турнира убираем."""
+    from ..server_sync import stop_lobbies
+
+    t = _get_or_404(db, tournament_id)
+    bracket = dict(t.bracket or {})
+    bracket["server"] = payload.on
+    t = save_bracket(db, t, bracket)
+    if not payload.on:
+        stop_lobbies(db, t)
+    return _to_out(t, db)

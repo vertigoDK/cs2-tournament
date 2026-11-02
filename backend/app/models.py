@@ -151,6 +151,13 @@ class Lobby(Base):
     # Убийства/смерти/ассисты по Steam ID: {"7656…": [k, d, a]}. Это данные самого
     # лобби — в общую статистику сайта они не попадают.
     stats: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    # Турнирное лобби: дуэль отбора или карта матча. Результат пишется в сетку
+    # турнира (и тем попадает в статистику). ref — где в сетке: {"g","r","i"} для
+    # дуэли, {"r","i","map"} для карты матча.
+    tournament_id: Mapped[int | None] = mapped_column(ForeignKey("tournaments.id", ondelete="CASCADE"), nullable=True, index=True)
+    kind: Mapped[str | None] = mapped_column(String(16), nullable=True)  # duel | match
+    ref: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    label: Mapped[str] = mapped_column(String(120), default="")
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
     started_at: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)

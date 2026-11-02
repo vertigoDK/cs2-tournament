@@ -61,7 +61,7 @@ export default function LobbyStage({ lobby, isAdmin, onCancel, toast }) {
   };
 
   return (
-    <div className={`lv${lobby.status === "live" ? " live" : ""}`}>
+    <div className={`lv${lobby.status === "live" ? " live" : ""}${lobby.tournament_id ? " tourney" : ""}`}>
       <section className="lv-banner" style={cover ? { "--cover": `url(${cover})` } : undefined}>
         <span className="lv-status mono">
           {lobby.status === "live" ? <i className="live-dot" /> : null}
@@ -73,6 +73,11 @@ export default function LobbyStage({ lobby, isAdmin, onCancel, toast }) {
           <b className={lobby.winner === 2 ? "win" : ""}>{s2 ?? "–"}</b>
         </div>
         <span className="lv-banner-map mono">{MODE_NAMES[lobby.mode] || lobby.mode} · {lobby.map}</span>
+        {lobby.tournament_id ? (
+          <Link to={`/tournaments/${lobby.tournament_id}`} className="lv-tourney mono">
+            <img src="/img/nav/trophy.webp" alt="" /> {lobby.tournament} · {lobby.label} →
+          </Link>
+        ) : null}
       </section>
 
       <section className="lv-grid">
