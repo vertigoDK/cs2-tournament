@@ -10,7 +10,7 @@ import { mapImage } from "../utils/maps.js";
 // от них сведения об игре. Лобби — отдельная игра, в общую статистику она не идёт.
 
 const MODE = { duel: "Дуэль 1×1", wingman: "Wingman 2×2", free: "Свободная игра" };
-const STATUS = { waiting: "Ждём игроков", live: "Идёт игра", finished: "Матч завершён", cancelled: "Отменено" };
+const STATUS = { waiting: "Грузим карту", ready: "Ждём игроков", live: "Идёт игра", finished: "Матч завершён", cancelled: "Отменено" };
 
 const when = (iso) =>
   iso ? new Date(iso + "Z").toLocaleString("ru-RU", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }) : "—";

@@ -13,7 +13,8 @@ import { mapImage } from "../utils/maps.js";
 // только их, играет и присылает счёт. Смотреть может любой.
 
 const STATUS = {
-  waiting: { label: "Ждём игроков", cls: "pill-upcoming" },
+  waiting: { label: "Грузим карту", cls: "pill-upcoming" },
+  ready: { label: "Ждём игроков", cls: "pill-upcoming" },
   live: { label: "Идёт игра", cls: "pill-live" },
   finished: { label: "Сыграно", cls: "pill-finished" },
   cancelled: { label: "Отменено", cls: "pill-finished" },
@@ -56,8 +57,9 @@ export default function Lobbies() {
     }
   };
 
-  const active = (lobbies || []).filter((l) => l.status === "waiting" || l.status === "live");
-  const done = (lobbies || []).filter((l) => l.status !== "waiting" && l.status !== "live");
+  const ACTIVE = ["waiting", "ready", "live"];
+  const active = (lobbies || []).filter((l) => ACTIVE.includes(l.status));
+  const done = (lobbies || []).filter((l) => !ACTIVE.includes(l.status));
 
   return (
     <main className="page">
@@ -146,7 +148,7 @@ function Team({ players, team, score, win }) {
 function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast }) {
   const st = STATUS[lobby.status];
   const cover = mapImage(lobby.map);
-  const isActive = lobby.status === "waiting" || lobby.status === "live";
+  const isActive = ["waiting", "ready", "live"].includes(lobby.status);
   const connect = lobby.server_address ? `connect ${lobby.server_address}` : "";
   const [s1, s2] = lobby.score || [null, null];
 
@@ -184,7 +186,7 @@ function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast }) {
 
       {isActive && !compact ? (
         <div className="lobby-foot">
-          {first && connect ? (
+          {first && connect && lobby.status !== "waiting" ? (
             <button type="button" className="lb-connect" onClick={copy} title="Скопировать">
               <code>{connect}</code>
               <Icon name="download" size={14} />
@@ -192,7 +194,9 @@ function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast }) {
           ) : null}
           <span className="hint">
             {first
-              ? "Заходи на сервер: пускаем только игроков из списка."
+              ? lobby.status === "waiting"
+                ? "Сервер грузит карту — адрес появится, когда всё будет готово (не заходи раньше, выкинет)."
+                : "Заходи на сервер."
               : "В очереди: сервер сыграет это лобби после предыдущего."}
           </span>
           {isAdmin ? (

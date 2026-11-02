@@ -651,6 +651,6 @@ class ServerPlayerStat(BaseModel):
 
 class ServerLobbyStatusIn(BaseModel):
     lobby_id: int
-    status: str  # live | finished
+    status: str  # ready | live | finished
     score: list[int] | None = None
     stats: list[ServerPlayerStat] | None = None

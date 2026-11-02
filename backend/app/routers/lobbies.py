@@ -24,7 +24,8 @@ MODES = {
     "wingman": {"name": "Wingman 2×2", "hint": "Два на два на карте из пула", "per_team": 2, "maps": POOL},
     "free": {"name": "Свободная игра", "hint": "Любые игроки и карта, без счёта в матче", "per_team": None, "maps": [AIM_MAP, *POOL]},
 }
-ACTIVE = ("waiting", "live")
+# waiting — сервер ещё грузит карту, ready — карта загружена, можно заходить.
+ACTIVE = ("waiting", "ready", "live")
 
 
 def _out(lobby: Lobby, users: dict[int, User], creators: dict[int, str]) -> schemas.LobbyOut:
@@ -113,7 +114,7 @@ def create_lobby(payload: schemas.LobbyCreate, db: Session = Depends(get_db), ad
 
     # Новое лобби заменяет прежние, которые ещё ждут игроков: сервер один, и очередь
     # из забытых лобби только путает (он играл бы самое старое). Идущую игру не трогаем.
-    for old in db.query(Lobby).filter(Lobby.status == "waiting").all():
+    for old in db.query(Lobby).filter(Lobby.status.in_(("waiting", "ready"))).all():
         old.status = "cancelled"
         old.finished_at = dt.datetime.utcnow()
 

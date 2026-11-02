@@ -37,6 +37,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     private readonly HashSet<string> _ready = [];
     private bool _starting;           // после !ready идёт разминка до начала матча
     private bool _live;               // матч идёт, раунды считаются
+    private bool _awaitingMap;        // грузим карту лобби; как загрузится — сообщим сайту «готово»
     private readonly int[] _score = new int[2];
     // Убийства / смерти / ассисты игроков лобби за матч: steamid → [k, d, a].
     private readonly Dictionary<string, int[]> _kda = [];
@@ -53,7 +54,11 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     {
         if (_api is null)
             Logger.LogWarning("ServerKey не задан в configs/plugins/NineCupLobby/NineCupLobby.json — плагин ничего не делает");
-        RegisterListener<Listeners.OnMapStart>(_ => AddTimer(3f, Warmup));
+        RegisterListener<Listeners.OnMapStart>(_ => AddTimer(3f, () =>
+        {
+            Warmup();
+            if (_awaitingMap) { _awaitingMap = false; PostReady(); }
+        }));
         AddTimer(Config.RefreshSeconds, () => Refresh(), TimerFlags.REPEAT);
         Refresh();
     }
@@ -135,8 +140,10 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         if (Server.MapName.Equals(_lobby.MapId, StringComparison.OrdinalIgnoreCase))
         {
             Warmup();
+            PostReady();
             return;
         }
+        _awaitingMap = true;
         Server.PrintToChatAll($"{Tag} лобби #{_lobby.Id}: грузим {_lobby.Map}…");
         LoadMap(_lobby);
     }
@@ -147,6 +154,12 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         var (type, mode) = l.Mode switch { "wingman" => (0, 2), "free" => (0, 0), _ => (0, 1) };
         Server.ExecuteCommand($"game_type {type}; game_mode {mode}");
         Server.ExecuteCommand(l.WorkshopId is not null ? $"host_workshop_map {l.WorkshopId}" : $"map {l.MapId}");
+    }
+
+    // Карта загружена — сайт показывает адрес только теперь: заходящие во время смены карты вылетали.
+    private void PostReady()
+    {
+        if (_lobby is { Status: "waiting" } l) Post(new StatusIn(l.Id, "ready", null), st => Apply(st));
     }
 
     private void Warmup()

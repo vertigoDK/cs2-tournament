@@ -237,7 +237,7 @@ def current_lobby(db: Session = Depends(get_db)):
     linked = db.query(User).filter(User.steam_id.isnot(None)).all()
     admins = [u.steam_id for u in linked if u.role == Role.admin]
     known = [u.steam_id for u in linked]
-    lobby = db.query(Lobby).filter(Lobby.status.in_(("waiting", "live"))).order_by(Lobby.id).first()
+    lobby = db.query(Lobby).filter(Lobby.status.in_(("waiting", "ready", "live"))).order_by(Lobby.id).first()
     if not lobby:
         return schemas.ServerLobbyOut(lobby=None, admins=admins, known=known)
     users = _users(db, {p["user_id"] for p in lobby.players})
@@ -266,7 +266,10 @@ def lobby_status(payload: schemas.ServerLobbyStatusIn, db: Session = Depends(get
     if lobby.status in ("finished", "cancelled"):
         return current_lobby(db)
     now = dt.datetime.utcnow()
-    if payload.status == "live":
+    if payload.status == "ready":
+        if lobby.status == "waiting":
+            lobby.status = "ready"
+    elif payload.status == "live":
         lobby.status = "live"
         lobby.started_at = lobby.started_at or now
     elif payload.status == "finished":
@@ -281,6 +284,6 @@ def lobby_status(payload: schemas.ServerLobbyStatusIn, db: Session = Depends(get
         lobby.started_at = lobby.started_at or now
         lobby.finished_at = now
     else:
-        raise HTTPException(status_code=400, detail="Статус: live или finished")
+        raise HTTPException(status_code=400, detail="Статус: ready, live или finished")
     db.commit()
     return current_lobby(db)
