@@ -148,6 +148,9 @@ class Lobby(Base):
     # Счёт по командам [t1, t2] и победитель (1, 2 или 0 — ничья), когда игра окончена.
     score: Mapped[list | None] = mapped_column(JSON, nullable=True)
     winner: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Убийства/смерти/ассисты по Steam ID: {"7656…": [k, d, a]}. Это данные самого
+    # лобби — в общую статистику сайта они не попадают.
+    stats: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
     started_at: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)

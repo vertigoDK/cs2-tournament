@@ -576,6 +576,9 @@ class LobbyPlayerOut(BaseModel):
     team: int
     avatar_color: str
     avatar_url: str | None = None
+    kills: int | None = None
+    deaths: int | None = None
+    assists: int | None = None
 
 
 class LobbyOut(BaseModel):
@@ -639,7 +642,15 @@ class ServerLobbyOut(BaseModel):
     known: list[str] = []
 
 
+class ServerPlayerStat(BaseModel):
+    steam_id: str
+    kills: int = 0
+    deaths: int = 0
+    assists: int = 0
+
+
 class ServerLobbyStatusIn(BaseModel):
     lobby_id: int
     status: str  # live | finished
     score: list[int] | None = None
+    stats: list[ServerPlayerStat] | None = None

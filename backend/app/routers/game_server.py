@@ -275,6 +275,8 @@ def lobby_status(payload: schemas.ServerLobbyStatusIn, db: Session = Depends(get
                 raise HTTPException(status_code=400, detail="Счёт — два числа, по командам")
             lobby.score = payload.score
             lobby.winner = 1 if payload.score[0] > payload.score[1] else 2 if payload.score[1] > payload.score[0] else 0
+        if payload.stats:
+            lobby.stats = {s.steam_id: [s.kills, s.deaths, s.assists] for s in payload.stats}
         lobby.status = "finished"
         lobby.started_at = lobby.started_at or now
         lobby.finished_at = now

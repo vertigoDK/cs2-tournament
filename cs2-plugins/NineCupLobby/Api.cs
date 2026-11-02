@@ -11,7 +11,9 @@ public record Lobby(int Id, string Mode, string Map, string MapId, string? Works
 
 public record LobbyState(Lobby? Lobby, List<string> Admins, List<string> Known);
 
-public record StatusIn(int LobbyId, string Status, List<int>? Score);
+public record PlayerStat(string SteamId, int Kills, int Deaths, int Assists);
+
+public record StatusIn(int LobbyId, string Status, List<int>? Score, List<PlayerStat>? Stats = null);
 
 public record ApiError(string? Detail);
 

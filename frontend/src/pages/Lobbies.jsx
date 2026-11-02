@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import api, { apiErrorMessage } from "../api.js";
 import { useAuth } from "../auth/AuthContext.jsx";
@@ -166,7 +167,7 @@ function LobbyCard({ lobby, first, compact, isAdmin, onCancel, toast }) {
             {lobby.status === "live" ? <i className="live-dot" /> : null}
             {st.label}
           </span>
-          <b className="lobby-mode">{modeName(lobby.mode)}</b>
+          <Link to={`/lobbies/${lobby.id}`} className="lobby-mode">{modeName(lobby.mode)}</Link>
           <span className="lobby-map mono">
             {cover ? <img src={cover} alt="" onError={(e) => (e.currentTarget.style.display = "none")} /> : null}
             {lobby.map}

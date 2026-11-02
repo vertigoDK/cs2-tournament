@@ -31,10 +31,12 @@ def _out(lobby: Lobby, users: dict[int, User], creators: dict[int, str]) -> sche
         u = users.get(p["user_id"])
         if not u:
             continue
+        kda = (lobby.stats or {}).get(u.steam_id or "")
         players.append(
             schemas.LobbyPlayerOut(
                 user_id=u.id, name=u.display_name, team=p["team"],
                 avatar_color=u.avatar_color, avatar_url=u.avatar_url,
+                kills=kda[0] if kda else None, deaths=kda[1] if kda else None, assists=kda[2] if kda else None,
             )
         )
     return schemas.LobbyOut(

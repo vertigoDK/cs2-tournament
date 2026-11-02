@@ -38,6 +38,8 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     private bool _starting;           // после !ready идёт разминка до начала матча
     private bool _live;               // матч идёт, раунды считаются
     private readonly int[] _score = new int[2];
+    // Убийства / смерти / ассисты игроков лобби за матч: steamid → [k, d, a].
+    private readonly Dictionary<string, int[]> _kda = [];
 
     private static readonly string Tag = $" {ChatColors.Orange}nine cup{ChatColors.Default} ·";
 
@@ -215,6 +217,9 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         _starting = false;
         _live = true;
         _score[0] = _score[1] = 0;
+        _kda.Clear();
+        if (_lobby is not null)
+            foreach (var p in _lobby.Players) _kda[p.SteamId] = [0, 0, 0];
         if (_lobby is not null) Post(new StatusIn(_lobby.Id, "live", null), null);
     }
 
@@ -251,6 +256,22 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     }
 
     [GameEventHandler]
+    public HookResult OnPlayerDeath(EventPlayerDeath @event, GameEventInfo info)
+    {
+        if (!_live || InWarmup()) return HookResult.Continue;
+        var victim = @event.Userid;
+        var attacker = @event.Attacker;
+        var assister = @event.Assister;
+        if (victim is { IsValid: true } && _kda.TryGetValue(victim.SteamID.ToString(), out var v)) v[1]++;
+        // Убийство своего или самоубийство не считаем.
+        if (attacker is { IsValid: true } && attacker != victim && attacker.TeamNum != victim?.TeamNum &&
+            _kda.TryGetValue(attacker.SteamID.ToString(), out var a)) a[0]++;
+        if (assister is { IsValid: true } && assister.TeamNum != victim?.TeamNum &&
+            _kda.TryGetValue(assister.SteamID.ToString(), out var s)) s[2]++;
+        return HookResult.Continue;
+    }
+
+    [GameEventHandler]
     public HookResult OnMatchEnd(EventCsWinPanelMatch @event, GameEventInfo info)
     {
         if (!_live || _lobby is null) return HookResult.Continue;
@@ -258,7 +279,8 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         var lobby = _lobby;
         var score = new List<int> { _score[0], _score[1] };
         Server.PrintToChatAll($"{Tag} итог: команда 1 {score[0]}:{score[1]} команда 2");
-        Post(new StatusIn(lobby.Id, "finished", score), st =>
+        var stats = _kda.Select(kv => new PlayerStat(kv.Key, kv.Value[0], kv.Value[1], kv.Value[2])).ToList();
+        Post(new StatusIn(lobby.Id, "finished", score, stats), st =>
         {
             Server.PrintToChatAll($"{Tag} счёт отправлен на сайт");
             _ready.Clear();
