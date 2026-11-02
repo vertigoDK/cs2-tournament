@@ -46,6 +46,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     private int _knifeWinner;         // сторона (2 — T, 3 — CT), выигравшая нож
     private Timer? _chooseTimer;
     private int _bots;                // сколько ботов заменяют отсутствующих (для !start админа)
+    private int _botsTeam1, _botsTeam2; // из них — за команду 1 и команду 2 лобби
     private bool _awaitingMap;        // грузим карту лобби; как загрузится — сообщим сайту «готово»
     private readonly int[] _score = new int[2];
     // Убийства / смерти / ассисты игроков лобби за матч: steamid → [k, d, a].
@@ -225,7 +226,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
                 h.ChangeTeam(CsTeam.Spectator);
         }
 
-        _bots = 0;
+        _bots = _botsTeam1 = _botsTeam2 = 0;
         if (withBots)
         {
             // Кого нет — того заменяет бот на его стороне (для проверки в одиночку).
@@ -233,9 +234,13 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
             // Сначала убираем всех ботов: файл режима wingman сам держит bot_quota 1.
             Server.ExecuteCommand("bot_kick; bot_quota_mode normal; bot_quota 0; bot_join_after_player 0");
             _bots = missing.Count;
+            _botsTeam1 = missing.Count(p => p.Team == 1);
+            _botsTeam2 = missing.Count(p => p.Team == 2);
             if (missing.Count > 0)
             {
                 foreach (var p in missing) Server.ExecuteCommand(p.Team == 1 ? "bot_add_t" : "bot_add_ct");
+                // Менеджер ботов игры любит докинуть своего — через секунду-другую выравниваем сами.
+                AddTimer(1.5f, FixBots);
                 Server.PrintToChatAll($"{Tag} вместо {string.Join(", ", missing.Select(p => p.Name))} — боты");
             }
         }
@@ -324,11 +329,34 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         Server.ExecuteCommand("exec gamemode_competitive2v2");
         // Файл режима снова включает автоботов — держим ровно тех, что заменяют отсутствующих.
         Server.ExecuteCommand($"bot_quota_mode normal; bot_quota {_bots}; bot_join_after_player 0");
+        if (_bots > 0) AddTimer(1.5f, FixBots);
         Server.ExecuteCommand(
             "mp_t_default_secondary weapon_glock; mp_ct_default_secondary weapon_hkp2000; mp_give_player_c4 1; " +
             "mp_startmoney 800; mp_buytime 20; " +
             "mp_maxrounds 16; mp_overtime_enable 1; mp_overtime_maxrounds 6; mp_match_can_clinch 1; mp_halftime 1; " +
             "mp_warmup_pausetimer 0; mp_warmuptime 5; mp_warmup_end");
+    }
+
+    // Ровно столько ботов, сколько не хватает игроков, и каждый — на стороне своей команды лобби.
+    private void FixBots()
+    {
+        if (_lobby is null) return;
+        Server.ExecuteCommand($"bot_quota_mode normal; bot_quota {_bots}");
+        var teamOf = _lobby.Players.ToDictionary(p => p.SteamId, p => p.Team);
+        // Где сейчас команда 1: по её живому игроку, иначе — напротив игрока команды 2, иначе T.
+        var h1 = Humans().FirstOrDefault(h => h.TeamNum is 2 or 3 && teamOf.GetValueOrDefault(h.SteamID.ToString()) == 1);
+        var h2 = Humans().FirstOrDefault(h => h.TeamNum is 2 or 3 && teamOf.GetValueOrDefault(h.SteamID.ToString()) == 2);
+        int side1 = h1?.TeamNum ?? (h2 is not null ? (h2.TeamNum == 2 ? 3 : 2) : 2);
+        int side2 = side1 == 2 ? 3 : 2;
+        var bots = Utilities.GetPlayers().Where(p => p is { IsValid: true, IsBot: true, IsHLTV: false }).ToList();
+        int i = 0;
+        foreach (var b in bots)
+        {
+            int want = i < _botsTeam1 ? side1 : i < _botsTeam1 + _botsTeam2 ? side2 : 0;
+            i++;
+            if (want == 0) { Server.ExecuteCommand($"kickid {b.UserId}"); continue; }
+            if (b.TeamNum != want) b.ChangeTeam(want == 2 ? CsTeam.Terrorist : CsTeam.CounterTerrorist);
+        }
     }
 
     private void OnSideCommand(CCSPlayerController? player, bool swap)
@@ -531,7 +559,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         _live = _starting = _knife = _choosing = false;
         _chooseTimer?.Kill();
         _ready.Clear();
-        _bots = 0;
+        _bots = _botsTeam1 = _botsTeam2 = 0;
         Server.ExecuteCommand("bot_kick; bot_quota 0");
         Server.PrintToChatAll($"{Tag} игра остановлена админом");
         Warmup();
