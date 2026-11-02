@@ -29,3 +29,23 @@ MAPS: list[MapInfo] = [
 ]
 
 MAP_NAMES: list[str] = [m.name for m in MAPS]
+
+
+# Для своего сервера: имя карты на сайте → (карта для changelevel, id мастерской или None).
+# «Aim Map» — карта для дуэлей 1×1 из мастерской.
+AIM_MAP = "Aim Map"
+SERVER_MAPS: dict[str, tuple[str, str | None]] = {
+    "Nuke": ("de_nuke", None),
+    "Inferno": ("de_inferno", None),
+    "Dust2": ("de_dust2", None),
+    "Mirage": ("de_mirage", None),
+    "Train": ("de_train", None),
+    "Anubis": ("de_anubis", None),
+    "Rialto": ("gd_rialto", None),
+    "Overpass": ("de_overpass", None),
+    "Vertigo": ("de_vertigo", None),
+    "Lake": ("de_lake", None),
+    "Eldorado": ("de_eldorado", None),
+    "Debris": ("de_debris", None),
+    AIM_MAP: ("aim_map_s2", "3074525246"),
+}

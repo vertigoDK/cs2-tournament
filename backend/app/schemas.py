@@ -554,3 +554,90 @@ class ServerSkinsPlayer(BaseModel):
 
 class ServerSkinsOut(BaseModel):
     players: list[ServerSkinsPlayer]
+
+
+# ---------------- лобби ----------------
+
+class LobbyPlayerIn(BaseModel):
+    user_id: int
+    team: int = Field(ge=1, le=2)
+
+
+class LobbyCreate(BaseModel):
+    mode: str
+    map: str
+    server_address: str = Field(default="", max_length=80)
+    players: list[LobbyPlayerIn]
+
+
+class LobbyPlayerOut(BaseModel):
+    user_id: int
+    name: str
+    team: int
+    avatar_color: str
+    avatar_url: str | None = None
+
+
+class LobbyOut(BaseModel):
+    id: int
+    mode: str
+    map: str
+    server_address: str
+    status: str
+    players: list[LobbyPlayerOut]
+    score: list[int] | None = None
+    winner: int | None = None
+    created_by: str | None = None
+    created_at: dt.datetime
+    started_at: dt.datetime | None = None
+    finished_at: dt.datetime | None = None
+
+
+class LobbyModeOut(BaseModel):
+    id: str
+    name: str
+    hint: str
+    per_team: int | None
+    maps: list[str]
+
+
+class LobbyCandidate(BaseModel):
+    id: int
+    name: str
+    avatar_color: str
+    avatar_url: str | None = None
+    steam_linked: bool
+
+
+class LobbyOptionsOut(BaseModel):
+    modes: list[LobbyModeOut]
+    players: list[LobbyCandidate]
+    server_address: str
+
+
+class ServerLobbyPlayer(BaseModel):
+    steam_id: str
+    name: str
+    team: int
+
+
+class ServerLobby(BaseModel):
+    id: int
+    mode: str
+    map: str
+    map_id: str  # имя карты для changelevel
+    workshop_id: str | None = None
+    status: str
+    players: list[ServerLobbyPlayer]
+
+
+class ServerLobbyOut(BaseModel):
+    lobby: ServerLobby | None = None
+    # Кого пускать, когда лобби нет: админы с привязанным Steam.
+    admins: list[str] = []
+
+
+class ServerLobbyStatusIn(BaseModel):
+    lobby_id: int
+    status: str  # live | finished
+    score: list[int] | None = None

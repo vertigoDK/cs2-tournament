@@ -10,7 +10,11 @@ import { isWinter } from "../utils/season.js";
 
 // Группы бокового меню; новый раздел — строка в нужной группе.
 const NAV = [
-  { title: "Играем", items: [{ to: "/", end: true, label: "Турниры", icon: "trophy" }] },
+  { title: "Играем", items: [
+      { to: "/", end: true, label: "Турниры", icon: "trophy" },
+      { to: "/lobbies", label: "Лобби", icon: "lobby" },
+    ],
+  },
   {
     title: "Люди и цифры",
     items: [

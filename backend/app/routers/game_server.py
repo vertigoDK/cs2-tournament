@@ -9,6 +9,7 @@
 users.steam_id.
 """
 
+import datetime as dt
 import hashlib
 import hmac
 
@@ -19,7 +20,8 @@ from .. import bracket as B
 from .. import schemas
 from ..config import get_settings
 from ..deps import get_db, require_admin
-from ..models import Loadout, Role, SkinChoice, Tournament, TournamentStatus, User
+from ..map_catalog import SERVER_MAPS
+from ..models import Lobby, Loadout, Role, SkinChoice, Tournament, TournamentStatus, User
 from ..store import save_bracket
 
 router = APIRouter(prefix="/api/server", tags=["game-server"])
@@ -225,3 +227,55 @@ def skins(db: Session = Depends(get_db)):
             )
         )
     return schemas.ServerSkinsOut(players=sorted(players, key=lambda p: p.steam_id))
+
+
+# ---------------- лобби ----------------
+
+@router.get("/lobby", response_model=schemas.ServerLobbyOut, dependencies=[Depends(require_server)])
+def current_lobby(db: Session = Depends(get_db)):
+    """Лобби, которое сервер играет сейчас: самое раннее неоконченное."""
+    admins = [u.steam_id for u in db.query(User).filter(User.role == Role.admin, User.steam_id.isnot(None)).all()]
+    lobby = db.query(Lobby).filter(Lobby.status.in_(("waiting", "live"))).order_by(Lobby.id).first()
+    if not lobby:
+        return schemas.ServerLobbyOut(lobby=None, admins=admins)
+    users = _users(db, {p["user_id"] for p in lobby.players})
+    map_id, workshop = SERVER_MAPS.get(lobby.map, (lobby.map, None))
+    return schemas.ServerLobbyOut(
+        lobby=schemas.ServerLobby(
+            id=lobby.id, mode=lobby.mode, map=lobby.map, map_id=map_id, workshop_id=workshop, status=lobby.status,
+            players=[
+                schemas.ServerLobbyPlayer(steam_id=users[p["user_id"]].steam_id, name=users[p["user_id"]].display_name, team=p["team"])
+                for p in lobby.players
+                if p["user_id"] in users and users[p["user_id"]].steam_id
+            ],
+        ),
+        admins=admins,
+    )
+
+
+@router.post("/lobby-status", response_model=schemas.ServerLobbyOut, dependencies=[Depends(require_server)])
+def lobby_status(payload: schemas.ServerLobbyStatusIn, db: Session = Depends(get_db)):
+    """Сервер сообщает: игра началась (live) или закончилась (finished, со счётом
+    по командам). Повторные сообщения не страшны."""
+    lobby = db.get(Lobby, payload.lobby_id)
+    if not lobby:
+        raise HTTPException(status_code=404, detail="Лобби не найдено")
+    if lobby.status in ("finished", "cancelled"):
+        return current_lobby(db)
+    now = dt.datetime.utcnow()
+    if payload.status == "live":
+        lobby.status = "live"
+        lobby.started_at = lobby.started_at or now
+    elif payload.status == "finished":
+        if payload.score is not None:
+            if len(payload.score) != 2:
+                raise HTTPException(status_code=400, detail="Счёт — два числа, по командам")
+            lobby.score = payload.score
+            lobby.winner = 1 if payload.score[0] > payload.score[1] else 2 if payload.score[1] > payload.score[0] else 0
+        lobby.status = "finished"
+        lobby.started_at = lobby.started_at or now
+        lobby.finished_at = now
+    else:
+        raise HTTPException(status_code=400, detail="Статус: live или finished")
+    db.commit()
+    return current_lobby(db)

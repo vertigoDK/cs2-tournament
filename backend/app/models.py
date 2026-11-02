@@ -125,3 +125,30 @@ class Loadout(Base):
     knife_defindex: Mapped[int | None] = mapped_column(Integer, nullable=True)
     glove_defindex: Mapped[int | None] = mapped_column(Integer, nullable=True)
     updated_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow)
+
+
+class Lobby(Base):
+    """Лобби на нашем CS2-сервере: админ собирает игроков и карту, сервер
+    (плагин nine cup) забирает активное лобби, пускает только этих игроков,
+    запускает игру и присылает счёт.
+
+    Сервер один, поэтому лобби идут по очереди: плагин берёт самое раннее
+    неоконченное. Статусы: waiting → live → finished (или cancelled).
+    Состав — JSON [{user_id, team}], team 1 или 2.
+    """
+
+    __tablename__ = "lobbies"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    mode: Mapped[str] = mapped_column(String(16))  # duel | wingman | free
+    map: Mapped[str] = mapped_column(String(40))
+    server_address: Mapped[str] = mapped_column(String(80), default="")
+    status: Mapped[str] = mapped_column(String(16), default="waiting", index=True)
+    players: Mapped[list] = mapped_column(JSON, default=list)
+    # Счёт по командам [t1, t2] и победитель (1, 2 или 0 — ничья), когда игра окончена.
+    score: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    winner: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
+    started_at: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)
+    finished_at: Mapped[dt.datetime | None] = mapped_column(DateTime, nullable=True)

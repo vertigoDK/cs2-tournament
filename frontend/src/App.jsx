@@ -14,6 +14,7 @@ import Cabinet from "./pages/Cabinet.jsx";
 import Stats from "./pages/Stats.jsx";
 import Players from "./pages/Players.jsx";
 import History from "./pages/History.jsx";
+import Lobbies from "./pages/Lobbies.jsx";
 import Skins from "./pages/Skins.jsx";
 import PlayerProfile from "./pages/PlayerProfile.jsx";
 import NotFound from "./pages/NotFound.jsx";
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="/players/:id" element={<PlayerProfile />} />
           <Route path="/history" element={<History />} />
           <Route path="/skins" element={<Skins />} />
+          <Route path="/lobbies" element={<Lobbies />} />
           <Route path="/tournaments/:id" element={<TournamentView />} />
           <Route path="/tournaments/:id/media" element={<TournamentMedia />} />
 
