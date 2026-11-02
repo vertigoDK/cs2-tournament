@@ -272,6 +272,11 @@ def lobby_status(payload: schemas.ServerLobbyStatusIn, db: Session = Depends(get
     elif payload.status == "live":
         lobby.status = "live"
         lobby.started_at = lobby.started_at or now
+        # По ходу игры сервер присылает текущий счёт и K/D/A после каждого раунда.
+        if payload.score is not None and len(payload.score) == 2:
+            lobby.score = payload.score
+        if payload.stats:
+            lobby.stats = {s.steam_id: [s.kills, s.deaths, s.assists] for s in payload.stats}
     elif payload.status == "finished":
         if payload.score is not None:
             if len(payload.score) != 2:

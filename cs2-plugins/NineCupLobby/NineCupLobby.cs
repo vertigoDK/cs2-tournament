@@ -45,6 +45,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
     private bool _choosing;           // ждём !switch / !stay от победителей ножа
     private int _knifeWinner;         // сторона (2 — T, 3 — CT), выигравшая нож
     private Timer? _chooseTimer;
+    private int _bots;                // сколько ботов заменяют отсутствующих (для !start админа)
     private bool _awaitingMap;        // грузим карту лобби; как загрузится — сообщим сайту «готово»
     private readonly int[] _score = new int[2];
     // Убийства / смерти / ассисты игроков лобби за матч: steamid → [k, d, a].
@@ -224,13 +225,16 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
                 h.ChangeTeam(CsTeam.Spectator);
         }
 
+        _bots = 0;
         if (withBots)
         {
             // Кого нет — того заменяет бот на его стороне (для проверки в одиночку).
             var missing = _lobby.Players.Where(p => Find(p) is null).ToList();
+            // Сначала убираем всех ботов: файл режима wingman сам держит bot_quota 1.
+            Server.ExecuteCommand("bot_kick; bot_quota_mode normal; bot_quota 0; bot_join_after_player 0");
+            _bots = missing.Count;
             if (missing.Count > 0)
             {
-                Server.ExecuteCommand("bot_quota_mode normal; bot_join_after_player 0");
                 foreach (var p in missing) Server.ExecuteCommand(p.Team == 1 ? "bot_add_t" : "bot_add_ct");
                 Server.PrintToChatAll($"{Tag} вместо {string.Join(", ", missing.Select(p => p.Name))} — боты");
             }
@@ -266,7 +270,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
             "mp_give_player_c4 0; mp_startmoney 0; mp_buytime 0; mp_free_armor 0; " +
             "mp_t_default_secondary \"\"; mp_ct_default_secondary \"\"; " +
             "mp_warmup_pausetimer 0; mp_warmuptime 5; mp_warmup_end");
-        Server.PrintToChatAll($"{Tag} ножевой раунд! Победители выберут сторону");
+        Server.PrintToChatAll($"{Tag} {ChatColors.Green}ножевой раунд{ChatColors.Default}: у всех только ножи. Выигравшая команда выберет сторону (!switch / !stay)");
     }
 
     private void StripToKnife()
@@ -310,22 +314,33 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         _chooseTimer = null;
         if (swap)
         {
-            var ids = _lobby.Players.Select(p => p.SteamId).ToHashSet();
-            foreach (var h in Humans().Where(h => ids.Contains(h.SteamID.ToString())))
+            // Меняются все на сторонах — и игроки, и боты, иначе команды разъедутся.
+            foreach (var h in Utilities.GetPlayers().Where(p => p is { IsValid: true, IsHLTV: false } && p.TeamNum is 2 or 3).ToList())
                 h.ChangeTeam(h.TeamNum == 2 ? CsTeam.CounterTerrorist : CsTeam.Terrorist);
         }
         Server.PrintToChatAll($"{Tag} {(swap ? "меняемся сторонами" : "остаёмся")} — матч начинается заново");
         // Правила wingman по умолчанию обратно, плюс допы без конца.
         _starting = true;
         Server.ExecuteCommand("exec gamemode_competitive2v2");
+        // Файл режима снова включает автоботов — держим ровно тех, что заменяют отсутствующих.
+        Server.ExecuteCommand($"bot_quota_mode normal; bot_quota {_bots}; bot_join_after_player 0");
         Server.ExecuteCommand(
+            "mp_t_default_secondary weapon_glock; mp_ct_default_secondary weapon_hkp2000; mp_give_player_c4 1; " +
+            "mp_startmoney 800; mp_buytime 20; " +
             "mp_maxrounds 16; mp_overtime_enable 1; mp_overtime_maxrounds 6; mp_match_can_clinch 1; mp_halftime 1; " +
             "mp_warmup_pausetimer 0; mp_warmuptime 5; mp_warmup_end");
     }
 
     private void OnSideCommand(CCSPlayerController? player, bool swap)
     {
-        if (player is null || !_choosing || _lobby is null) return;
+        if (player is null || _lobby is null) return;
+        if (!_choosing)
+        {
+            player.PrintToChat(_knife
+                ? $"{Tag} сначала выиграйте ножевой раунд — потом выбор стороны"
+                : $"{Tag} выбор стороны — только после ножевого раунда");
+            return;
+        }
         if (_lobby.Players.All(p => p.SteamId != player.SteamID.ToString()) || player.TeamNum != _knifeWinner)
         {
             player.PrintToChat($"{Tag} сторону выбирает команда, выигравшая нож");
@@ -395,6 +410,10 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
             var loser = Humans().FirstOrDefault(p => p.TeamNum is 2 or 3 && p.TeamNum != @event.Winner && teams.ContainsKey(p.SteamID.ToString()));
             if (loser is not null) _score[2 - teams[loser.SteamID.ToString()]]++;
         }
+        // Счёт и K/D/A на сайт после каждого раунда — страница лобби обновляется по ходу игры.
+        var lobbyId = _lobby.Id;
+        var score = new List<int> { _score[0], _score[1] };
+        AddTimer(1f, () => { if (_live) Post(new StatusIn(lobbyId, "live", score, Stats()), null); });
         return HookResult.Continue;
     }
 
@@ -422,8 +441,7 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         var lobby = _lobby;
         var score = new List<int> { _score[0], _score[1] };
         Server.PrintToChatAll($"{Tag} итог: команда 1 {score[0]}:{score[1]} команда 2");
-        var stats = _kda.Select(kv => new PlayerStat(kv.Key, kv.Value[0], kv.Value[1], kv.Value[2])).ToList();
-        Post(new StatusIn(lobby.Id, "finished", score, stats), st =>
+        Post(new StatusIn(lobby.Id, "finished", score, Stats()), st =>
         {
             Server.PrintToChatAll($"{Tag} счёт отправлен на сайт");
             _ready.Clear();
@@ -431,6 +449,9 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         });
         return HookResult.Continue;
     }
+
+    private List<PlayerStat> Stats() =>
+        _kda.Select(kv => new PlayerStat(kv.Key, kv.Value[0], kv.Value[1], kv.Value[2])).ToList();
 
     private void Post(StatusIn body, Action<LobbyState>? done)
     {
@@ -510,6 +531,8 @@ public class NineCupLobby : BasePlugin, IPluginConfig<NineCupLobbyConfig>
         _live = _starting = _knife = _choosing = false;
         _chooseTimer?.Kill();
         _ready.Clear();
+        _bots = 0;
+        Server.ExecuteCommand("bot_kick; bot_quota 0");
         Server.PrintToChatAll($"{Tag} игра остановлена админом");
         Warmup();
     }
