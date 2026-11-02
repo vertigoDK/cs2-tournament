@@ -90,11 +90,16 @@ export default function LobbyStage({ lobby, isAdmin, onCancel, toast }) {
                 <p className="hint">Сервер грузит карту. Адрес появится, когда всё будет готово — раньше не заходи, выкинет.</p>
               ) : connect ? (
                 <>
+                  {/* steam://connect — Steam сам запускает CS2 (если ещё не открыта) и заходит на сервер. */}
+                  <a className="btn primary lv-play" href={`steam://connect/${lobby.server_address}`}>
+                    <Icon name="play" size={14} filled />
+                    <span>Играть</span>
+                  </a>
                   <button type="button" className="lb-connect" onClick={copy} title="Скопировать">
                     <code>{connect}</code>
                     <Icon name="download" size={14} />
                   </button>
-                  <p className="hint">Скопируй и вставь в консоль CS2. Кто не в составе — заходит зрителем.</p>
+                  <p className="hint">«Играть» откроет CS2 и сразу подключит. Не сработало — скопируй connect и вставь в консоль. Кто не в составе — заходит зрителем.</p>
                 </>
               ) : (
                 <p className="hint">Адрес сервера не указан.</p>
