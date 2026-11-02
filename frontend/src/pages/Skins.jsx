@@ -149,7 +149,7 @@ export default function Skins() {
               label="Перчатки"
               title={glove ? glove.n : "Перчатки"}
               sub={glove ? skinOf(glove.d)?.n || "…" : "Стандартные"}
-              img={glove && skinOf(glove.d) ? skinImage(catalog, skinOf(glove.d).i) : ""}
+              img={glove && skinOf(glove.d) ? skinImage(catalog, skinOf(glove.d).i) : "/img/gloves-default.webp"}
               color={glove ? skinOf(glove.d)?.r : null}
               onClick={() => setTarget({ mode: "glove" })}
             />

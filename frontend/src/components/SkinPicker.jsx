@@ -95,9 +95,7 @@ export default function SkinPicker({ catalog, mode, weapon, current, onSave, onC
           {!item && types ? (
             <div className="sp-grid">
               <button type="button" className="sp-tile plain" onClick={() => onSave({ item: null, paint: 0 })}>
-                <span className="sp-none">
-                  <Icon name="close" size={22} />
-                </span>
+                <img src={mode === "knife" ? skinImage(catalog, catalog.knife_default) : "/img/gloves-default.webp"} alt="" />
                 <b>{mode === "knife" ? "Стандартный нож" : "Стандартные"}</b>
                 <span className="mono">как у всех</span>
               </button>
