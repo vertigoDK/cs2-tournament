@@ -3473,3 +3473,20 @@ button.ds-toggle:hover { background: var(--paper); }
 .q-standing.first .q-place { background: var(--accent); color: #fff; }
 .check-row { display: flex; align-items: flex-start; gap: 10px; margin: 4px 0 14px; font-size: 14px; line-height: 1.4; cursor: pointer; }
 .check-row input { margin-top: 3px; accent-color: var(--accent); }
+
+/* бафы за места в дуэлях */
+.q-buffs { margin-top: 22px; }
+.q-buffs-table { border: 1px solid var(--line); border-radius: var(--r); background: var(--card); overflow: hidden; }
+.q-buff { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 14px; padding: 11px 16px; }
+.q-buff + .q-buff { border-top: 1px dashed var(--line); }
+.q-buff-place { font-size: 15px; font-weight: 700; }
+.q-buff:first-child .q-buff-place { color: var(--accent); }
+.q-buff-text { font-size: 14.5px; }
+.q-buff-who { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.q-buff-person { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px 3px 3px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); font-size: 13px; font-weight: 600; }
+.q-buff-person .ava { border-radius: 6px; }
+.q-buff-rules { margin: 12px 0 0; padding-left: 18px; color: var(--muted); font-size: 13.5px; line-height: 1.5; display: grid; gap: 4px; }
+@media (max-width: 600px) {
+  .q-buff { grid-template-columns: 44px 1fr; }
+  .q-buff-who { grid-column: 1 / -1; justify-content: flex-start; }
+}
