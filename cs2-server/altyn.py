@@ -229,7 +229,12 @@ def cmd_setup(a) -> None:
 
     print("1/6 переменные запуска")
     for k, v in {"STEAM_ACC": env["CS2_GSLT"], "STEAM_API_KEY": env["STEAM_WEB_API_KEY"],
-                 "INSTALL_CSS": "1", "INSTALL_METAMOD": "0", "SERVER_MODE": "vanilla"}.items():
+                 "INSTALL_CSS": "1", "INSTALL_METAMOD": "0", "SERVER_MODE": "vanilla",
+                 # SourceTV занимает одно из 4 мест в wingman — четвёртый игрок не зашёл бы.
+                 "TV_ENABLE": "0",
+                 # Пустой сервер не засыпает: иначе плагин лобби стоит, карта грузится только
+                 # при заходе игрока, и смена карты его выкидывает.
+                 "CUSTOM_PARAMS": "+sv_hibernate_when_empty 0"}.items():
         p.call("PUT", "/startup/variable", json={"key": k, "value": v}, ok=(200, 204, 422))
 
     print("2/6 ждём, пока установится CounterStrikeSharp")
