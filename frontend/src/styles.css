@@ -2556,7 +2556,9 @@ button.ds-toggle:hover { background: var(--paper); }
 .skin-picker .veto-modal-body { max-height: 58vh; overflow-y: auto; }
 .sp-back { margin-left: auto; }
 .sp-search { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; padding: 0 12px; border: 1px solid var(--line-2); border-radius: 12px; background: var(--card); color: var(--muted); }
-.sp-search input { flex: 1; border: 0; background: none; padding: 11px 0; font: inherit; font-size: 15px; color: var(--ink); outline: none; }
+.sp-search { transition: border-color 0.2s, box-shadow 0.2s; }
+.sp-search:focus-within { border-color: var(--ink); box-shadow: 0 0 0 3px var(--accent-soft); }
+.sp-search input, .sp-search input:focus { flex: 1; min-width: 0; border: 0; border-radius: 0; background: none; box-shadow: none; padding: 11px 0; font: inherit; font-size: 15px; color: var(--ink); outline: none; }
 .sp-search span { font-size: 12px; }
 .sp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
 .sp-tile {
@@ -2583,7 +2585,8 @@ button.ds-toggle:hover { background: var(--paper); }
 .sp-tile span.mono { font-size: 10.5px; color: var(--muted); }
 .sp-none { display: grid; place-items: center; height: 84px; color: var(--line-2); }
 
-.sp-foot { display: flex; align-items: center; gap: 16px; }
+.sp-foot { display: flex; align-items: center; justify-content: flex-start; gap: 16px; flex-wrap: nowrap; }
+.sp-foot > .btn { flex: none; align-self: center; padding: 12px 22px; }
 .sp-foot > img { width: 120px; height: 80px; object-fit: contain; flex: none; }
 .sp-pick { flex: 1; display: grid; gap: 6px; min-width: 0; }
 .sp-pick > b { font: 500 18px/1.2 var(--display); letter-spacing: -0.02em; }
