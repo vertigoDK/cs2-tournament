@@ -158,6 +158,10 @@ export default function TournamentView() {
   };
   const onAddPlaces = () =>
     runAction(() => api.post(`/tournaments/${id}/qualifier/places`), "Игры за места добавлены");
+  const onRemovePlaces = () => {
+    if (!confirm("Убрать все игры за места вместе с их результатами? Основная сетка дуэлей останется.")) return;
+    runAction(() => api.delete(`/tournaments/${id}/qualifier/places`), "Игры за места убраны");
+  };
   const onDeleteQualifier = () => {
     if (!confirm("Удалить отборочные дуэли вместе с результатами?")) return;
     runAction(() => api.delete(`/tournaments/${id}/qualifier`), "Дуэли удалены");
@@ -379,6 +383,7 @@ export default function TournamentView() {
           busy={busy}
           onSetDuel={onSetDuel}
           onAddPlaces={onAddPlaces}
+          onRemovePlaces={onRemovePlaces}
           onRebuild={() => setQualifierSetup(true)}
           onDelete={onDeleteQualifier}
         />

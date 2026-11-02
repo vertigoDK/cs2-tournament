@@ -18,17 +18,6 @@ function placeStage(group, r) {
   return `Места ${group.place}–${group.place + n - 1} · ${left === 2 ? "полуфинал" : left === 3 ? "1/4" : `раунд ${r + 1}`}`;
 }
 
-// Что даёт место в дуэлях команде в основной сетке. Каждый баф — разовый
-// жетон: использовал — сгорел; на одну карту не больше одного.
-const BUFFS = [
-  { places: [1], text: "Старт 2:0 на двух картах" },
-  { places: [2], text: "Старт 2:0 на одной карте" },
-  { places: [3], text: "Старт 1:0 на двух картах" },
-  { places: [4], text: "Старт 1:0 на одной карте" },
-  { places: [5, 6], text: "Первый бан в драфте на одной серии" },
-  { places: [7, 8], text: "Выбор стороны на одной карте" },
-];
-
 // Итоговые места {id: место} — у кого уже определились (как qualifier_places на сервере).
 function finalPlaces(qualifier) {
   const out = {};
@@ -47,7 +36,7 @@ function finalPlaces(qualifier) {
 // Отборочные дуэли 1×1 перед основной сеткой. Своего титула у них нет —
 // по итогу составляют пары или посев, поэтому показываем их внутри турнира.
 // Админ кликает по дуэли, чтобы внести или исправить результат.
-export default function QualifierBracket({ qualifier, isAdmin, busy, onSetDuel, onRebuild, onDelete, onAddPlaces }) {
+export default function QualifierBracket({ qualifier, isAdmin, busy, onSetDuel, onRebuild, onDelete, onAddPlaces, onRemovePlaces }) {
   const [editing, setEditing] = useState(null); // {g, r, i}; g = -1 — основная сетка
   const rounds = qualifier.rounds || [];
   const people = qualifier.people || {};
@@ -111,6 +100,11 @@ export default function QualifierBracket({ qualifier, isAdmin, busy, onSetDuel, 
                   <Icon name="plus" size={13} /> Добавить игры за места
                 </button>
               ) : null}
+              {qualifier.places && onRemovePlaces ? (
+                <button type="button" className="btn sm danger" onClick={onRemovePlaces} disabled={busy}>
+                  <Icon name="trash" size={13} /> Убрать игры за места
+                </button>
+              ) : null}
               <button type="button" className="btn sm" onClick={onRebuild} disabled={busy}>
                 Пересобрать
               </button>
@@ -171,45 +165,6 @@ export default function QualifierBracket({ qualifier, isAdmin, busy, onSetDuel, 
               );
             })}
           </ol>
-        </div>
-      ) : null}
-
-      {qualifier.places ? (
-        <div className="q-buffs">
-          <div className="q-places-head mono">бафы за места</div>
-          <div className="q-buffs-table">
-            {BUFFS.map((b) => {
-              const who = standings.filter((s) => b.places.includes(s.place)).map((s) => person(Number(s.pid)));
-              return (
-                <div className="q-buff" key={b.places.join("-")}>
-                  <span className="q-buff-place mono">{b.places.join("–")}</span>
-                  <span className="q-buff-text">{b.text}</span>
-                  <span className="q-buff-who">
-                    {who.map((p, k) =>
-                      p ? (
-                        <span className="q-buff-person" key={k}>
-                          <Avatar name={p.name} color={p.color} url={p.avatar} size={20} />
-                          {p.name}
-                        </span>
-                      ) : null
-                    )}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <ul className="q-buff-rules">
-            <li>Каждый баф — разовый: команда сама решает, на какой карте его использовать, после этого он сгорает.</li>
-            <li>На одну карту — не больше одного бафа.</li>
-            <li>
-              Старт со счётом (2:0 или 1:0) меняет только табло: карта всё равно начинается с пистолетного раунда, как
-              при 0:0, у обеих команд по $800.
-            </li>
-            <li>
-              Если оба игрока команды заняли места в дуэлях, их бафы не сливаются в один, а идут отдельными жетонами:
-              например, 1-е и 2-е место — это «2:0» на трёх разных картах, а не 4:0 на одной.
-            </li>
-          </ul>
         </div>
       ) : null}
 

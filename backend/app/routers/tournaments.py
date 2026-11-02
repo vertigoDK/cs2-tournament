@@ -299,6 +299,21 @@ def add_qualifier_places(tournament_id: int, db: Session = Depends(get_db), _: U
     return _to_out(t, db)
 
 
+@router.delete("/{tournament_id}/qualifier/places", response_model=schemas.TournamentOut)
+def remove_qualifier_places(tournament_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    """Убрать все игры за места — основная сетка дуэлей остаётся."""
+    t = _get_or_404(db, tournament_id)
+    bracket = dict(t.bracket)
+    if not bracket.get("qualifier"):
+        raise HTTPException(status_code=404, detail="У турнира нет дуэлей")
+    try:
+        B.qualifier_remove_places(bracket["qualifier"])
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    save_bracket(db, t, bracket)
+    return _to_out(t, db)
+
+
 @router.delete("/{tournament_id}/qualifier", response_model=schemas.TournamentOut)
 def delete_qualifier(tournament_id: int, db: Session = Depends(get_db), _: User = Depends(require_admin)):
     t = _get_or_404(db, tournament_id)

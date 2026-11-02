@@ -580,6 +580,13 @@ def qualifier_add_places(q: dict) -> None:
     _qualifier_sync(q)
 
 
+def qualifier_remove_places(q: dict) -> None:
+    """Убирает игры за места; основная сетка и её результаты остаются."""
+    if q.get("places") is None:
+        raise ValueError("Игр за места нет")
+    q.pop("places")
+
+
 def _group_rounds(q: dict, g: int) -> list:
     return q["rounds"] if g == -1 else q["places"][g]["rounds"]
 
