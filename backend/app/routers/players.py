@@ -185,6 +185,7 @@ def _summary(u: User, p: dict, axes: dict[str, float] | None) -> schemas.PlayerP
         display_name=u.display_name,
         avatar_color=u.avatar_color,
         avatar_url=u.avatar_url,
+        banned=bool(u.banned),
         rating=round(B.player_rating(p["kills"], p["deaths"], p["rounds"]), 2),
         kills=p["kills"], deaths=p["deaths"], assists=p["assists"], rounds=p["rounds"], maps=p["maps"],
         map_wins=p["map_wins"], map_losses=p["map_losses"],

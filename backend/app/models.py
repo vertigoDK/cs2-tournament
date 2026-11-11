@@ -42,6 +42,8 @@ class User(Base):
     # Пароли хранятся только хэшем. Флаг помнит, показывали ли пароль админу:
     # у перенесённых со старой схемы его никто не видел, им нужно выдать новый.
     password_issued: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Пойман на читах/нарушении: на карточке и в профиле висит плашка BANNED.
+    banned: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
 
     created_at: Mapped[dt.datetime] = mapped_column(DateTime, default=dt.datetime.utcnow)
 

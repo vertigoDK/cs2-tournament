@@ -87,7 +87,10 @@ export default function PlayerProfile() {
       <section className="profile-hero">
         <Avatar name={p.display_name} color={p.avatar_color} url={p.avatar_url} size={104} />
         <div className="ph-main">
-          <h1>{p.display_name}</h1>
+          <h1>
+            {p.display_name}
+            {p.banned ? <span className="banned-tag">banned</span> : null}
+          </h1>
           <p className="ph-sub">
             {strong ? (
               <>

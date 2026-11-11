@@ -28,7 +28,7 @@ def list_users(db: Session = Depends(get_db), _: User = Depends(get_current_user
         schemas.UserOut(
             id=u.id, username=u.username, display_name=u.display_name,
             avatar_color=u.avatar_color, avatar_url=u.avatar_url, role=u.role.value,
-            password_issued=bool(u.password_issued),
+            password_issued=bool(u.password_issued), banned=bool(u.banned),
         )
         for u in rows
     ]
@@ -82,6 +82,15 @@ def reset_password(user_id: int, db: Session = Depends(get_db), _: User = Depend
     return schemas.CredentialsOut(
         id=user.id, display_name=user.display_name, username=user.username, password=password
     )
+
+
+@router.put("/{user_id}/ban", status_code=204)
+def set_ban(user_id: int, payload: schemas.UserBanIn, db: Session = Depends(get_db), _: User = Depends(require_admin)):
+    user = db.get(User, user_id)
+    if not user or user.role == Role.admin:
+        raise HTTPException(status_code=404, detail="Участник не найден")
+    user.banned = payload.banned
+    db.commit()
 
 
 @router.delete("/{user_id}", status_code=204)

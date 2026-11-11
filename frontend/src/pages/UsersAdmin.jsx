@@ -60,6 +60,20 @@ export default function UsersAdmin() {
     }
   };
 
+  const toggleBan = async (u) => {
+    const question = u.banned ? `Снять бан с «${u.display_name}»?` : `Забанить «${u.display_name}»? На карточке появится плашка BANNED.`;
+    if (!confirm(question)) return;
+    setBusy(true);
+    try {
+      await api.put(`/users/${u.id}/ban`, { banned: !u.banned });
+      await load();
+    } catch (err) {
+      toast(apiErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const removeUser = async (u) => {
     if (!confirm(`Удалить участника «${u.display_name}»?`)) return;
     setBusy(true);
@@ -179,6 +193,7 @@ export default function UsersAdmin() {
                 <span className="u-name">
                   <span className="u-nick">
                     {u.display_name}
+                    {u.banned ? <span className="banned-tag">banned</span> : null}
                     {!u.password_issued ? (
                       <span className="u-warn" title="Пароль ни разу не показывали — выдайте новый">
                         <Icon name="lock" size={11} />
@@ -196,6 +211,9 @@ export default function UsersAdmin() {
                   disabled={busy}
                 >
                   {u.password_issued ? "Новый пароль" : "Выдать пароль"}
+                </button>
+                <button className="btn sm" onClick={() => toggleBan(u)} disabled={busy}>
+                  {u.banned ? "Разбанить" : "Бан"}
                 </button>
                 <button className="btn sm danger" onClick={() => removeUser(u)} disabled={busy}>
                   Удалить

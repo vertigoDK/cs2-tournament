@@ -66,13 +66,16 @@ function PlayerCard({ p, place, index }) {
   return (
     <Link
       to={`/players/${p.id}`}
-      className={`player-card${p.axes ? "" : " idle"}`}
+      className={`player-card${p.axes ? "" : " idle"}${p.banned ? " is-banned" : ""}`}
       style={{ animationDelay: `${index * 50}ms` }}
     >
       <div className="pc-head">
         <Avatar name={p.display_name} color={p.avatar_color} url={p.avatar_url} size={46} />
         <div className="pc-name">
-          <b>{p.display_name}</b>
+          <b>
+            {p.display_name}
+            {p.banned ? <span className="banned-tag">banned</span> : null}
+          </b>
           <span className="mono">
             {strong ? (
               <>

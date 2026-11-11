@@ -2659,6 +2659,7 @@ button.ds-toggle:hover { background: var(--paper); }
 .pc-name b { font: 500 19px/1.2 var(--display); letter-spacing: -0.03em; overflow-wrap: anywhere; }
 .pc-name span { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .pc-name i { font-style: normal; color: var(--accent); font-weight: 700; }
+.player-card.is-banned .pc-body { filter: grayscale(1); opacity: 0.55; }
 
 .pc-body { display: flex; justify-content: center; margin: -4px -10px -2px; }
 .pc-body .radar { width: 100%; max-width: 300px; }
@@ -3903,3 +3904,21 @@ a.lobby-mode:hover { color: var(--accent-ink); }
 .srv-address .hint { font-size: 12.5px; }
 
 .lv-play { justify-content: center; padding: 12px 18px; font-size: 15px; }
+
+/* Плашка BANNED у ника: карточка игрока, профиль, админка. */
+.banned-tag {
+  display: inline-block;
+  vertical-align: 0.25em;
+  margin-left: 8px;
+  padding: 2px 7px 3px;
+  border-radius: 6px;
+  background: #d92d20;
+  color: #fff;
+  font: 700 10px/1.2 var(--mono, ui-monospace, monospace);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-3deg);
+  white-space: nowrap;
+}
+.pc-name b .banned-tag { margin-top: 0; font-size: 10px; color: #fff; }
+h1 .banned-tag { font-size: 13px; padding: 3px 9px 4px; }

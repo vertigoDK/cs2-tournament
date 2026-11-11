@@ -47,6 +47,11 @@ class UserOut(BaseModel):
     avatar_url: str | None = None
     role: str
     password_issued: bool = False
+    banned: bool = False
+
+
+class UserBanIn(BaseModel):
+    banned: bool
 
 
 class CredentialsOut(BaseModel):
@@ -408,6 +413,7 @@ class PlayerProfileSummary(BaseModel):
     display_name: str
     avatar_color: str
     avatar_url: str | None = None
+    banned: bool = False
     rating: float = 0.0
     kills: int = 0
     deaths: int = 0
